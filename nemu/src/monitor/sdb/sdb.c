@@ -120,7 +120,6 @@ void sdb_mainloop() {
       cmd = strtok(str, " ");
     }else{
       cmd = strtok(NULL, " ");
-      if (cmd == NULL) { break; }
     }
       if (cmd == NULL) { continue; }
 
