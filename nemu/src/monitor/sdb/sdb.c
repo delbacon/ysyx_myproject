@@ -109,20 +109,20 @@ void sdb_mainloop() {
     cmd_c(NULL);
     return;
   }
-  for (int cnt=0; ; cnt++) {
-    char *str = rl_gets();
-    if(str == NULL) { break; }
+
+  char *str = rl_gets();
+  char *cmd = NULL;
+  for (int cnt=0; str != NULL; cnt++) {
     char *str_end = str + strlen(str);
 
     /* extract the first token as the command */
-    char *cmd = NULL;
     if(cnt==0){
       cmd = strtok(str, " ");
     }else{
       cmd = strtok(NULL, " ");
+      if (cmd == NULL) { break; }
     }
-    
-    if (cmd == NULL) { continue; }
+      if (cmd == NULL) { continue; }
 
     /* treat the remaining string as the arguments,
      * which may need further parsing
