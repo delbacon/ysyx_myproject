@@ -54,46 +54,13 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
-//static int cmd_si_N(char *args) {
-//  int n = strtol(args,NULL,10);
-//  if(n>=1) cpu_exec(n);
-//  else cpu_exec(1);
-//  return -1;
-//}
-uint64_t get_steps_from_args() {
-  char *num = strtok(NULL, " ");
- 
-  /* no argument given */
-  if (num == NULL) {
-    return 1;
-  }
- 
-  uint64_t result = 0;
-  int i = 0;
- 
-  /* Loop through the string*/
-  while(num[i] != '\0') {
-    // Check if the character is a digit (0-9)
-    if (num[i] >= '0' && num[i] <= '9') {
-      result = result * 10 + (num[i] - '0');
-    } else {
-      //Return 1 if a non-digit character is found
-      return 1;
-    }
- 
-    i++;
-  }
- 
-  return result;
-}
- 
- 
 static int cmd_si_N(char *args) {
-  /* get the num of steps from args*/
-  uint64_t n = get_steps_from_args();
-  cpu_exec(n);
+  int n = strtol(args,NULL,10);
+  if(n>=1) cpu_exec(n);
+  else cpu_exec(1);
   return 0;
 }
+
 
 static struct {
   const char *name;
