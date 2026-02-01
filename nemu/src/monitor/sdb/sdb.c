@@ -57,7 +57,8 @@ static int cmd_help(char *args,uint8_t n);
 
 //单步执行
 static int cmd_si_N(char *args,uint8_t n){
-  cpu_exec(n);
+  if(n>0) cpu_exec(n);
+  else cpu_exec(1);
   return 0;
 }
 
@@ -83,15 +84,15 @@ static struct {
   uint8_t n;
 } cmd_args;
 
-int is_int(char *s) {
+long is_int(char *s) {
     if (!s || *s == '\0') return 0;
     
     char *end;
     // 使用 strtol 避免溢出问题
-    strtol(s, &end, 10);
-    
+    long var = strtol(s, &end, 10);
+    if((*end == '\0' && end != s ) || var < 0) return -1;   
     // 检查是否完整转换（end 指向结尾）且不是空输入
-    return (*end == '\0' && end != s);
+    return var;
 }
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -159,7 +160,8 @@ void sdb_mainloop() {
           break;
         
         case 1 :
-          cmd_args.n = (uint8_t)is_int(args);
+          int n = (uint8_t)is_int(args);
+          cmd_args.n = n;
           break;
 
         default:break;
