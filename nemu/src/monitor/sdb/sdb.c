@@ -55,10 +55,12 @@ static int cmd_q(char *args) {
 static int cmd_help(char *args);
 
 static int cmd_si_N(char *args) {
-  if(args==NULL) return -1;
+  char *arg = strtok(NULL," ");
+
+  if(arg == NULL) return -1;
 
   char *endptr;
-  int n = strtol(args,&endptr,10);
+  int n = strtol(arg,&endptr,10);
   
   if (*endptr != '\0') return -1;
 
