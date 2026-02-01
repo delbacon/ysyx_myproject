@@ -155,7 +155,7 @@ void sdb_mainloop() {
 
       switch(j){
         case 0 :
-          cmd_args.args = args;
+          cmd_args.args = cmd;
           break;
         
         case 1 :
