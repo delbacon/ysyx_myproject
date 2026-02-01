@@ -110,18 +110,12 @@ void sdb_mainloop() {
     return;
   }
 
-  char *str = rl_gets();
-  char *cmd = NULL;
-  for (int cnt=0; str != NULL; cnt++) {
+  for (char *str; (str = rl_gets()) != NULL; ) {
     char *str_end = str + strlen(str);
 
     /* extract the first token as the command */
-    if(cnt==0){
-      cmd = strtok(str, " ");
-    }else{
-      cmd = strtok(NULL, " ");
-    }
-      if (cmd == NULL) { continue; }
+    char *cmd = strtok(str, " ");
+    if (cmd == NULL) { continue; }
 
     /* treat the remaining string as the arguments,
      * which may need further parsing
