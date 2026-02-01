@@ -135,18 +135,21 @@ void sdb_mainloop() {
     char *str_end = str + strlen(str);
 
     char *cmd = strtok(str, " ");
+
+    char *args = NULL;
     for(int j=0;j<CMD_ARGS_NUM;j++){
       /* extract the first token as the command */
       //读取参数到cmd，如果j=0默认不读，因为cmd定义时读取了这个位置的参数
       if(j>0){
-        cmd = strtok(NULL, " ");
+//        cmd = strtok(NULL, " ");
+          cmd = args;
       }
       if (cmd == NULL) { continue; }
 
       /* treat the remaining string as the arguments,
        * which may need further parsing
        */
-      char *args = cmd + strlen(cmd) + 1;
+      args = cmd + strlen(cmd) + 1;
       if (args >= str_end) {
         args = NULL;
       }
