@@ -42,42 +42,62 @@ static char* rl_gets() {
   return line_read;
 }
 
-static int cmd_c(char *args) {
+static int cmd_c(char *args,uint8_t n) {
   cpu_exec(-1);
   return 0;
 }
 
 
-static int cmd_q(char *args) {
+static int cmd_q(char *args,uint8_t n) {
 	nemu_state.state = NEMU_QUIT;
 	return -1;
 }
 
-static int cmd_help(char *args);
+static int cmd_help(char *args,uint8_t n);
 
 //单步执行
-static int cmd_si_N(char *args){
-  cpu_exec(1);
+static int cmd_si_N(char *args,uint8_t n){
+  cpu_exec(n);
   return 0;
 }
 
 static struct {
   const char *name;
   const char *description;
-  int (*handler) (char *);
+  int (*handler) (char *,uint8_t);
 } cmd_table [] = {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-  { "si [N]", "Execute the program step-by-step for N insts and then pause.If N is not provided, default to 1.", cmd_si_N },
+  { "si", "Execute the program step-by-step for N insts and then pause.If N is not provided, default to 1.", cmd_si_N },
 
   /* TODO: Add more commands */
 
 };
 
+//cmd中参数的最大数量
+#define CMD_ARGS_NUM 2
+
+static struct {
+  char * args;
+  uint8_t n;
+} cmd_args;
+
+int is_int(char *s) {
+    if (!s || *s == '\0') return 0;
+    
+    char *end;
+    // 使用 strtol 避免溢出问题
+    strtol(s, &end, 10);
+    
+    // 检查是否完整转换（end 指向结尾）且不是空输入
+    return (*end == '\0' && end != s);
+}
+
 #define NR_CMD ARRLEN(cmd_table)
 
-static int cmd_help(char *args) {
+static int cmd_help(char *args,uint8_t n) {
+  n = 0;
   /* extract the first argument */
   char *arg = strtok(NULL, " ");
   int i;
@@ -106,23 +126,42 @@ void sdb_set_batch_mode() {
 
 void sdb_mainloop() {
   if (is_batch_mode) {
-    cmd_c(NULL);
+    cmd_c(NULL,0);
     return;
   }
-
+//把rl_gets写在for里面，可以让每次执行完之后重新调用这个函数，去获得新的输入的参数，从而实现
+//执行完当前指令后，接着接受下一条指令的操作
   for (char *str; (str = rl_gets()) != NULL; ) {
     char *str_end = str + strlen(str);
 
-    /* extract the first token as the command */
     char *cmd = strtok(str, " ");
-    if (cmd == NULL) { continue; }
+    for(int j=0;j<CMD_ARGS_NUM;j++){
+      /* extract the first token as the command */
+      //读取参数到cmd，如果j=0默认不读，因为cmd定义时读取了这个位置的参数
+      if(j>0){
+        cmd = strtok(NULL, " ");
+      }
+      if (cmd == NULL) { continue; }
 
-    /* treat the remaining string as the arguments,
-     * which may need further parsing
-     */
-    char *args = cmd + strlen(cmd) + 1;
-    if (args >= str_end) {
-      args = NULL;
+      /* treat the remaining string as the arguments,
+       * which may need further parsing
+       */
+      char *args = cmd + strlen(cmd) + 1;
+      if (args >= str_end) {
+        args = NULL;
+      }
+
+      switch(j){
+        case 0 :
+          cmd_args.args = args;
+          break;
+        
+        case 1 :
+          cmd_args.n = (uint8_t)is_int(args);
+          break;
+
+        default:break;
+      }
     }
 
 #ifdef CONFIG_DEVICE
@@ -133,7 +172,7 @@ void sdb_mainloop() {
     int i;
     for (i = 0; i < NR_CMD; i ++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
-        if (cmd_table[i].handler(args) < 0) { return; }
+        if (cmd_table[i].handler(cmd_args.args,cmd_args.n) < 0) { return; }
         break;
       }
     }
