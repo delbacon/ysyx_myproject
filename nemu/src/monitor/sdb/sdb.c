@@ -55,9 +55,14 @@ static int cmd_q(char *args) {
 static int cmd_help(char *args);
 
 static int cmd_si_N(char *args) {
-  int n = strtol(args,NULL,10);
-  if(n>=1) cpu_exec(n);
-  else cpu_exec(1);
+  if(args==NULL) return -1;
+
+  char *endptr;
+  int n = strtol(args,&endptr,10);
+  
+  if (*endptr != '\0') return -1;
+
+  if(n>=0) cpu_exec(n);
   return 0;
 }
 
