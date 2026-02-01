@@ -59,7 +59,7 @@ static int cmd_help(char *args,uint8_t n);
 static int cmd_si_N(char *args,uint8_t n){
   if(n>0) cpu_exec(n);
   else cpu_exec(1);
-  return 0;
+  return -1;
 }
 
 static struct {
