@@ -84,15 +84,27 @@ static struct {
   uint8_t n;
 } cmd_args;
 
-long is_int(char *s) {
+long is_uint(const char *s) {
     if (!s || *s == '\0') return 0;
-    
+
+    // 检查是否全为数字
+    const char *p = s;
+    while (*p) {
+        if (!isdigit((unsigned char)*p)) {
+            return 0;  // 含非数字字符
+        }
+        p++;
+    }
+
+    // "0" 不是正整数，返回 0
+    if (s[0] == '0' && s[1] == '\0') {
+        return 0;
+    }
+
     char *end;
-    // 使用 strtol 避免溢出问题
-    long var = strtol(s, &end, 10);
-    if((*end == '\0' && end != s ) || var < 0) return -1;   
-    // 检查是否完整转换（end 指向结尾）且不是空输入
-    return var;
+    long val = strtol(s, &end, 10);
+
+    return val;
 }
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -160,7 +172,7 @@ void sdb_mainloop() {
           break;
         
         case 1 :
-          int n = (uint8_t)is_int(cmd);
+          int n = (uint8_t)is_uint(cmd);
           cmd_args.n = n;
           break;
 
