@@ -57,7 +57,10 @@ static int cmd_help(char *args);
 static int cmd_si_N(char *args) {
   char *arg = strtok(NULL," ");
 
-  if(arg == NULL) return -1;
+  if(arg == NULL) {
+    cpu_exec(1);
+    return 0;
+  }
 
   char *endptr;
   int n = strtol(arg,&endptr,10);
