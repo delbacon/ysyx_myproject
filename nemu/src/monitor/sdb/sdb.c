@@ -149,7 +149,6 @@ void sdb_mainloop() {
       /* treat the remaining string as the arguments,
        * which may need further parsing
        */
-      args = cmd + strlen(cmd) + 1;
       if (args >= str_end) {
         args = NULL;
       }
@@ -165,6 +164,7 @@ void sdb_mainloop() {
 
         default:break;
       }
+      args = cmd + strlen(cmd) + 1;
     }
 
 #ifdef CONFIG_DEVICE
