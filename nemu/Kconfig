@@ -113,8 +113,7 @@ config CC_LTO
   depends on !TARGET_AM
   bool "Enable link-time optimization"
   default n
-
-config CC_DEBUG
+config DEBUG
   bool "Enable debug information"
   default n
 
