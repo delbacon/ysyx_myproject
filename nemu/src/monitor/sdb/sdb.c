@@ -109,8 +109,9 @@ void sdb_mainloop() {
     cmd_c(NULL);
     return;
   }
-  char *str = rl_gets();
-  for (int cnt=0; str != NULL; cnt++) {
+  for (int cnt=0; ; cnt++) {
+    char *str = rl_gets();
+    if(str == NULL) { break; }
     char *str_end = str + strlen(str);
 
     /* extract the first token as the command */
