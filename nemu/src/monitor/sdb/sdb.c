@@ -160,7 +160,7 @@ void sdb_mainloop() {
           break;
         
         case 1 :
-          int n = (uint8_t)is_int(args);
+          int n = (uint8_t)is_int(cmd);
           cmd_args.n = n;
           break;
 
