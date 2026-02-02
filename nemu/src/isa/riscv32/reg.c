@@ -29,8 +29,7 @@ void isa_reg_display() {
     if(strcmp(regname,"s10")==0 || strcmp(regname,"s11")==0){
       printf("%s:%x ",reg_name(i),cpu.gpr[i]);
     }else{
-      printf("%s:%x ",reg_name(i),cpu.gpr[i]);
-      printf(" ");
+      printf("%s: %x ",reg_name(i),cpu.gpr[i]);
     }
 
     if(((i+1) % 8 == 0) && i != 0) printf("\n");
