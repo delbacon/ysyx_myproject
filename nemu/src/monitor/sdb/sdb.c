@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include "memory/vaddr.h"
 
 static int is_batch_mode = false;
 
@@ -87,6 +88,24 @@ static int cmd_info(char *args){
   return 0;
 }
 
+static int cmd_x_N_EXPR(char *args){
+  char *arg_N = strtok(NULL," ");
+  if(arg_N == NULL) return -1;
+  char *arg_EXPR = strtok(NULL," ");
+  if(arg_EXPR == NULL) return -1;
+
+  char *endptr;
+  vaddr_t addr = strtol(arg_EXPR,&endptr,16);
+  if (*endptr != '\0') return -1;
+
+  int n = strtol(arg_N,&endptr,10);
+  if (*endptr != '\0') return -1;
+  
+  printf("%x: %x",addr,vaddr_read(addr,n));
+
+  return 0;
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -98,6 +117,7 @@ static struct {
   /* TODO: Add more commands */
   { "si", "Execute the program step-by-step for N instructions and then pause.If N is not provided, default to 1.", cmd_si_N },
   { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
+  { "x", "Compute [EXPR] as a starting address and output [N] consecutive 4-byte words in hex.", cmd_x_N_EXPR },
 
 
 
