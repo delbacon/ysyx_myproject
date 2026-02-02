@@ -102,7 +102,7 @@ static int cmd_x_N_EXPR(char *args){
   if (*endptr != '\0') return -1;
 
   paddr_t addr;
-  for(int i=0;i>n;i++){
+  for(int i=0;i<n;i++){
     printf("%x: %x\n",addr,paddr_read(addr,1));
     addr = addr_l + i;
   }
