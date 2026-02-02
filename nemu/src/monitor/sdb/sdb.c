@@ -95,8 +95,8 @@ static int cmd_x_N_EXPR(char *args){
   if(arg_EXPR == NULL) return -1;
 
   char *endptr;
-  int n = strtol(arg_N,&endptr,10);
-  if (*endptr != '\0') return -1;
+//  int n = strtol(arg_N,&endptr,10);
+//  if (*endptr != '\0') return -1;
 
   int addr_l = (strtol(arg_EXPR,&endptr,0));
   paddr_t addr = (paddr_t)addr_l;
@@ -104,7 +104,7 @@ static int cmd_x_N_EXPR(char *args){
 
 
 
-  printf("%x: %x",addr,paddr_read(addr,n));
+  printf("%x: %x",addr,paddr_read(addr,1));
 
   return 0;
 }
