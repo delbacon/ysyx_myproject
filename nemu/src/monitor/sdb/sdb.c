@@ -18,7 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
-#include "memory/vaddr.h"
+#include "memory/paddr.h"
 
 static int is_batch_mode = false;
 
@@ -96,15 +96,15 @@ static int cmd_x_N_EXPR(char *args){
 
   char *endptr;
   int n = strtol(arg_N,&endptr,10);
-//  if (*endptr != '\0') return -1;
+  if (*endptr != '\0') return -1;
 
   int addr_l = (strtol(arg_EXPR,&endptr,0));
-  vaddr_t addr = (vaddr_t)addr_l;
-//  if (*endptr != '\0') return -1;
+  paddr_t addr = (paddr_t)addr_l;
+  if (*endptr != '\0') return -1;
 
 
 
-  printf("%x: %x",addr,vaddr_read(addr,n));
+  printf("%x: %x",addr,paddr_read(addr,n));
 
   return 0;
 }
