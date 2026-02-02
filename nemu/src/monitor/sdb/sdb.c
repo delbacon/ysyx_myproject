@@ -54,6 +54,7 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+//单步执行
 static int cmd_si_N(char *args) {
   char *arg = strtok(NULL," ");
 
@@ -71,6 +72,20 @@ static int cmd_si_N(char *args) {
   return 0;
 }
 
+static int cmd_info(char *args){
+  char *arg = strtok(NULL," ");
+
+  if(arg==NULL) return -1;
+
+  switch(*arg){
+    case 'r':
+      isa_reg_display();
+      break;
+
+    default: break;
+  }
+  return 0;
+}
 
 static struct {
   const char *name;
@@ -80,8 +95,11 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-  { "si", "Execute the program step-by-step for N instructions and then pause.If N is not provided, default to 1.", cmd_si_N },
   /* TODO: Add more commands */
+  { "si", "Execute the program step-by-step for N instructions and then pause.If N is not provided, default to 1.", cmd_si_N },
+  { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
+
+
 
 };
 
