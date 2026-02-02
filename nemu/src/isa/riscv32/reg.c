@@ -27,10 +27,10 @@ void isa_reg_display() {
   for(int i=0;i<32;i++){
     const char * regname =reg_name(i);
     if(strcmp(regname,"s10")==0 || strcmp(regname,"s11")==0){
-      printf(" ");
       printf("%s:%x ",reg_name(i),cpu.gpr[i]);
     }else{
       printf("%s:%x ",reg_name(i),cpu.gpr[i]);
+      printf(" ");
     }
 
     if(((i+1) % 8 == 0) && i != 0) printf("\n");
