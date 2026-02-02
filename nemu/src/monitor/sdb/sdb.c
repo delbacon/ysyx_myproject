@@ -95,17 +95,17 @@ static int cmd_x_N_EXPR(char *args){
   if(arg_EXPR == NULL) return -1;
 
   char *endptr;
-//  int n = strtol(arg_N,&endptr,10);
-//  if (*endptr != '\0') return -1;
-
-  int addr_l = (strtol(arg_EXPR,&endptr,0));
-  paddr_t addr = (paddr_t)addr_l;
+  int n = strtol(arg_N,&endptr,10);
   if (*endptr != '\0') return -1;
 
+  paddr_t addr_l = (paddr_t)(strtol(arg_EXPR,&endptr,0));
+  if (*endptr != '\0') return -1;
 
-
-  printf("%x: %x",addr,paddr_read(addr,1));
-
+  paddr_t addr;
+  for(int i=0;i>n;i++){
+    printf("%x: %x\n",addr,paddr_read(addr,1));
+    addr = addr_l + i;
+  }
   return 0;
 }
 
