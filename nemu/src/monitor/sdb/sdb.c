@@ -95,7 +95,7 @@ static int cmd_x_N_EXPR(char *args){
   if(arg_EXPR == NULL) return -1;
 
   char *endptr;
-  vaddr_t addr = strtol(arg_EXPR,&endptr,0);
+  int addr = strtol(arg_EXPR,&endptr,0);
   if (*endptr != '\0') return -1;
 
   int n = strtol(arg_N,&endptr,10);
