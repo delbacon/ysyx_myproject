@@ -96,11 +96,11 @@ static int cmd_x_N_EXPR(char *args){
 
   char *endptr;
   int n = strtol(arg_N,&endptr,10);
-  if (*endptr != '\0') return -1;
+//  if (*endptr != '\0') return -1;
 
   int addr_l = (strtol(arg_EXPR,&endptr,0));
   vaddr_t addr = (vaddr_t)addr_l;
-  if (*endptr != '\0') return -1;
+//  if (*endptr != '\0') return -1;
 
 
 
