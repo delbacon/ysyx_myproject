@@ -103,8 +103,8 @@ static int cmd_x_N_EXPR(char *args){
 
   
   for(int i=0;i<n;i++){
-    paddr_t addr = addr_s + i;
-    printf("%x: %x\n",addr,paddr_read(addr,1));
+    paddr_t addr = addr_s + i*4;
+    printf("%x: %x\n",addr,paddr_read(addr,4));
   }
   return 0;
 }
