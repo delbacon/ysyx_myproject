@@ -1,38 +1,67 @@
-SRCS = vsrc/*.v
-TOP = top
-SIM_FILE = csrc/main.cpp
-#VCD=1时产生的波形文件为.VCD,注意修改cpp的define
-VCD = 0
+TOPNAME = top
+NXDC_FILES = constr/top.nxdc
+INC_PATH ?=
+
+VERILATOR = verilator
+VERILATOR_CFLAGS += -MMD --build -cc  \
+				-O3 --x-assign fast --x-initial fast --noassert
+
+SIM = 0
 
 
-# verilator --cc --exe --build -j 0 --trace-vcd -Wall sim_main.cpp ./src/top.v
-all:
-	@echo "Write this Makefile by your self."
-ifeq ($(VCD),1)
-	echo "VCD enabled..."
-	verilator --cc --exe --build -j 0 --trace-vcd -Wall \
-	    $(SIM_FILE) $(SRCS)
+BUILD_DIR = ./build
+OBJ_DIR = $(BUILD_DIR)/obj_dir
+BIN = $(BUILD_DIR)/$(TOPNAME)
+SIMFILE ?= 
 
+
+default: $(BIN)
+
+$(shell mkdir -p $(BUILD_DIR))
+
+# constraint file
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+# project source
+VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+CSRCS += $(SRC_AUTO_BIND)
+
+# rules for NVBoard
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+# rules for verilator
+INCFLAGS = $(addprefix -I, $(INC_PATH))
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+
+$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+	@rm -rf $(OBJ_DIR)
+ifeq ($(SIM),0)
+	$(VERILATOR) $(VERILATOR_CFLAGS) \
+		--top-module $(TOPNAME) $^ \
+		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 else
-	@echo "normal mode..."
-	verilator --cc --exe --build -j 0 --trace-fst -Wall \
-	    $(SIM_FILE) $(SRCS)
+	$(VERILATOR) $(VERILATOR_CFLAGS) \
+		--top-module $(TOPNAME) $^ \
+		--trace-fst \
+		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+	@echo "sim on, waveform.fst should created"
 endif
 
+all: default
 
+run: $(BIN)
+	@$^
 
-run: obj_dir/V$(TOP)
-	./obj_dir/V$(TOP)
-
-
-.PHONY: sim
-sim: run
+sim: $(SIMFILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by your self."
-	gtkwave waveform.*
+	gktwave waveform.*
 
 clean:
-	rm -rf ./obj_dir waveform.*
+	rm -rf $(BUILD_DIR)
 
-
-include ../Makefile
+.PHONY: default all clean run
