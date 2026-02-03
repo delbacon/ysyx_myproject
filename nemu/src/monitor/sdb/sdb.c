@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include "memory/paddr.h"
 
 static int is_batch_mode = false;
 
@@ -54,6 +55,60 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+//单步执行
+static int cmd_si_N(char *args) {
+  char *arg = strtok(NULL," ");
+
+  if(arg == NULL) {
+    cpu_exec(1);
+    return 0;
+  }
+
+  char *endptr;
+  int n = strtol(arg,&endptr,10);
+  
+  if (*endptr != '\0') return -1;
+
+  if(n>=0) cpu_exec(n);
+  return 0;
+}
+
+static int cmd_info(char *args){
+  char *arg = strtok(NULL," ");
+
+  if(arg==NULL) return -1;
+
+  switch(*arg){
+    case 'r':
+      isa_reg_display();
+      break;
+
+    default: break;
+  }
+  return 0;
+}
+
+static int cmd_x_N_EXPR(char *args){
+  char *arg_N = strtok(NULL," ");
+  if(arg_N == NULL) return -1;
+  char *arg_EXPR = strtok(NULL," ");
+  if(arg_EXPR == NULL) return -1;
+
+  char *endptr;
+  int n = strtol(arg_N,&endptr,10);
+  if (*endptr != '\0') return -1;
+
+  paddr_t addr_s = (paddr_t)(strtol(arg_EXPR,&endptr,0));
+  if (*endptr != '\0') return -1;
+
+  
+  for(int i=0;i<n;i++){
+    paddr_t addr = addr_s + i*4;
+    printf("%x: %08x\n",addr,paddr_read(addr,4));
+  }
+  return 0;
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -62,8 +117,12 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
   /* TODO: Add more commands */
+  { "si", "Execute the program step-by-step for N instructions and then pause.If N is not provided, default to 1.", cmd_si_N },
+  { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
+  { "x", "Compute [EXPR] as a starting address and output [N] consecutive 4-byte words in hex.", cmd_x_N_EXPR },
+
+
 
 };
 
