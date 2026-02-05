@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
   // 跳过 NEMU monitor 初始化
-  const char *input_file = "/home/delbacon/ysyx-workbench/nemu/tools/gen-expr/input";
+  const char *input_file = "input";
   FILE *fp = fopen(input_file, "r");
   if (!fp) {
     fprintf(stderr, "Error: cannot open input file '%s'\n", input_file);
