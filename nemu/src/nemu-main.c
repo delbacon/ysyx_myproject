@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     uint32_t expected = strtoul(line, NULL, 10);
 
     // 表达式从 space + 1 开始，跳过前导空格
-    char *expr_str = space + 2;
+    char *expr_str = space + 1;
     while (*expr_str == ' ' || *expr_str == '\t') expr_str++;
     if (*expr_str == '\0') {
       fprintf(stderr, "Empty expression: %s\n", line);
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
       passed++;
       printf("PASS: %s\n", expr_str); // 可选：打印通过的
     } else {
-      printf("FAIL: expected=%u, got=%u, expr=\"%s\"\n",
+      printf("FAIL: expected=%u, got=%u, expr=%s\n",
              expected, actual , expr_str);
       if (!success) {
         printf("  -> Evaluation failed (e.g., div-by-zero or syntax error)\n");
