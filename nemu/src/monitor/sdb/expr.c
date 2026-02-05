@@ -169,7 +169,7 @@ int check_parentheses(int p, int q, bool *legal) {
         return false;
       }
     }
-  *legal = false;
+  *legal = true;
   return false;
 }
 
