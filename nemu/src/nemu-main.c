@@ -44,6 +44,14 @@ int main(int argc, char *argv[]) {
 
 
 int main(int argc, char *argv[]) {
+  // Initialize the monitor. //
+#ifdef CONFIG_TARGET_AM
+  am_init_monitor();
+#else
+  init_monitor(argc, argv);
+#endif
+
+
   // 跳过 NEMU monitor 初始化
   const char *input_file = "/home/delbacon/ysyx-workbench/nemu/tools/gen-expr/input";
   if (argc > 1) {
@@ -108,12 +116,7 @@ int main(int argc, char *argv[]) {
   fclose(fp);
   printf("\n[Summary] %d/%d tests passed.\n", passed, total);
 
-  // Initialize the monitor. //
-#ifdef CONFIG_TARGET_AM
-  am_init_monitor();
-#else
-  init_monitor(argc, argv);
-#endif
+
 
   // Start engine. //
   engine_start();
