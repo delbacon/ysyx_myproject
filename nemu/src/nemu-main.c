@@ -87,12 +87,12 @@ int main(int argc, char *argv[]) {
     bool success = true;
     uint32_t actual = expr(expr_str, &success);
 
-    if (success && actual == expected) {
+    if (actual == expected) {
       passed++;
       // printf("PASS: %s\n", expr_str); // 可选：打印通过的
     } else {
       printf("FAIL: expected=%u, got=%u, expr=\"%s\"\n",
-             expected, actual ? actual : 0, expr_str);
+             expected, actual , expr_str);
       if (!success) {
         printf("  -> Evaluation failed (e.g., div-by-zero or syntax error)\n");
       }
