@@ -142,8 +142,20 @@ static bool make_token(char *e) {
   return true;
 }
 //legal标记是否合法
+bool check_parentheses(int p, int q) {
+  if (tokens[p].type=='(' && tokens[q].type==')') {
+    int par = 0;
+    for (int i = p; i <= q; i++) {
+      if (tokens[i].type=='(') par++;
+      else if (tokens[i].type==')') par--;
+
+      if (par == 0) return i==q; // the leftest parenthese is matched
+    }
+  }
+  return false;
+}
+/*
 int check_parentheses(int p, int q, bool *legal) {
-  /* TODO: Check whether the parentheses are matche and nested. */
   int flag = 0;
   int flag_bad = 0;//标记最外层括号互相不匹配的情况
     if(tokens[p].type == '(' && tokens[q].type == ')'){//如果式子左右两端都有括号
@@ -172,6 +184,8 @@ int check_parentheses(int p, int q, bool *legal) {
   *legal = true;
   return false;
 }
+
+*/
 
 int find_main_op(int p, int q) 
 {
@@ -227,7 +241,7 @@ static word_t eval(int p,int q, bool *legal) {
     word_t n = strtol(tokens[p].str, NULL, 10);
     return n;
   }
-  else if (check_parentheses(p, q, legal) == true) {
+  else if (check_parentheses(p, q) == true) {
     /* The expression is surrounded by a matched pair of parentheses.
      * If that is the case, just throw away the parentheses.
      */
