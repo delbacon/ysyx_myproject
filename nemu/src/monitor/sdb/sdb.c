@@ -138,6 +138,19 @@ static int cmd_x_N_EXPR(char *args){
   return 0;
 }
 
+static int cmd_p_EXPR(char *args){
+  char *arg = strtok(NULL," ");
+  // 判断输入是否为空
+  if(arg == NULL) {
+    fprintf(stderr, "Warning: use 'p EXPR' to evaluate [EXPR]. .\n");
+    return 1;
+  }
+
+  bool success;
+  expr(arg,&success);
+  if(success){printf("susccess");}
+  return 0;
+}
 
 static struct {
   const char *name;
@@ -151,6 +164,7 @@ static struct {
   { "si", "Execute the program step-by-step for N instructions and then pause.If N is not provided, default to 1.", cmd_si_N },
   { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
   { "x", "Compute [EXPR] as a starting address and output [N] consecutive 4-byte words in hex.", cmd_x_N_EXPR },
+  { "p", "Evaluate an expression EXPR and print the result.", cmd_p_EXPR },
 };
 
 #define NR_CMD ARRLEN(cmd_table)
