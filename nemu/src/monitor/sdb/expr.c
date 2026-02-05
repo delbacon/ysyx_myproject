@@ -142,53 +142,57 @@ static bool make_token(char *e) {
   return true;
 }
 //legal标记是否合法
-bool check_parentheses(int p, int q) {
-  if (tokens[p].type=='(' && tokens[q].type==')') {
-    int par = 0;
-    for (int i = p; i <= q; i++) {
-      if (tokens[i].type=='(') par++;
-      else if (tokens[i].type==')') par--;
-
-      if (par == 0) return i==q; // the leftest parenthese is matched
-    }
-  }
-  return false;
-}
-/*
-int check_parentheses(int p, int q, bool *legal) {
-  int flag = 0;
-  int flag_bad = 0;//标记最外层括号互相不匹配的情况
+int check_parentheses(int p, int q) {
     if(tokens[p].type == '(' && tokens[q].type == ')'){//如果式子左右两端都有括号
-      for(int j=p ;j<q+1;j++){
+    int flag = 0;
+      for(int j=p ;j<=q;j++){
         if(tokens[j].type == ')'){
           flag -- ;
         }else if(tokens[j].type == '('){
           flag ++ ;
         }
-        if(flag < 0){//如果出现( **)**  )的情况，直接返回不匹配
-          flag_bad = 1;
-        }
-      }
-      if(flag == 0 && flag_bad == 0){//匹配
-        *legal = true;
-        return true;
-      }else if(flag != 0){//不匹配
-        printf("Error: parentheses not match\n");
-        *legal = false;
-        return false;
-      }else{
-        *legal = true;
-        return false;
+        if (flag == 0) return j==q;
       }
     }
-  *legal = true;
   return false;
 }
 
-*/
+
 
 int find_main_op(int p, int q) 
 {
+  int ret = -1, par = 0, op_type = 0;
+  for (int i = p; i <= q; i++) {
+    if (tokens[i].type == TK_NUM) {
+      continue;
+    }
+    if (tokens[i].type == '(') {
+      par++;
+    } else if (tokens[i].type == ')') {
+      if (par == 0) {
+        return -1;
+      }
+      par--;
+    } else if (par > 0) {
+      continue;
+    } else {
+      int tmp_type = 0;
+      switch (tokens[i].type) {
+      case '*': case '/': tmp_type = 1; break;
+      case '+': case '-': tmp_type = 2; break;
+      default: assert(0);
+      }
+      if (tmp_type >= op_type) {
+        op_type = tmp_type;
+        ret = i;
+      }
+    }
+  }
+  if (par != 0) return -1;
+  return ret;
+}
+
+/*
   int flag_min = 0;
   for(int i=p;i<q;i++){
     //先看有没有加减，没有的话乘除运算最低，有的话加减最低
@@ -220,7 +224,7 @@ int find_main_op(int p, int q)
   }
   return -1;
 }
-
+*/
 static word_t eval(int p,int q, bool *legal) {
   if (p > q) {
     /* Bad expression */
