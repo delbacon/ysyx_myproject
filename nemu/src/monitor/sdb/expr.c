@@ -158,7 +158,7 @@ int check_parentheses(int p, int q) {
 }
 
 
-/*
+
 int find_main_op(int p, int q) 
 {
   int ret = -1, par = 0, op_type = 0;
@@ -178,8 +178,12 @@ int find_main_op(int p, int q)
     } else {
       int tmp_type = 0;
       switch (tokens[i].type) {
-      case '*': case '/': tmp_type = 1; break;
-      case '+': case '-': tmp_type = 2; break;
+      case '*':
+      case '/': 
+        tmp_type = 1; break;
+      case '+': 
+      case '-': 
+        tmp_type = 2; break;
       default: assert(0);
       }
       if (tmp_type >= op_type) {
@@ -188,55 +192,13 @@ int find_main_op(int p, int q)
       }
     }
   }
-  if (par != 0) return -1;
-  return ret;
-}
-*/
-int find_main_op(int p, int q) 
-{
-  int flag_min = 0,flag_mul = 0;
-  int cnt = 0;
-  for(int i=p;i<=q;i++){
-    if (tokens[i].type == TK_NUM) {
-      continue;
-    }
-
-    if(tokens[i].type == '('){
-      cnt++;
-    }else if(tokens[i].type == ')'){
-      if(cnt == 0) return -1;
-      cnt--;
-    }else if(cnt > 0) continue;
-    else if (tokens[i].type == '+' || tokens[i].type == '-'){
-      flag_min = 1 ;
-    }else if(tokens[i].type == '*' || tokens[i].type == '/'){
-      flag_mul = 1;
-    }
-  }
-
-  if(cnt != 0){ 
-    printf("Error: ( ) not match\n");
+  if (par != 0) {
+    printf("Error: unmatched ()\n");
     return -1;
   }
-
-  for(int i=q;i>p;i--){
-    //最后选择同级运算符里最后面的输出
-    if(flag_mul == 1){
-      if(tokens[i].type == '*' || tokens[i].type == '/'){
-        return i;
-      }
-    }else if(flag_min == 1){
-      if(tokens[i].type == '+' || tokens[i].type == '-'){
-        return i;
-      }
-    }else{
-      if(tokens[i].type == TK_NUM){
-        return i;
-      }
-    }
-  }
-  return -1;
+  return ret;
 }
+
 
 static word_t eval(int p,int q, bool *legal) {
   if (p > q) {
