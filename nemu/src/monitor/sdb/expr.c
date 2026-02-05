@@ -272,7 +272,7 @@ static word_t eval(int p,int q, bool *legal) {
           printf("Error: division by zero\n");
           return 0;
         }else {
-          return val1 / val2;
+          return (sword_t)val1 / (sword_t)val2;
         }
       default: printf( "invalid op type");
     }
