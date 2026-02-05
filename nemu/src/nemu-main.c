@@ -108,5 +108,15 @@ int main(int argc, char *argv[]) {
   fclose(fp);
   printf("\n[Summary] %d/%d tests passed.\n", passed, total);
 
-  return (passed == total) ? 0 : 1;
+  // Initialize the monitor. //
+#ifdef CONFIG_TARGET_AM
+  am_init_monitor();
+#else
+  init_monitor(argc, argv);
+#endif
+
+  // Start engine. //
+  engine_start();
+
+  return is_exit_status_bad();
 }
