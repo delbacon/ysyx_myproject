@@ -52,14 +52,10 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  char line[2048];
+  char line[65536];
   int passed = 0, total = 0;
 
   while (fgets(line, sizeof(line), fp)) {
-    // 跳过空行和纯空白行
-    size_t len = strlen(line);
-    if (len == 0 || line[0] == '\n' || line[0] == '\r') continue;
-
     // 找到第一个空格，分割期望结果和表达式
     char *space = strchr(line, ' ');
     if (!space) {
@@ -78,12 +74,6 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Empty expression: %s\n", line);
       continue;
     }
-
-    // 去掉末尾换行符（如果存在）
-    char *nl = strchr(expr_str, '\n');
-    if (nl) *nl = '\0';
-    nl = strchr(expr_str, '\r');
-    if (nl) *nl = '\0';
 
     total++;
     bool success = true;
