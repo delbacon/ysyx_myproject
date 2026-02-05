@@ -74,11 +74,6 @@ static int cmd_si_N(char *args) {
     fprintf(stderr, "Error: Invalid input '%s'. Expected a number.\n", arg);
     return 1;
   }
-  // 检查数值是否在 int 范围内
-  if (n < INT_MIN || n > INT_MAX) {
-    fprintf(stderr, "Error: Number out of range for int type.\n");
-    return 1;
-  }
 
   // 处理负数输入
   if (n < 0) {
@@ -90,10 +85,14 @@ static int cmd_si_N(char *args) {
   return 0;
 }
 
+//查看reg或者watchpoint的信息
 static int cmd_info(char *args){
   char *arg = strtok(NULL," ");
 
-  if(arg==NULL) return -1;
+  if(arg==NULL){
+    fprintf(stderr, "Warning: use 'r' to printf reg; use 'w' to printf watchpoint. .\n");
+    return 1;
+  } 
 
   switch(*arg){
     case 'r':
@@ -107,17 +106,21 @@ static int cmd_info(char *args){
 
 static int cmd_x_N_EXPR(char *args){
   char *arg_N = strtok(NULL," ");
-  if(arg_N == NULL) return -1;
   char *arg_EXPR = strtok(NULL," ");
-  if(arg_EXPR == NULL) return -1;
+  // 判断输入是否为空
+  if(arg_N == NULL || arg_EXPR == NULL) {
+    fprintf(stderr, "Warning: use 'x N EXPR' to printf [N] consecutive 4-byte words in hex. .\n");
+    return 1;
+  }
 
-  char *endptr;
-  int n = strtol(arg_N,&endptr,10);
-  if (*endptr != '\0') return -1;
-
-  paddr_t addr_s = (paddr_t)(strtol(arg_EXPR,&endptr,0));
-  if (*endptr != '\0') return -1;
-
+  char *endptr,*endptr2;
+  long n = strtol(arg_N,&endptr,10);
+  paddr_t addr_s = (paddr_t)(strtol(arg_EXPR,&endptr2,0));
+  // 判断输入是否为数字
+  if (*endptr != '\0' || *endptr2 !='\0' ) {
+    fprintf(stderr, "Error: Invalid input '%s'. Expected a number.\n", arg_N);
+    return 1;
+  }
   
   for(int i=0;i<n;i++){
     paddr_t addr = addr_s + i*4;
