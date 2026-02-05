@@ -243,6 +243,7 @@ static word_t eval(int p,int q, bool *legal) {
       case '/': 
         if(val2 == 0){
           *legal = false;
+          printf("Error: division by zero\n");
           return 0;
         }else {
           return val1 / val2;
