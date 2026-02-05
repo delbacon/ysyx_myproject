@@ -37,7 +37,7 @@ static struct rule {
    * Pay attention to the precedence level of different rules.
    */
 
-  {" ",     TK_NOTYPE },         // spaces
+  {" +",     TK_NOTYPE },         // spaces
   {"\\+",    '+'       },         // plus
   {"==",     TK_EQ     },         // equal
   {"[0-9]+", TK_NUM    },         // 0-9
@@ -97,7 +97,10 @@ static bool make_token(char *e) {
 
         position += substr_len;
 
-        if (rules[i].token_type == TK_NOTYPE) break;
+        if (rules[i].token_type == TK_NOTYPE) {
+          printf("space\n");
+          break;
+        }
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
