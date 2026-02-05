@@ -72,18 +72,18 @@ static int cmd_si_N(char *args) {
   // 判断输入是否为数字
   if (*endptr != '\0'){
     fprintf(stderr, "Error: Invalid input '%s'. Expected a number.\n", arg);
-    return -1;
+    return 1;
   }
   // 检查数值是否在 int 范围内
   if (n < INT_MIN || n > INT_MAX) {
     fprintf(stderr, "Error: Number out of range for int type.\n");
-    return -1;
+    return 1;
   }
 
   // 处理负数输入
   if (n < 0) {
     fprintf(stderr, "Warning: Negative value '%ld' ignored. Execution skipped.\n", n);
-    return 0;
+    return 1;
   }
 
   cpu_exec((uint32_t)n);
