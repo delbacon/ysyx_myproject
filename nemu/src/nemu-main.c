@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: cannot open input file '%s'\n", input_file);
     return 1;
   }
-
+  printf("build2\n");
   char line[2048];
   int passed = 0, total = 0;
 
