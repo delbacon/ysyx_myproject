@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 
     if (actual == expected) {
       passed++;
-      printf("PASS: %s\n", expr_str); // 可选：打印通过的
+      //printf("PASS: %s\n", expr_str); // 可选：打印通过的
     } else {
       printf("FAIL: expected=%u, got=%u, expr=%s\n",
              expected, actual , expr_str);
