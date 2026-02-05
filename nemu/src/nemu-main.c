@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
 #else
   init_monitor(argc, argv);
 #endif
+  printf("build\n");
 
 
   // 跳过 NEMU monitor 初始化
