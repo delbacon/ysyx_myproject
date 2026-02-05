@@ -119,7 +119,7 @@ static bool make_token(char *e) {
               assert(0);
             }
             strncpy(tokens[nr_token].str, substr_start-substr_len, substr_len);
-            tokens[nr_token].str[substr_len] = '\0';
+            //tokens[nr_token].str[substr_len] = '\0';
             break;
           default: 
             break;
@@ -240,7 +240,13 @@ static word_t eval(int p,int q, bool *legal) {
       case '+': return val1 + val2;
       case '-': return val1 - val2;
       case '*': return val1 * val2;
-      case '/': return val1 / val2;
+      case '/': 
+        if(val2 == 0){
+          *legal = false;
+          return 0;
+        }else {
+          return val1 / val2;
+        }
       default: Assert(0, "invalid op type");
     }
   }
