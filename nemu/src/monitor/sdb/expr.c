@@ -115,7 +115,6 @@ static bool make_token(char *e) {
             tokens[nr_token].str[substr_len] = '\0';
             break;
           default: 
-            printf("Error: unknown token: %.*s\n", substr_len, substr_start);
             break;
         }
         nr_token++;
