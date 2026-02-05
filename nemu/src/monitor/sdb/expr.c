@@ -115,11 +115,9 @@ static bool make_token(char *e) {
          */
         switch (rules[i].token_type) {
           case TK_NOTYPE : 
-            position++;
             break;
           case '+'       :
             tokens[nr_token++].type = rules[i].token_type; 
-            position++;
             break;
           case TK_EQ     ://暂时不用处理
             break;
@@ -128,24 +126,12 @@ static bool make_token(char *e) {
             while(isdigit(e[j])) j++;
             tokens[nr_token++].type = rules[i].token_type;
             safe_strcpy(&tokens[nr_token-1], e, j-position);
-            position = j+1;
+            position = j;
             break;
           case '-'       :
-            tokens[nr_token++].type = rules[i].token_type;
-            position++;
-            break;
           case '*'       :
-            tokens[nr_token++].type = rules[i].token_type;
-            position++;
-            break;
           case '/'       :
-            tokens[nr_token++].type = rules[i].token_type;
-            position++;
-            break;
           case '('       :
-            tokens[nr_token++].type = rules[i].token_type;
-            position++;
-            break;
           case ')'       :
             tokens[nr_token++].type = rules[i].token_type;
             position++;
