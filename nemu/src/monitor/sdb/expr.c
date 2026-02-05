@@ -197,22 +197,19 @@ int find_main_op(int p, int q)
   int flag_min = 0;
   int cnt = 0;
   for(int i=p;i<q;i++){
-    //忽略掉所有（）内的运算符
+    if (tokens[i].type == TK_NUM) {
+      continue;
+    }
+
     if(tokens[i].type == '('){
       cnt++;
-      for(int j=i+1;j<q;j++){
-        if(tokens[j].type == ')'){
-          cnt--;
-          i = j;
-          break;
-        }
-      }
-    }
-    //看有没有加减，没有的话乘除运算最低，有的话加减最低
-    if (tokens[i].type == '+' || tokens[i].type == '-'){
+    }else if(tokens[i].type == ')'){
+      cnt--;
+    }else if (tokens[i].type == '+' || tokens[i].type == '-'){
       flag_min = 1 ;
     }
   }
+
   if(cnt != 0){ 
     printf("Error: ( ) not match\n");
     return -1;
