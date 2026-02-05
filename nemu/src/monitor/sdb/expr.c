@@ -97,15 +97,19 @@ static bool make_token(char *e) {
 
         position += substr_len;
 
-        if (rules[i].token_type == TK_NOTYPE) {
-          printf("space\n");
-          break;
-        }
+
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
+        //如果是空格，直接跳过
+        if (rules[i].token_type == TK_NOTYPE) {
+          break;
+        }
+        //其他存在的符号则存一次type
         tokens[nr_token].type = rules[i].token_type;
+
+        //switch用来处理特殊情况，如需要存子串
         switch (rules[i].token_type) {
           case TK_EQ     ://暂时不用处理
             break;
@@ -115,7 +119,7 @@ static bool make_token(char *e) {
               assert(0);
             }
             strncpy(tokens[nr_token].str, substr_start-substr_len, substr_len);
-            //tokens[nr_token].str[substr_len] = '\0';
+            tokens[nr_token].str[substr_len] = '\0';
             break;
           default: 
             break;
@@ -133,6 +137,114 @@ static bool make_token(char *e) {
 
   return true;
 }
+//legal标记是否合法
+int check_parentheses(int p, int q, bool *legal) {
+  /* TODO: Check whether the parentheses are matche and nested. */
+  int flag = 0;
+  int flag_bad = 0;//标记最外层括号互相不匹配的情况
+    if(tokens[p].type == '(' && tokens[q].type == ')'){//如果式子左右两端都有括号
+      for(int j=1;j<q-1;j++){
+        if(tokens[j].type == ')'){
+          flag -- ;
+        }else if(tokens[j].type == '('){
+          flag ++ ;
+        }
+        if(flag < 0){//如果出现( **)**  )的情况，直接返回不匹配
+          flag_bad = 1;
+        }
+      }
+      if(flag == 0 && flag_bad == 0){//匹配
+        *legal = true;
+        return true;
+      }else if(flag != 0){//不匹配
+        printf("Error: parentheses not match\n");
+        *legal = false;
+        return false;
+      }else{
+        *legal = true;
+        return false;
+      }
+    }
+  *legal = false;
+  return false;
+}
+
+int find_main_op(int p, int q) 
+{
+  int flag_min = 0;
+  for(int i=p;i<q;i++){
+    //先看有没有加减，没有的话乘除运算最低，有的话加减最低
+    if (tokens[i].type == '+' || tokens[i].type == '-'){
+      flag_min = 1 ;
+    }
+    //然后忽略掉所有（）内的运算符
+    if(tokens[i].type == '('){
+      for(int j=i+1;j<q;j++){
+        if(tokens[j].type == ')'){
+          i = j;
+          break;
+        }
+      }
+    }
+  }
+
+  for(int i=q;i>p;i--){
+    //最后选择同级运算符里最后面的输出
+    if(flag_min == 0){
+      if(tokens[i].type == '*' || tokens[i].type == '/'){
+        return i;
+      }
+    }else{
+      if(tokens[i].type == '+' || tokens[i].type == '-'){
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+static word_t eval(int p,int q, bool *legal) {
+  if (p > q) {
+    /* Bad expression */
+    *legal = false;
+    panic("bad expression");
+  }
+  else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+    *legal = true;
+    Assert(tokens[p].type == TK_NUM, "the first token is not a number");
+    word_t n = strtol(tokens[p].str, NULL, 10);
+    return n;
+  }
+  else if (check_parentheses(p, q, legal) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+
+    return eval(p + 1, q - 1, legal);
+  }
+  else {
+    int op = find_main_op(p, q);
+    if(op == -1){
+      panic("Error: no operator found\n");
+      return 0;
+    }
+    
+    word_t val1 = eval(p, op - 1, legal);
+    word_t val2 = eval(op + 1, q, legal);
+
+    switch (tokens[op].type) {
+      case '+': return val1 + val2;
+      case '-': return val1 - val2;
+      case '*': return val1 * val2;
+      case '/': return val1 / val2;
+      default: Assert(0, "invalid op type");
+    }
+  }
+}
 
 
 word_t expr(char *e, bool *success) {
@@ -142,8 +254,13 @@ word_t expr(char *e, bool *success) {
   }
   *success = true;
 
-  /* TODO: Insert codes to evaluate the expression. */
-  //TODO();
-
-  return 0;
+  /* TODO: Insert codes to evaluate the expression. */  
+  word_t ans = eval(0, nr_token - 1, success);
+  
+  if(success == false){
+    printf("Error: invalid expression\n");
+    return 0;
+  }else{
+    return ans;
+  }
 }
