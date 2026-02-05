@@ -116,7 +116,7 @@ static bool make_token(char *e) {
           case TK_NUM    :
             if(substr_len >= 32) {
               printf("Error: token too long (>=32 chars): %.*s\n", substr_len, substr_start);
-              assert(0);
+              return false;
             }
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
@@ -207,7 +207,7 @@ static word_t eval(int p,int q, bool *legal) {
   if (p > q) {
     /* Bad expression */
     *legal = false;
-    panic("bad expression");
+    printf("Error: bad expression\n");
   }
   else if (p == q) {
     /* Single token.
@@ -215,7 +215,11 @@ static word_t eval(int p,int q, bool *legal) {
      * Return the value of the number.
      */
     *legal = true;
-    Assert(tokens[p].type == TK_NUM, "the first token is not a number");
+    if(tokens[p].type != TK_NUM){
+      *legal = false;
+      printf("Error: the first token is not a number\n");
+      return 0;
+    }
     word_t n = strtol(tokens[p].str, NULL, 10);
     return n;
   }
@@ -229,7 +233,7 @@ static word_t eval(int p,int q, bool *legal) {
   else {
     int op = find_main_op(p, q);
     if(op == -1){
-      panic("Error: no operator found\n");
+      printf("Error: no operator found\n");
       return 0;
     }
     
@@ -248,9 +252,10 @@ static word_t eval(int p,int q, bool *legal) {
         }else {
           return val1 / val2;
         }
-      default: Assert(0, "invalid op type");
+      default: printf( "invalid op type");
     }
   }
+  return 0;
 }
 
 
