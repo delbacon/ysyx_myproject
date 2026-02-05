@@ -44,18 +44,8 @@ int main(int argc, char *argv[]) {
 
 
 int main(int argc, char *argv[]) {
-  // Initialize the monitor. //
-#ifdef CONFIG_TARGET_AM
-  am_init_monitor();
-#else
-  init_monitor(argc, argv);
-#endif
-  printf("build\n");
-
-
   // 跳过 NEMU monitor 初始化
-  const char *input_file = "~/ysyx-workbench/nemu/tools/gen-expr/input";
-
+  const char *input_file = "/home/delbacon/ysyx-workbench/nemu/tools/gen-expr/input";
   FILE *fp = fopen(input_file, "r");
   if (!fp) {
     fprintf(stderr, "Error: cannot open input file '%s'\n", input_file);
@@ -114,10 +104,5 @@ int main(int argc, char *argv[]) {
   fclose(fp);
   printf("\n[Summary] %d/%d tests passed.\n", passed, total);
 
-
-
-  // Start engine. //
-  engine_start();
-
-  return is_exit_status_bad();
+  return (passed == total) ? 0 : 1;
 }
