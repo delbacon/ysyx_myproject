@@ -141,7 +141,7 @@ static bool make_token(char *e) {
 
   return true;
 }
-//legal标记是否合法
+
 int check_parentheses(int p, int q) {
     if(tokens[p].type == '(' && tokens[q].type == ')'){//如果式子左右两端都有括号
     int flag = 0;
@@ -158,7 +158,7 @@ int check_parentheses(int p, int q) {
 }
 
 
-
+/*
 int find_main_op(int p, int q) 
 {
   int ret = -1, par = 0, op_type = 0;
@@ -191,23 +191,31 @@ int find_main_op(int p, int q)
   if (par != 0) return -1;
   return ret;
 }
-
-/*
+*/
+int find_main_op(int p, int q) 
+{
   int flag_min = 0;
+  int cnt = 0;
   for(int i=p;i<q;i++){
-    //先看有没有加减，没有的话乘除运算最低，有的话加减最低
-    if (tokens[i].type == '+' || tokens[i].type == '-'){
-      flag_min = 1 ;
-    }
-    //然后忽略掉所有（）内的运算符
+    //忽略掉所有（）内的运算符
     if(tokens[i].type == '('){
+      cnt++;
       for(int j=i+1;j<q;j++){
         if(tokens[j].type == ')'){
+          cnt--;
           i = j;
           break;
         }
       }
     }
+    //看有没有加减，没有的话乘除运算最低，有的话加减最低
+    if (tokens[i].type == '+' || tokens[i].type == '-'){
+      flag_min = 1 ;
+    }
+  }
+  if(cnt != 0){ 
+    printf("Error: ( ) not match\n");
+    return -1;
   }
 
   for(int i=q;i>p;i--){
@@ -224,7 +232,7 @@ int find_main_op(int p, int q)
   }
   return -1;
 }
-*/
+
 static word_t eval(int p,int q, bool *legal) {
   if (p > q) {
     /* Bad expression */
