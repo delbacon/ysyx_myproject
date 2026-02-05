@@ -128,7 +128,7 @@ static bool make_token(char *e) {
             while(isdigit(e[j])) j++;
             tokens[nr_token++].type = rules[i].token_type;
             safe_strcpy(&tokens[nr_token-1], e, j-position);
-            position = j;
+            position = j+1;
             break;
           case '-'       :
             tokens[nr_token++].type = rules[i].token_type;
