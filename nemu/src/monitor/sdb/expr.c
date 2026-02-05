@@ -196,7 +196,7 @@ int find_main_op(int p, int q)
 {
   int flag_min = 0;
   int cnt = 0;
-  for(int i=p;i<q;i++){
+  for(int i=p;i<=q;i++){
     if (tokens[i].type == TK_NUM) {
       continue;
     }
@@ -217,7 +217,7 @@ int find_main_op(int p, int q)
     return -1;
   }
 
-  for(int i=q;i>p;i--){
+  for(int i=q;i>=p;i--){
     //最后选择同级运算符里最后面的输出
     if(flag_min == 0){
       if(tokens[i].type == '*' || tokens[i].type == '/'){
