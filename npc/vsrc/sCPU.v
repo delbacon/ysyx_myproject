@@ -1,8 +1,20 @@
 module sCPU(
     input clk,
     input rst,
-    output [7:0] out
+    output [7:0] out,
+    //test
+    output [3:0]pc,
+    output [7:0]test0,
+    output [7:0]test1,
+    output [7:0]test2,
+    output [7:0]test3
+    //output []
 );
+    assign test0 = GPR[0];
+    assign test1 = GPR[1];
+    assign test2 = GPR[2];
+    assign test3 = GPR[3];
+
     wire [7:0] rom[11:0];//ram
     //rom_init
     assign rom[ 0] = 8'b10001010;
@@ -13,10 +25,7 @@ module sCPU(
     assign rom[ 5] = 8'b00101001;
     assign rom[ 6] = 8'b11010001;
     assign rom[ 7] = 8'b01100000;
-    assign rom[ 8] = 8'b11111000;
-    assign rom[ 9] = 8'h00;//8'b
-    assign rom[10] = 8'h00;
-    assign rom[11] = 8'h00;
+    assign rom[ 8] = 8'b11100011;
 /*
                     10001010    # 0: li r0, 10
                     10010000    # 1: li r1, 0
@@ -25,11 +34,12 @@ module sCPU(
                     00010111    # 4: add r1, r1, r3
                     00101001    # 5: add r2, r2, r1
                     11010001    # 6: bner0 r1, 4
-                    11011111    # 7: bner0 r3, 7
+                    01100000    # 7: out r1
+                    11011111    # 8: bner0 r3, 7
 */
     localparam ADD = 2'b00,OUT = 2'b01,LI = 2'b10,BNER0 = 2'b11;
 
-    wire [3:0] pc;
+//    wire [3:0] pc;
     wire [7:0] GPR[3:0];//寄存器
 //    assign GPR[0] = 4'b0000;//zero=0
 
@@ -42,7 +52,7 @@ module sCPU(
 //一个时钟周期执行一条指令
 //--------------------------------//
     wire [3:0] next_pc;
-    assign next_pc = ((inst[7:6] == LI) && (GPR[0] != GPR[rs2])) ? 
+    assign next_pc = ((inst[7:6] == BNER0) && (GPR[0] != GPR[rs2])) ? 
                         addr : (pc + 1'b1);
 
     Reg #(4, 4'b0) pcreg (clk,rst,next_pc,pc,1'b1);
@@ -92,7 +102,7 @@ module sCPU(
 
     genvar i;
     for (i = 0; i < 4; i = i + 1) begin:inst_write_GPR
-        Reg #(8,8'b0) gpr0 (clk, rst, wdata,     GPR[i], we && (rd==i));
+        Reg #(8,8'b0) gpr0 (clk, rst, wdata,     GPR[i], (inst[7:6]==ADD || inst[7:6]==LI) && (rd==i));
     end
 //--------------------------------//
 
