@@ -21,6 +21,9 @@
 #include "memory/paddr.h"
 #include <limits.h>
 
+
+#define TOKEN_SIZE 64
+
 static int is_batch_mode = false;
 
 void init_regex();
@@ -84,6 +87,9 @@ static int cmd_si_N(char *args) {
   cpu_exec((uint32_t)n);
   return 0;
 }
+//-----------------------------//
+
+
 
 //查看reg或者watchpoint的信息
 static int cmd_info(char *args){
@@ -104,6 +110,9 @@ static int cmd_info(char *args){
   return 0;
 }
 
+
+
+//输出内存
 static int cmd_x_N_EXPR(char *args){
   char *arg_N = strtok(NULL," ");
   char *arg_EXPR = strtok(NULL," ");
@@ -129,6 +138,7 @@ static int cmd_x_N_EXPR(char *args){
   return 0;
 }
 
+
 static struct {
   const char *name;
   const char *description;
@@ -141,12 +151,30 @@ static struct {
   { "si", "Execute the program step-by-step for N instructions and then pause.If N is not provided, default to 1.", cmd_si_N },
   { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
   { "x", "Compute [EXPR] as a starting address and output [N] consecutive 4-byte words in hex.", cmd_x_N_EXPR },
-
-
-
 };
 
 #define NR_CMD ARRLEN(cmd_table)
+
+/*
+//token
+//-------------------------------//
+typedef struct token {
+  int type;     //token类型
+  char str[32]; //token具体值
+} Token;
+
+
+Token tokens[TOKEN_SIZE];
+
+static make_token(Token *token, int type)
+{
+  token->type = type;
+  memset(token->str, 0, sizeof(token->str));
+  strncpy(token->str, args, sizeof(token->str));
+  return token;
+}
+//-------------------------------//
+*/
 
 static int cmd_help(char *args) {
   /* extract the first argument */
