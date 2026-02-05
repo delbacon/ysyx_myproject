@@ -100,9 +100,6 @@ int main(int argc, char *argv[]) {
     ret = fscanf(fp, "%d", &result);
     pclose(fp);
 
-    //滤除除零，通过fscanf的返回值
-    if(!ret) continue;
-
     printf("%u %s\n", result, buf);
   }
   return 0;
