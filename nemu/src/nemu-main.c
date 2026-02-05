@@ -55,9 +55,6 @@ int main(int argc, char *argv[]) {
 
   // 跳过 NEMU monitor 初始化
   const char *input_file = "~/ysyx-workbench/nemu/tools/gen-expr/input";
-  if (argc > 1) {
-    input_file = argv[1]; // 允许指定输入文件
-  }
 
   FILE *fp = fopen(input_file, "r");
   if (!fp) {
