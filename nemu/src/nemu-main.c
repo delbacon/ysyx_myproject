@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     uint32_t expected = strtoul(line, NULL, 10);
 
     // 表达式从 space + 1 开始，跳过前导空格
-    char *expr_str = space + 1;
+    char *expr_str = space + 2;
     while (*expr_str == ' ' || *expr_str == '\t') expr_str++;
     if (*expr_str == '\0') {
       fprintf(stderr, "Empty expression: %s\n", line);
