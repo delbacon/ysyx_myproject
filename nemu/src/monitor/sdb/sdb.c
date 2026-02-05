@@ -19,6 +19,7 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include "memory/paddr.h"
+#include <limits.h>
 
 static int is_batch_mode = false;
 
@@ -56,6 +57,7 @@ static int cmd_q(char *args) {
 static int cmd_help(char *args);
 
 //单步执行
+//-----------------------------//
 static int cmd_si_N(char *args) {
   char *arg = strtok(NULL," ");
 
@@ -65,11 +67,26 @@ static int cmd_si_N(char *args) {
   }
 
   char *endptr;
-  int n = strtol(arg,&endptr,10);
+  long n = strtol(arg,&endptr,10);
   
-  if (*endptr != '\0') return -1;
+  // 判断输入是否为数字
+  if (*endptr != '\0'){
+    fprintf(stderr, "Error: Invalid input '%s'. Expected a number.\n", arg);
+    return -1;
+  }
+  // 检查数值是否在 int 范围内
+  if (n < INT_MIN || n > INT_MAX) {
+    fprintf(stderr, "Error: Number out of range for int type.\n");
+    return -1;
+  }
 
-  if(n>=0) cpu_exec(n);
+  // 处理负数输入
+  if (n < 0) {
+    fprintf(stderr, "Warning: Negative value '%ld' ignored. Execution skipped.\n", n);
+    return 0;
+  }
+
+  cpu_exec((uint32_t)n);
   return 0;
 }
 
