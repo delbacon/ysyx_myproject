@@ -139,15 +139,8 @@ static int cmd_x_N_EXPR(char *args){
 }
 
 static int cmd_p_EXPR(char *args){
-  char *arg = strtok(NULL," ");
-  // 判断输入是否为空
-  if(arg == NULL) {
-    fprintf(stderr, "Warning: use 'p EXPR' to evaluate [EXPR]. .\n");
-    return 1;
-  }
-
   bool success;
-  word_t res = expr(arg,&success);
+  word_t res = expr(args,&success);
   if(!success){
     printf("Invalid expression.\n");
     return 1;
