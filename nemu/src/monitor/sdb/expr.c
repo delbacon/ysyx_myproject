@@ -21,6 +21,8 @@
  */
 #include <regex.h>
 
+
+#define EXPRLEN 65536
 enum {
   TK_NOTYPE = 256, TK_EQ,
 
@@ -70,9 +72,11 @@ void init_regex() {
   }
 }
 
+
+
 typedef struct token {
   int type;
-  char str[32];
+  char str[EXPRLEN];
 } Token;
 
 static Token tokens[32] __attribute__((used)) = {};
@@ -114,7 +118,7 @@ static bool make_token(char *e) {
           case TK_EQ     ://暂时不用处理
             break;
           case TK_NUM    :
-            if(substr_len >= 32) {
+            if(substr_len >= EXPRLEN) {
               printf("Error: token too long (>=32 chars): %.*s\n", substr_len, substr_start);
               return false;
             }
