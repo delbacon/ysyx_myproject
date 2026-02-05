@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+
+
     // 提取期望结果
     *space = '\0'; // 分割字符串
     uint32_t expected = strtoul(line, NULL, 10);
@@ -82,6 +84,12 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Empty expression: %s\n", line);
       continue;
     }
+    
+    // 去掉末尾换行符（如果存在）
+    char *nl = strchr(expr_str, '\n');
+    if (nl) *nl = '\0';
+    nl = strchr(expr_str, '\r');
+    if (nl) *nl = '\0';
 
     total++;
     bool success = true;
