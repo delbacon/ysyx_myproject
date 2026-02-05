@@ -78,18 +78,6 @@ typedef struct token {
 static Token tokens[32] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
-
-// 将子串复制到tokens数组内，如果子串的输入超过32个字符，则截断
-static void safe_strcpy(Token *t, const char *src, int len) {
-  if (len >= 32) {
-    // 缓冲区溢出
-    fprintf(stderr, "Error: token too long (>=32 chars): %.32s...\n", src);
-    len = 31; // 截断
-  }
-  strncpy(t->str, src, len);
-  t->str[len] = '\0';
-}
-
 static bool make_token(char *e) {
   int position = 0;
   int i;
@@ -122,10 +110,11 @@ static bool make_token(char *e) {
           case TK_EQ     ://暂时不用处理
             break;
           case TK_NUM    :
-            int j=position;
-            while(isdigit(e[j])) j++;
+            if(substr_len >= 32) {
+              printf("Error: token too long (>=32 chars): %.*s\n", substr_len, substr_start);
+              assert(0);
+            }
             tokens[nr_token++].type = rules[i].token_type;
-            safe_strcpy(&tokens[nr_token-1], e, j-position);
             break;
           case '-'       :
           case '*'       :
@@ -133,7 +122,6 @@ static bool make_token(char *e) {
           case '('       :
           case ')'       :
             tokens[nr_token++].type = rules[i].token_type;
-            position++;
             break;
           default: assert(0);
         }
