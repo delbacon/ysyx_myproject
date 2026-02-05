@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
       // printf("PASS: %s\n", expr_str); // 可选：打印通过的
     } else {
       printf("FAIL: expected=%u, got=%u, expr=\"%s\"\n",
-             expected, success ? actual : 0, expr_str);
+             expected, actual ? actual : 0, expr_str);
       if (!success) {
         printf("  -> Evaluation failed (e.g., div-by-zero or syntax error)\n");
       }
