@@ -102,6 +102,7 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
+        tokens[nr_token++].type = rules[i].token_type;
         switch (rules[i].token_type) {
           case TK_EQ     ://暂时不用处理
             break;
@@ -110,18 +111,8 @@ static bool make_token(char *e) {
               printf("Error: token too long (>=32 chars): %.*s\n", substr_len, substr_start);
               assert(0);
             }
-            strncpy(tokens->str, substr_start, substr_len);
-            tokens->str[substr_len] = '\0';
-            tokens[nr_token++].type = rules[i].token_type;
-
-            break;
-          case '+'       :
-          case '-'       :
-          case '*'       :
-          case '/'       :
-          case '('       :
-          case ')'       :
-            tokens[nr_token++].type = rules[i].token_type;
+            strncpy(tokens[nr_token-1].str, substr_start, substr_len);
+            tokens[nr_token-1].str[substr_len] = '\0';
             break;
           default: assert(0);
         }

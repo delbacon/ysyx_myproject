@@ -147,8 +147,12 @@ static int cmd_p_EXPR(char *args){
   }
 
   bool success;
-  expr(arg,&success);
-  if(success){printf("susccess");}
+  word_t res = expr(arg,&success);
+  if(!success){
+    printf("Invalid expression.\n");
+    return 1;
+  }
+  printf("%d\n",res);
   return 0;
 }
 
