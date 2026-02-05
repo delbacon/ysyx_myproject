@@ -110,7 +110,7 @@ static bool make_token(char *e) {
               printf("Error: token too long (>=32 chars): %.*s\n", substr_len, substr_start);
               assert(0);
             }
-            strncpy(tokens->str, substr_start - substr_len, substr_len);
+            strncpy(tokens->str, substr_start, substr_len);
             tokens->str[substr_len] = '\0';
             tokens[nr_token++].type = rules[i].token_type;
 
