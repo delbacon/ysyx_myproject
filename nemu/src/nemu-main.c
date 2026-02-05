@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 
   // 跳过 NEMU monitor 初始化
-  const char *input_file = "/home/delbacon/ysyx-workbench/nemu/tools/gen-expr/input";
+  const char *input_file = "~/ysyx-workbench/nemu/tools/gen-expr/input";
   if (argc > 1) {
     input_file = argv[1]; // 允许指定输入文件
   }
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: cannot open input file '%s'\n", input_file);
     return 1;
   }
-  printf("build2\n");
+
   char line[2048];
   int passed = 0, total = 0;
 
