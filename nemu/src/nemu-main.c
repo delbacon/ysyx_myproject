@@ -44,6 +44,14 @@ int main(int argc, char *argv[]) {
 
 
 int main(int argc, char *argv[]) {
+#ifdef CONFIG_TARGET_AM
+  am_init_monitor();
+#else
+  init_monitor(argc, argv);
+#endif
+
+  // Start engine. //
+  engine_start();
   // 跳过 NEMU monitor 初始化
   const char *input_file = "input";
   FILE *fp = fopen(input_file, "r");
