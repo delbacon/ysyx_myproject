@@ -155,27 +155,6 @@ static struct {
 
 #define NR_CMD ARRLEN(cmd_table)
 
-/*
-//token
-//-------------------------------//
-typedef struct token {
-  int type;     //token类型
-  char str[32]; //token具体值
-} Token;
-
-
-Token tokens[TOKEN_SIZE];
-
-static make_token(Token *token, int type)
-{
-  token->type = type;
-  memset(token->str, 0, sizeof(token->str));
-  strncpy(token->str, args, sizeof(token->str));
-  return token;
-}
-//-------------------------------//
-*/
-
 static int cmd_help(char *args) {
   /* extract the first argument */
   char *arg = strtok(NULL, " ");

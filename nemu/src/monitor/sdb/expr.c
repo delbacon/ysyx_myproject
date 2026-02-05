@@ -14,6 +14,7 @@
 ***************************************************************************************/
 
 #include <isa.h>
+#include <ctype.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -36,15 +37,15 @@ static struct rule {
    * Pay attention to the precedence level of different rules.
    */
 
-  {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"==", TK_EQ},        // equal
-  {"[0-9]+", TK_NUM},   // 0-9
-  {"\\-", '-'},         // minus
-  {"\\*", '*'},         // multi
-  {"/"  , '/'},        // division
-  {"\\(", '('},         // left parentheses
-  {"\\)", ')'},         // right parentheses
+  {" +",     TK_NOTYPE },         // spaces
+  {"\\+",    '+'       },         // plus
+  {"==",     TK_EQ     },         // equal
+  {"[0-9]+", TK_NUM    },         // 0-9
+  {"\\-",    '-'       },         // minus
+  {"\\*",    '*'       },         // multi
+  {"/"  ,    '/'       },         // division
+  {"\\(",    '('       },         // left parentheses
+  {"\\)",    ')'       },         // right parentheses
 
 };
 
@@ -77,6 +78,18 @@ typedef struct token {
 static Token tokens[32] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
+
+// 将子串复制到tokens数组内，如果子串的输入超过32个字符，则截断
+static void safe_strcpy(Token *t, const char *src, int len) {
+  if (len >= 32) {
+    // 缓冲区溢出
+    fprintf(stderr, "Error: token too long (>=32 chars): %.32s...\n", src);
+    len = 31; // 截断
+  }
+  strncpy(t->str, src, len);
+  t->str[len] = '\0';
+}
+
 static bool make_token(char *e) {
   int position = 0;
   int i;
@@ -100,9 +113,44 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
-
         switch (rules[i].token_type) {
-          default: TODO();
+          case TK_NOTYPE : 
+            position++;
+            break;
+          case '+'       :
+            tokens[nr_token++].type = rules[i].token_type; 
+            position++;
+            break;
+          case TK_EQ     ://暂时不用处理
+            break;
+          case TK_NUM    :
+            int j=position;
+            while(isdigit(e[j])) j++;
+            tokens[nr_token++].type = rules[i].token_type;
+            safe_strcpy(&tokens[nr_token-1], e, j-position);
+            position = j;
+            break;
+          case '-'       :
+            tokens[nr_token++].type = rules[i].token_type;
+            position++;
+            break;
+          case '*'       :
+            tokens[nr_token++].type = rules[i].token_type;
+            position++;
+            break;
+          case '/'       :
+            tokens[nr_token++].type = rules[i].token_type;
+            position++;
+            break;
+          case '('       :
+            tokens[nr_token++].type = rules[i].token_type;
+            position++;
+            break;
+          case ')'       :
+            tokens[nr_token++].type = rules[i].token_type;
+            position++;
+            break;
+          default: assert(0);
         }
 
         break;
