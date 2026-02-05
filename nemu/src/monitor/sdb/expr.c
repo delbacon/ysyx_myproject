@@ -97,14 +97,12 @@ static bool make_token(char *e) {
 
         position += substr_len;
 
+        if (rules[i].token_type == TK_NOTYPE) break;
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
         switch (rules[i].token_type) {
-          case '+'       :
-            tokens[nr_token++].type = rules[i].token_type; 
-            break;
           case TK_EQ     ://暂时不用处理
             break;
           case TK_NUM    :
@@ -117,6 +115,7 @@ static bool make_token(char *e) {
             tokens[nr_token++].type = rules[i].token_type;
 
             break;
+          case '+'       :
           case '-'       :
           case '*'       :
           case '/'       :
