@@ -204,8 +204,10 @@ int find_main_op(int p, int q)
     if(tokens[i].type == '('){
       cnt++;
     }else if(tokens[i].type == ')'){
+      if(cnt == 0) return -1;
       cnt--;
-    }else if (tokens[i].type == '+' || tokens[i].type == '-'){
+    }else if(cnt > 0) continue;
+    else if (tokens[i].type == '+' || tokens[i].type == '-'){
       flag_min = 1 ;
     }
   }
