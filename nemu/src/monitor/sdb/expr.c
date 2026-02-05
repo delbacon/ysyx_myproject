@@ -147,7 +147,7 @@ int check_parentheses(int p, int q, bool *legal) {
   int flag = 0;
   int flag_bad = 0;//标记最外层括号互相不匹配的情况
     if(tokens[p].type == '(' && tokens[q].type == ')'){//如果式子左右两端都有括号
-      for(int j=p ;j<q;j++){
+      for(int j=p ;j<q+1;j++){
         if(tokens[j].type == ')'){
           flag -- ;
         }else if(tokens[j].type == '('){
