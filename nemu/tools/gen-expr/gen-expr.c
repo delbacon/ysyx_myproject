@@ -49,7 +49,7 @@ static void gen_space(){
 }
 
 static void gen_num() {
-  gen(choose(9) + '0');
+  gen(choose(9) + '1');
 }
 
 static void gen_rand_op() {
