@@ -103,7 +103,9 @@ static int cmd_info(char *args){
     case 'r':
       isa_reg_display();
       break;
-
+    case 'w':
+      wp_iterate();
+      break;
     default: break;
   }
   return 0;
@@ -144,7 +146,9 @@ static int cmd_p_EXPR(char *args){
     printf("Invalid expression.\n");
     return 1;
   }
-  printf("EXPR expressed:%d\n",res);
+
+
+  printf("EXPR expressed:%x\n",res);
   return 0;
 }
 

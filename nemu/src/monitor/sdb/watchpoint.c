@@ -92,3 +92,15 @@ void wp_difftest() {
     h = h->next;
   }
 }
+void wp_iterate() {
+  WP* h = head;
+  if (!h) {
+    puts("No watchpoints.");
+    return;
+  }
+  printf("%-8s%-8s\n", "Num", "What");
+  while (h) {
+    printf("%-8d%-8s\n", h->NO, h->expr);
+    h = h->next;
+  }
+}
