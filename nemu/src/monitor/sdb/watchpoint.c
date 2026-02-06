@@ -43,6 +43,7 @@ void init_wp_pool() {
 /* TODO: Implement the functionality of watchpoint */
 
 static WP* new_wp() {
+  //如果还有空位置的话
   assert(free_);
   WP* ret = free_;
   free_ = free_->next;
@@ -53,7 +54,7 @@ static WP* new_wp() {
 
 static void free_wp(WP *wp) {
   WP* h = head;
-  if (h == wp) head = NULL;
+  if (h == wp) head = wp->next;
   else {
     while (h && h->next != wp) h = h->next;
     assert(h);
