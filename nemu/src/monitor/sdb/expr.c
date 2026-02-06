@@ -369,7 +369,7 @@ static word_t eval(int p,int q, bool *legal) {
         word_t val1 = eval(p, op - 1, &legal1);
         word_t val2 = eval(op + 1, q, &legal2);
 
-        printf("ope:%dr:%d  %d\n",val2,tokens[op].type,!legal1 || !legal2);
+        //printf("ope:%dr:%d  %d\n",val2,tokens[op].type,!legal1 || !legal2);
         return calc2op(val1, tokens[op].type, val2, legal);
       }
 
