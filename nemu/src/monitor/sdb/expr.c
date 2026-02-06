@@ -153,6 +153,7 @@ static bool make_token(char *e) {
         switch (rules[i].token_type) {
           case TK_EQ     ://暂时不用处理
             break;
+          case TK_REG    :
           case TK_NUM    :
           case TK_HEX    :
             if(substr_len >= EXPRLEN) {
