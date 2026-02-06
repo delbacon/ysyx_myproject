@@ -104,7 +104,7 @@ static int cmd_info(char *args){
       isa_reg_display();
       break;
     case 'w':
-      wp_iterate();
+      wp_display();
       break;
     default: break;
   }
