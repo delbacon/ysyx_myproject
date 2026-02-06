@@ -77,20 +77,22 @@ void remove_wp(int no) {
   printf("Delete watchpoint %d: %s\n", wp->NO, wp->expr);
 }
 
-void wp_difftest() {
+int wp_difftest() {
   WP* h = head;
   while (h) {
     bool _;
     word_t new = expr(h->expr, &_);
     if (h->old != new) {
       printf("Watchpoint %d: %s\n"
-        "Old value = %u\n"
-        "New value = %u\n"
-        , h->NO, h->expr, h->old, new);
+        "Old value = %u %x\n"
+        "New value = %u %x\n"
+        , h->NO, h->expr, h->old, h->old, new, new);
       h->old = new;
+      return 1;
     }
     h = h->next;
   }
+  return 0;
 }
 void wp_iterate() {
   WP* h = head;

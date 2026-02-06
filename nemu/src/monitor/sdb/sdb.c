@@ -47,7 +47,7 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  cpu_exec(-1);
+  while(!wp_difftest()) cpu_exec(1);
   return 0;
 }
 
@@ -148,7 +148,7 @@ static int cmd_p_EXPR(char *args){
   }
 
 
-  printf("EXPR expressed:0d:%d  0x%x\n",res,res);
+  printf("EXPR expressed:0d:%u  0x%x\n",res,res);
   return 0;
 }
 
