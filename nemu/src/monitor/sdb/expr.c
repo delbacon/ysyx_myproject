@@ -290,7 +290,7 @@ static word_t eval_operation(int p, bool *legal) {
 static word_t calc1op(int op, word_t val, bool *success) {
   switch (op){
   case TK_NEG: return -val;
-  case TK_DEREF: return vaddr_read(val, 8);
+  case TK_DEREF: return vaddr_read(val, 4);
   default: *success = false;
   }
 
