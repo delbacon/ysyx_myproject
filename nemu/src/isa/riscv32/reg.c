@@ -37,5 +37,15 @@ void isa_reg_display() {
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
+  
+  if(strcmp(s+1,"pc")==0) return cpu.pc;
+  
+  for(int i=0;i<32;i++){
+    //s+1以跳过开头的标识符$
+    if(strcmp((s+1),reg_name(i))==0){
+      *success = true;
+      return gpr(i);
+    }
+  }
   return 0;
 }

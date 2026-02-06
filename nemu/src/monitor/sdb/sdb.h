@@ -18,6 +18,14 @@
 
 #include <common.h>
 
+#define NR_WP 32
+#define TOKEN_SIZE 64
+
 word_t expr(char *e, bool *success);
 
+
+void wp_watch(char *expr, word_t res) ;
+void remove_wp(int no) ;
+void wp_difftest() ;
+void wp_iterate() ;
 #endif

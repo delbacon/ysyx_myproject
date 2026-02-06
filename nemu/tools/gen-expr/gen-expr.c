@@ -19,6 +19,7 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/wait.h>
 
 // this should be enough
 static char buf[65536] = {};
@@ -31,8 +32,42 @@ static char *code_format =
 "  return 0; "
 "}";
 
+static int count = 0;
+static int buf_end = 65536;
+
+static int choose(int n) {
+  return rand() % n;
+}
+static void gen(char c) {
+  int wr_num = snprintf((&buf[0]+count), buf_end-count, "%c", c);
+  if(buf_end-count > 0 || wr_num > 0) count += wr_num;
+}
+
+static void gen_space(){
+  int n = choose(5);
+  for(int i = 0; i < n; i++) gen(' ');
+}
+
+static void gen_num() {
+  gen(choose(9) + '1');
+}
+
+static void gen_rand_op() {
+  switch (choose(4)) {
+    case 0: gen('+'); break;
+    case 1: gen('-'); break;
+    case 2: gen('*'); break;
+    default: gen('/'); break;
+  }
+  gen_space();
+}
+
 static void gen_rand_expr() {
-  buf[0] = '\0';
+  switch (choose(3)) {
+    case 0: gen_num(); break;
+    case 1: gen('('); gen_rand_expr(); gen(')'); break;
+    default: gen_rand_expr(); gen_rand_op(); gen_rand_expr(); break;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -44,6 +79,7 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
+    count = 0;
     gen_rand_expr();
 
     sprintf(code_buf, code_format, buf);
@@ -53,10 +89,11 @@ int main(int argc, char *argv[]) {
     fputs(code_buf, fp);
     fclose(fp);
 
-    int ret = system("gcc /tmp/.code.c -o /tmp/.expr");
+    int ret = system("gcc -Wall -Werror /tmp/.code.c -o /tmp/.expr");
     if (ret != 0) continue;
 
     fp = popen("/tmp/.expr", "r");
+
     assert(fp != NULL);
 
     int result;
