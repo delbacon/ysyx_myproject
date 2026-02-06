@@ -81,14 +81,15 @@ void remove_wp(int no) {
 void wp_difftest() {
   WP* h = head;
   while (h) {
-    bool _;
-    word_t new = expr(h->expr, &_);
+    bool success;
+    word_t new = expr(h->expr, &success);
     if (h->old != new) {
       printf("Wp %d: %s\n"
         "Old value = %u %x\n"
         "New value = %u %x\n"
         , h->NO, h->expr, h->old, h->old, new, new);
       h->old = new;
+      //暂停运行
       nemu_state.state = NEMU_STOP;
       return ;
     }
