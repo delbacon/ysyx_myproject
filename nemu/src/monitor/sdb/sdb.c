@@ -148,7 +148,7 @@ static int cmd_p_EXPR(char *args){
   }
 
 
-  printf("EXPR expressed:%x\n",res);
+  printf("EXPR expressed:0d:%d  0x%x\n",res,res);
   return 0;
 }
 
