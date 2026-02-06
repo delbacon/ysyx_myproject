@@ -102,9 +102,9 @@ void wp_iterate() {
     puts("No watchpoints.");
     return;
   }
-  printf("%-8s%-8s%-8s\n", "Num", "What", "Result");
+  printf("%-4s%-4s%-4s\n", "Num", "WP", "Result");
   while (h) {
-    printf("%-8d%-8s%-8x\n", h->NO, h->expr, h->old);
+    printf("%-4d%-4s%-8x\n", h->NO, h->expr, h->old);
     h = h->next;
   }
 }
