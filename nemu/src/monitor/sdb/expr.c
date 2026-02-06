@@ -152,6 +152,7 @@ static bool make_token(char *e) {
           case TK_EQ     ://暂时不用处理
             break;
           case TK_NUM    :
+          case TK_HEX    :
             if(substr_len >= EXPRLEN) {
               printf("Error: token too long (>=32 chars): %.*s\n", substr_len, substr_start);
               return false;
