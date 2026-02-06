@@ -300,7 +300,7 @@ static word_t calc1op(int op, word_t val, bool *success) {
 
 // binary operator
 static word_t calc2op(word_t val1, int op, word_t val2, bool *success) {
-  switch(tokens[op].type) {
+  switch(op) {
   case '+': return val1 + val2;
   case '-': return val1 - val2;
   case '*': return val1 * val2;
