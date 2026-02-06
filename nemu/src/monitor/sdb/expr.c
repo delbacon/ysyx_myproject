@@ -15,6 +15,7 @@
 
 #include <isa.h>
 #include <ctype.h>
+#include "memory/vaddr.h"
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -33,7 +34,8 @@ enum {
   TK_OR    ,   // or
   TK_HEX   ,   // 十六进制整数
   TK_REG   ,   // 寄存器
-  DEREF    ,   // 指针
+  TK_DEREF    ,   // 指针
+  TK_NEG   ,   // 负数
 };
 
 
@@ -59,7 +61,7 @@ static struct rule {
 
   {"\\+",              '+'      },     // plus
   {"\\-",              '-'      },     // minus
-  {"\\*",              '*'      },     // multiplication / deref
+  {"\\*",              '*'      },     // multiplication / TK_TK_DEREF
   {"/",                '/'      },     // division
   {"&",                '&'      },     // bitwise and / address-of
 
@@ -74,9 +76,9 @@ static regex_t re[NR_REGEX] = {};
 
 #define TOKEN_TYPES(type,types) token_types(type,types,ARRLEN(types))
 
-//static int Literals[] = {TK_NUM, TK_HEX, TK_REG};
+static int Literals[] = {TK_NUM, TK_HEX, TK_REG};
 static int Literals_par[] = {'(', ')', TK_NUM, TK_HEX, TK_REG};
-//static int Operators[] = {'+', '-', '*', '/', '&', '|'};
+static int Operators[] = {'+', '-', '*', '/', '&', '|'};
 
 
 static bool token_types(int type, int types[], int len) {
@@ -169,10 +171,10 @@ static bool make_token(char *e) {
           switch (tokens[i].type)
           {
           case  '*' : 
-            tokens[i].type = DEREF;
+            tokens[i].type = TK_DEREF;
             break;
           case '-' :
-            tokens[i].type = '-';
+            tokens[i].type = TK_NEG;
             break;
           case '+' :
             tokens[i].type = '+';
@@ -214,14 +216,27 @@ int check_parentheses(int p, int q) {
 }
 
 
+int get_precedence(int type) {
+  switch (type) {
+    case TK_OR: return 1;
+    case TK_AND: return 2;
+    case TK_EQ: case TK_NEQ: return 3;
+    case '+': case '-': return 4;
+    case '*': case '/': return 5;
+    default: return 0; // 一元 or invalid
+  }
+}
 
 int find_main_op(int p, int q) 
 {
-  int ret = -1, par = 0, op_type = 0;
+  int ret = -1, par = 0;
+  int op_pre = 0;
   for (int i = p; i <= q; i++) {
-    if (tokens[i].type == TK_NUM) {
+    //跳过所有数字
+    if (TOKEN_TYPES(tokens[i].type,Literals)) {
       continue;
     }
+    //识别括号并计算是否匹配
     if (tokens[i].type == '(') {
       par++;
     } else if (tokens[i].type == ')') {
@@ -229,21 +244,16 @@ int find_main_op(int p, int q)
         return -1;
       }
       par--;
+    //如果在一对括号之内，直接忽略
     } else if (par > 0) {
       continue;
+    //否则判断运算优先级
     } else {
       int tmp_type = 0;
-      switch (tokens[i].type) {
-      case '*':
-      case '/': 
-        tmp_type = 1; break;
-      case '+': 
-      case '-': 
-        tmp_type = 2; break;
-      default: assert(0);
-      }
-      if (tmp_type >= op_type) {
-        op_type = tmp_type;
+      tmp_type = get_precedence(tokens[i].type);
+      //如果优先级更高，则更新返回值ret为优先级更高的位置
+      if (tmp_type > op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
+        op_pre = tmp_type;
         ret = i;
       }
     }
@@ -277,6 +287,35 @@ static word_t eval_operation(int p, bool *legal) {
   return 0;
 }
 
+static word_t calc1op(int op, word_t val, bool *success) {
+  switch (op){
+  case TK_NEG: return -val;
+  case TK_DEREF: return vaddr_read(val, 8);
+  default: *success = false;
+  }
+
+  return 0;
+}
+
+// binary operator
+static word_t calc2op(word_t val1, int op, word_t val2, bool *success) {
+  switch(op) {
+  case '+': return val1 + val2;
+  case '-': return val1 - val2;
+  case '*': return val1 * val2;
+  case '/': if (val2 == 0) {
+              printf("Error: division by zero"); 
+              *success = false;
+              return 0;
+            } 
+            return (sword_t)val1 / (sword_t)val2; //
+  case TK_AND: return val1 && val2;
+  case TK_OR: return val1 || val2;
+  case TK_EQ: return val1 == val2;
+  case TK_NEQ: return val1 != val2;
+  default: *success = false; return 0;
+  }
+}
 
 static word_t eval(int p,int q, bool *legal) {
   if (p > q) {
@@ -313,28 +352,23 @@ static word_t eval(int p,int q, bool *legal) {
   }
   else {
     int op = find_main_op(p, q);
-    if(op == -1){
+    if(op < 0){
       printf("Error: no operator found\n");
       return 0;
     }
-    
-    word_t val1 = eval(p, op - 1, legal);
-    word_t val2 = eval(op + 1, q, legal);
+    bool *legal1 = 0;
+    bool *legal2 = 0;
+    word_t val1 = eval(p, op - 1, legal1);
+    word_t val2 = eval(op + 1, q, legal2);
 
-    switch (tokens[op].type) {
-      case '+': return val1 + val2;
-      case '-': return val1 - val2;
-      case '*': return val1 * val2;
-      case '/': 
-        if(val2 == 0){
-          *legal = false;
-          printf("Error: division by zero\n");
-          return 0;
-        }else {
-          return (sword_t)val1 / (sword_t)val2;
-        }
-      default: printf( "invalid op type");
+    if(legal1){
+      word_t val = calc1op(tokens[op].type, val1, legal1);
+      return val;
+    }else if(legal2){
+      word_t val = calc2op(val1, tokens[op].type, val2, legal2);
+      return val;
     }
+
   }
   return 0;
 }
