@@ -47,7 +47,9 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  while(!wp_difftest()) cpu_exec(1);
+  while(!wp_difftest()) {
+    if(cpu_exec(1)) break;
+  }
   return 0;
 }
 

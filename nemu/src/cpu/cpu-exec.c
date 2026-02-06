@@ -100,12 +100,12 @@ void assert_fail_msg() {
 }
 
 /* Simulate how the CPU works. */
-void cpu_exec(uint64_t n) {
+int cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INST_TO_PRINT);
   switch (nemu_state.state) {
     case NEMU_END: case NEMU_ABORT: case NEMU_QUIT:
       printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
-      return;
+      return 1;
     default: nemu_state.state = NEMU_RUNNING;
   }
 
@@ -128,4 +128,5 @@ void cpu_exec(uint64_t n) {
       // fall through
     case NEMU_QUIT: statistic();
   }
+  return 0;
 }
