@@ -356,10 +356,10 @@ static word_t eval(int p,int q, bool *legal) {
       printf("Error: no operator found\n");
       return 0;
     }
-    bool *legal1 = 0;
-    bool *legal2 = 0;
-    word_t val1 = eval(p, op - 1, legal1);
-    word_t val2 = eval(op + 1, q, legal2);
+    bool legal1 = 0;
+    bool legal2 = 0;
+    word_t val1 = eval(p, op - 1, &legal1);
+    word_t val2 = eval(op + 1, q, &legal2);
 
     if(legal1){
       word_t val = calc2op(val1, tokens[op].type, val2, legal);
