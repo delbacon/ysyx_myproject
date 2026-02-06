@@ -263,7 +263,7 @@ static word_t eval_operation(int p, bool *legal) {
     return strtol(tokens[p].str, NULL, 10);
     break;
   case TK_HEX:
-    return strtol(tokens[p].str, NULL,  0);
+    return strtol(tokens[p].str, NULL, 16);
     break;
   case TK_REG:
     return isa_reg_str2val(tokens[p].str, legal);
