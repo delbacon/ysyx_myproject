@@ -49,7 +49,10 @@ static char* rl_gets() {
 static int cmd_c(char *args) {
   while(!wp_difftest()) {
     int n = cpu_exec(1);
-    if(n)  return 0;
+    if(n) {
+      printf("%d\n",n);
+      return 0;
+    }
   }
   return 0;
 }
