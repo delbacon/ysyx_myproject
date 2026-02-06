@@ -291,7 +291,7 @@ static word_t calc1op(int op, word_t val, bool *success) {
   switch (op){
   case '+': return val;
   case '-': return -val;
-  case TK_DEREF: return vaddr_read(val, 4);
+  case '*': return vaddr_read(val, 4);
   default: *success = false;
   }
 
