@@ -357,6 +357,7 @@ static word_t eval(int p,int q, bool *legal) {
       return 0;
     }
     if (op == p) {
+      printf("oper\n");
         // 可能是一元操作符
         word_t val2 = eval(op + 1, q, legal);
         if (!*legal) return 0;
