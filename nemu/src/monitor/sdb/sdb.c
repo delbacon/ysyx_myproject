@@ -160,7 +160,7 @@ static int cmd_w_EXPR(char *args){
     return 1;
   }
   wp_watch(args,res);
-  printf("Set watchpoint at addr:%d\n",res);
+  printf("Set watchpoint at addr:%x\n",res);
   return 0;
 }
 
