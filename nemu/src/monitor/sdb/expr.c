@@ -365,7 +365,7 @@ static word_t eval(int p,int q, bool *legal) {
       word_t val = calc2op(val1, tokens[op].type, val2, legal);
       return val;
     }else {
-      word_t val = calc1op(tokens[op].type, val1, legal);
+      word_t val = calc1op(tokens[op].type, val2, legal);
       return val;
     }
 
