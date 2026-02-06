@@ -148,13 +148,14 @@ static int cmd_p_EXPR(char *args){
   return 0;
 }
 
-static int cmd_s_EXPR(char *args){ 
+static int cmd_w_EXPR(char *args){ 
   bool success;
   word_t res = expr(args,&success);
   if(!success){
     printf("Invalid expression.\n");
     return 1;
   }
+  wp_watch(args,res);
   printf("Set watchpoint at addr:%d\n",res);
   return 0;
 }
@@ -189,7 +190,7 @@ static struct {
   { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
   { "x", "Compute [EXPR] as a starting address and output [N] consecutive 4-byte words in hex.", cmd_x_N_EXPR },
   { "p", "Evaluate an expression EXPR and print the result.", cmd_p_EXPR },
-  { "w", "Set watchpoint addr:[EXPR]", cmd_s_EXPR },
+  { "w", "Set watchpoint addr:[EXPR]", cmd_w_EXPR },
   { "d", "Delete watchpoint [N]", cmd_d_N },
   
 };

@@ -23,6 +23,8 @@
 
 word_t expr(char *e, bool *success);
 
+
+void wp_watch(char *expr, word_t res) ;
 void remove_wp(int no) ;
 void wp_difftest() ;
 #endif
