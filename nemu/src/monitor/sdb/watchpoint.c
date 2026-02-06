@@ -84,7 +84,7 @@ void wp_difftest() {
     bool _;
     word_t new = expr(h->expr, &_);
     if (h->old != new) {
-      printf("Watchpoint %d: %s\n"
+      printf("Wp %d: %s\n"
         "Old value = %u %x\n"
         "New value = %u %x\n"
         , h->NO, h->expr, h->old, h->old, new, new);
@@ -102,9 +102,9 @@ void wp_iterate() {
     printf("No wp.\n");
     return;
   }
-  printf("%-4s%-4s%-4s\n", "Num", "WP", "Result");
+  printf("%-4s%-4s%-4s\n", "Num ", "Wp ", "Result");
   while (h) {
-    printf("%-4d%-4s%-8x\n", h->NO, h->expr, h->old);
+    printf("%-4d  %-4s  %-8x\n", h->NO, h->expr, h->old);
     h = h->next;
   }
 }
