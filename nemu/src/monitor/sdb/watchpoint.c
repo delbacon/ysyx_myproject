@@ -98,8 +98,8 @@ void wp_difftest() {
 }
 void wp_iterate() {
   WP* h = head;
-  if (!h) {
-    puts("No watchpoints.");
+  if (h==NULL) {
+    printf("No wp.");
     return;
   }
   printf("%-4s%-4s%-4s\n", "Num", "WP", "Result");
