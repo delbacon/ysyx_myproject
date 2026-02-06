@@ -47,8 +47,10 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  while(!wp_difftest()) {
-    int n = cpu_exec(1);
+  int n = 0;
+  while(!n) {
+    n = wp_difftest();
+    cpu_exec(1);
     if(n) {
       printf("%d\n",n);
       return 0;
