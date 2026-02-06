@@ -288,7 +288,7 @@ static word_t eval_operation(int p, bool *legal) {
 }
 
 static word_t calc1op(int op, word_t val, bool *success) {
-  switch (op){
+  switch (tokens[op].type){
   case TK_NEG: return -val;
   case TK_DEREF: return vaddr_read(val, 4);
   default: *success = false;
@@ -299,7 +299,7 @@ static word_t calc1op(int op, word_t val, bool *success) {
 
 // binary operator
 static word_t calc2op(word_t val1, int op, word_t val2, bool *success) {
-  switch(op) {
+  switch(tokens[op].type) {
   case '+': return val1 + val2;
   case '-': return val1 - val2;
   case '*': return val1 * val2;
@@ -359,8 +359,9 @@ static word_t eval(int p,int q, bool *legal) {
     if (op == p) {
         // 可能是一元操作符
         word_t val2 = eval(op + 1, q, legal);
-        printf("ope:%dr:%d\n",val2,*legal);
+
         if (!*legal) return 0;
+        printf("ope:%dr:%d\n",val2,*legal);
         return calc1op(tokens[op].type, val2, legal);
     } else {
         // 二元操作符
