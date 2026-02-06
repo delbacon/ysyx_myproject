@@ -117,6 +117,7 @@ config CC_LTO
 config CC_DEBUG
   bool "Enable debug information"
   default n
+  
 
 config CC_ASAN
   depends on MODE_SYSTEM
@@ -158,6 +159,14 @@ config DIFFTEST
   default n
   help
     Enable differential testing with a reference design.
+    Note that this will significantly reduce the performance of NEMU.
+
+config WATCHPOINT
+  depends on TARGET_NATIVE_ELF
+  bool "Enable watchpoint"
+  default n
+  help
+    Enable watchpoint with a reference design.
     Note that this will significantly reduce the performance of NEMU.
 
 choice

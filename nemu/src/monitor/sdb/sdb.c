@@ -22,7 +22,6 @@
 #include <limits.h>
 
 
-#define TOKEN_SIZE 64
 
 static int is_batch_mode = false;
 
@@ -145,7 +144,35 @@ static int cmd_p_EXPR(char *args){
     printf("Invalid expression.\n");
     return 1;
   }
-  printf("%d\n",res);
+  printf("EXPR expressed:%d\n",res);
+  return 0;
+}
+
+static int cmd_s_EXPR(char *args){ 
+  bool success;
+  word_t res = expr(args,&success);
+  if(!success){
+    printf("Invalid expression.\n");
+    return 1;
+  }
+  printf("Set watchpoint at addr:%d\n",res);
+  return 0;
+}
+
+static int cmd_d_N(char *args){ 
+  char *arg_N = strtok(NULL," ");
+  char *endptr;
+  long n = strtol(arg_N,&endptr,10);
+  if(n<0){
+    printf("Warning: Negative value '%ld' ignored. Deletion skipped.\n", n);
+    return 1;
+  }
+  if(n>=NR_WP){
+    printf("Warning: Watchpoint [%ld] does not exist. Deletion skipped.\n", n);
+    return 1;
+  }
+  remove_wp(n);
+  printf("Delete watchpoint [%ld]\n", n);
   return 0;
 }
 
@@ -162,6 +189,9 @@ static struct {
   { "info", "use 'r' to printf reg; use 'w' to printf watchpoint.", cmd_info },
   { "x", "Compute [EXPR] as a starting address and output [N] consecutive 4-byte words in hex.", cmd_x_N_EXPR },
   { "p", "Evaluate an expression EXPR and print the result.", cmd_p_EXPR },
+  { "w", "Set watchpoint addr:[EXPR]", cmd_s_EXPR },
+  { "d", "Delete watchpoint [N]", cmd_d_N },
+  
 };
 
 #define NR_CMD ARRLEN(cmd_table)
