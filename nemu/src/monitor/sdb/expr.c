@@ -362,10 +362,10 @@ static word_t eval(int p,int q, bool *legal) {
     word_t val2 = eval(op + 1, q, legal2);
 
     if(legal1){
-      word_t val = calc1op(tokens[op].type, val1, legal1);
-      return val;
-    }else if(legal2){
       word_t val = calc2op(val1, tokens[op].type, val2, legal2);
+      return val;
+    }else {
+      word_t val = calc1op(tokens[op].type, val1, legal);
       return val;
     }
 
