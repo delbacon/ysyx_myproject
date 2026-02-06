@@ -102,7 +102,7 @@ void wp_iterate() {
     printf("No wp.\n");
     return;
   }
-  printf("%-4s%-4s%-4s\n", "Num ", "Wp ", "Result");
+  printf("%-4s  %-4s %-4s\n", "Num", "Wp", "Result");
   while (h) {
     printf("%-4d  %-4s  %-8x\n", h->NO, h->expr, h->old);
     h = h->next;
