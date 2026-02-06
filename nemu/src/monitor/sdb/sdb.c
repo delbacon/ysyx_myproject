@@ -48,8 +48,8 @@ static char* rl_gets() {
 
 static int cmd_c(char *args) {
   while(!wp_difftest()) {
-    cpu_exec(1);
-    return 0;
+    int n = cpu_exec(1);
+    if(n)  return 0;
   }
   return 0;
 }
