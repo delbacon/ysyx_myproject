@@ -26,6 +26,6 @@ word_t expr(char *e, bool *success);
 
 void wp_watch(char *expr, word_t res) ;
 void remove_wp(int no) ;
-int wp_difftest() ;
+void wp_difftest() ;
 void wp_iterate() ;
 #endif

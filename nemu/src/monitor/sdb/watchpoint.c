@@ -77,7 +77,7 @@ void remove_wp(int no) {
   printf("Delete watchpoint %d: %s\n", wp->NO, wp->expr);
 }
 
-int wp_difftest() {
+void wp_difftest() {
   WP* h = head;
   while (h) {
     bool _;
@@ -88,11 +88,12 @@ int wp_difftest() {
         "New value = %u %x\n"
         , h->NO, h->expr, h->old, h->old, new, new);
       h->old = new;
-      return 1;
+      nemu_state.state = NEMU_STOP;
+      return ;
     }
     h = h->next;
   }
-  return 0;
+  return ;
 }
 void wp_iterate() {
   WP* h = head;

@@ -47,15 +47,7 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  while(1) {
-    int ret = cpu_exec(1);
-    int n = wp_difftest();
-    printf("%d  %d\n",n,ret);
-    if(n || ret) {
-      printf("%d\n",n);
-      return 0;
-    }
-  }
+  cpu_exec(-1);
   return 0;
 }
 
