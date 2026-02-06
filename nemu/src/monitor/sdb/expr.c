@@ -22,13 +22,20 @@
 #include <regex.h>
 
 
-#define EXPRLEN 65536
+#define EXPRLEN 4096
 enum {
   TK_NOTYPE = 256, TK_EQ,
 
   /* TODO: Add more token types */
   TK_NUM   ,   // 十进制整数
+  TK_NEQ   ,   // 不等于
+  TK_AND   ,   // and
+  TK_OR    ,   // or
+  TK_HEX   ,   // 十六进制整数
+  TK_REG   ,   // 寄存器
+  DEREF    ,   // 指针
 };
+
 
 static struct rule {
   const char *regex;
@@ -39,21 +46,48 @@ static struct rule {
    * Pay attention to the precedence level of different rules.
    */
 
-  {" +",     TK_NOTYPE },         // spaces
-  {"\\+",    '+'       },         // plus
-  {"==",     TK_EQ     },         // equal
-  {"[0-9]+", TK_NUM    },         // 0-9
-  {"\\-",    '-'       },         // minus
-  {"\\*",    '*'       },         // multi
-  {"/"  ,    '/'       },         // division
-  {"\\(",    '('       },         // left parentheses
-  {"\\)",    ')'       },         // right parentheses
+  {" +",               TK_NOTYPE },    // spaces
+
+  {"0[xX][0-9a-fA-F]+", TK_HEX   },    // hex literal (fixed ++)
+  {"[0-9]+",           TK_NUM   },     // decimal number
+  {"\\$\\w+",          TK_REG   },     // register, e.g., $eax
+
+  {"==",               TK_EQ    },     // equal
+  {"!=",               TK_NEQ   },     // not equal
+  {"&&",               TK_AND   },     // logical and
+  {"\\|\\|",           TK_OR    },     // optional: logical or
+
+  {"\\+",              '+'      },     // plus
+  {"\\-",              '-'      },     // minus
+  {"\\*",              '*'      },     // multiplication / deref
+  {"/",                '/'      },     // division
+  {"&",                '&'      },     // bitwise and / address-of
+
+  {"\\(",              '('      },
+  {"\\)",              ')'      },
 
 };
 
 #define NR_REGEX ARRLEN(rules)
 
 static regex_t re[NR_REGEX] = {};
+
+#define TOKEN_TYPES(type,types) token_types(type,types,ARRLEN(types))
+
+//static int Literals[] = {TK_NUM, TK_HEX, TK_REG};
+static int Literals_par[] = {'(', ')', TK_NUM, TK_HEX, TK_REG};
+//static int Operators[] = {'+', '-', '*', '/', '&', '|'};
+
+
+static bool token_types(int type, int types[], int len) {
+  for (int i = 0; i < len; i++) {
+    if (type == *types) {
+      return true;
+    }
+    types++;
+  }
+  return false;
+}
 
 /* Rules are used for many times.
  * Therefore we compile them only once before any usage.
@@ -128,6 +162,26 @@ static bool make_token(char *e) {
           default: 
             break;
         }
+        
+        //识别单目运算符
+        if ((i == 0 || TOKEN_TYPES(tokens[i - 1].type,Literals_par)==0) ) {
+          switch (tokens[i].type)
+          {
+          case  '*' : 
+            tokens[i].type = DEREF;
+            break;
+          case '-' :
+            tokens[i].type = '-';
+            break;
+          case '+' :
+            tokens[i].type = '+';
+            break;
+          default:
+            break;
+          }
+        }
+
+
         nr_token++;
         break;
       }
@@ -264,6 +318,9 @@ word_t expr(char *e, bool *success) {
   *success = true;
 
   /* TODO: Insert codes to evaluate the expression. */  
+
+
+
   word_t ans = eval(0, nr_token - 1, success);
   
   if(success == false){
