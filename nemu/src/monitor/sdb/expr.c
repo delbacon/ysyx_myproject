@@ -196,6 +196,7 @@ static bool make_token(char *e) {
   return true;
 }
 
+
 int check_parentheses(int p, int q) {
     if(tokens[p].type == '(' && tokens[q].type == ')'){//如果式子左右两端都有括号
     int flag = 0;
@@ -254,17 +255,41 @@ int find_main_op(int p, int q)
 }
 
 
+static word_t eval_operation(int p, bool *legal) { 
+  switch (tokens[p].type)
+  {
+  case TK_NUM:
+    return strtol(tokens[p].str, NULL, 10);
+    break;
+  case TK_HEX:
+    return strtol(tokens[p].str, NULL,  0);
+    break;
+  case TK_REG:
+    return isa_reg_str2val(tokens[p].str, legal);
+    break;
+  
+  default:
+    printf("Error: unsupported operator %s\n", tokens[p].str);
+    return 0;
+    break;
+  }
+  return 0;
+}
+
+
 static word_t eval(int p,int q, bool *legal) {
   if (p > q) {
     /* Bad expression */
     *legal = false;
     printf("Error: bad expression\n");
+    return 0;
   }
   else if (p == q) {
     /* Single token.
      * For now this token should be a number.
      * Return the value of the number.
      */
+    /*
     *legal = true;
     if(tokens[p].type != TK_NUM){
       *legal = false;
@@ -273,7 +298,11 @@ static word_t eval(int p,int q, bool *legal) {
     }
     word_t n = strtol(tokens[p].str, NULL, 10);
     return n;
+    */
+    return eval_operation(p, legal);
   }
+
+  //如果最外侧是一对匹配的括号的话
   else if (check_parentheses(p, q) == true) {
     /* The expression is surrounded by a matched pair of parentheses.
      * If that is the case, just throw away the parentheses.
