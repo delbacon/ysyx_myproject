@@ -50,6 +50,7 @@ static int cmd_c(char *args) {
   while(1) {
     int n = wp_difftest();
     int ret = cpu_exec(1);
+    printf("%d  %d\n",n,ret);
     if(n || ret) {
       printf("%d\n",n);
       return 0;
