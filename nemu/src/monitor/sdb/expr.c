@@ -359,7 +359,7 @@ static word_t eval(int p,int q, bool *legal) {
     if (op == p) {
         // 可能是一元操作符
         word_t val2 = eval(op + 1, q, legal);
-        printf("ope:%dr\n",val2);
+        printf("ope:%dr:%d\n",val2,*legal);
         if (!*legal) return 0;
         return calc1op(tokens[op].type, val2, legal);
     } else {
