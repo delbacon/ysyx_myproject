@@ -254,7 +254,7 @@ int find_main_op(int p, int q)
       tmp_type = get_precedence(tokens[i].type);
       //如果优先级更高，则更新返回值ret为优先级更高的位置
       printf("tmp:%d  op_pre:%d\n",tmp_type,op_pre);
-      if (tmp_type > op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
+      if (tmp_type < op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
         op_pre = tmp_type;
         ret = i;
       }
