@@ -218,43 +218,20 @@ int check_parentheses(int p, int q) {
 
 
 int get_precedence(int type) {
-  switch (type) {
-    case TK_OR: return 1;
-    case TK_AND: return 2;
-    case TK_EQ: case TK_NEQ: return 3;
-    case '+': case '-': return 4;
-    case '*': case '/': return 5;
-    default: return 0; // 一元 or invalid
-  }
-}
-
-int find_main_op(int p, int q) {
- int ret = -1, par = 0, op_pre = 0;
-  for (int i = p; i <= q; i++) {
-    if (tokens[i].type == '(') {
-      par++;
-    } else if (tokens[i].type == ')') {
-      if (par == 0) {
-        return -1;
+  int tmp_pre = 0;
+      switch (type) {
+      case TK_OR: tmp_pre++;
+      case TK_AND: tmp_pre++;
+      case TK_EQ: case TK_NEQ: tmp_pre++;
+      case '+': case '-': tmp_pre++;
+      case '*': case '/': tmp_pre++;
+      case TK_NEG: case TK_DEREF: tmp_pre++; break;
+      default: return -1;
       }
-      par--;
-    } else if (TOKEN_TYPES(tokens[i].type, Literals)) {
-      continue;
-    } else if (par > 0) {
-      continue;
-    } else {
-      int tmp_pre = 0;
-      tmp_pre = get_precedence(tokens[i].type);
-      if (tmp_pre > op_pre || (tmp_pre == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
-        op_pre = tmp_pre;
-        ret = i;
-      }
+      return tmp_pre;
     }
-  }
-  if (par != 0) return -1;
-  return ret;
-}
-/*
+
+int find_main_op(int p, int q) 
 {
   int ret = -1, cnt = 0;
   int op_pre = 0;
@@ -280,7 +257,7 @@ int find_main_op(int p, int q) {
       tmp_type = get_precedence(tokens[i].type);
       //如果优先级更高，则更新返回值ret为优先级更高的位置
       printf("tmp:%d  op_pre:%d\n",tmp_type,op_pre);
-      if (tmp_type > op_pre || (tmp_type == op_pre && TOKEN_TYPES(tokens[i].type, Operators))) {
+      if (tmp_type > op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
         op_pre = tmp_type;
         ret = i;
       }
@@ -292,7 +269,7 @@ int find_main_op(int p, int q) {
   }
   return ret;
 }
-*/
+
 
 static word_t eval_operation(int p, bool *legal) { 
   switch (tokens[p].type)
