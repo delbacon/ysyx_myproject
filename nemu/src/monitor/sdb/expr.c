@@ -309,7 +309,7 @@ static word_t calc2op(word_t val1, int op, word_t val2, bool *success) {
               *success = false;
               return 0;
             } 
-            return val1 / val2;
+            return (sword_t)val1 / (sword_t)val2;
   case TK_AND: return val1 && val2;
   case TK_OR: return val1 || val2;
   case TK_EQ: return val1 == val2;
