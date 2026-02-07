@@ -244,15 +244,7 @@ int find_main_op(int p, int q) {
       continue;
     } else {
       int tmp_pre = 0;
-      switch (tokens[i].type) {
-      case TK_OR: tmp_pre++;
-      case TK_AND: tmp_pre++;
-      case TK_EQ: case TK_NEQ: tmp_pre++;
-      case '+': case '-': tmp_pre++;
-      case '*': case '/': tmp_pre++;
-      case TK_NEG: case TK_DEREF: tmp_pre++; break;
-      default: return -1;
-      }
+      tmp_pre = get_precedence(tokens[i].type);
       if (tmp_pre > op_pre || (tmp_pre == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
         op_pre = tmp_pre;
         ret = i;
