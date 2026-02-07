@@ -42,9 +42,10 @@ void init_wp_pool() {
 
 /* TODO: Implement the functionality of watchpoint */
 
-static WP* new_wp() {
+static WP* new_wp() 
+{
   //如果还有空位置的话
-  assert(free_);
+  assert(free_!=NULL);
   WP* ret = free_;
   free_ = free_->next;
   ret->next = head;
@@ -52,12 +53,13 @@ static WP* new_wp() {
   return ret;
 }
 
-static void free_wp(WP *wp) {
+static void free_wp(WP *wp)
+ {
   WP* h = head;
   if (h == wp) head = wp->next;
   else {
     while (h != NULL && h->next != wp) h = h->next;
-    assert(h);
+    assert(h!=NULL);
     h->next = wp->next;
   }
   wp->next = free_;
@@ -66,7 +68,8 @@ static void free_wp(WP *wp) {
 
 
 //监视某个地址的数据
-void wp_watch(char *expr, word_t res) {
+void wp_watch(char *expr, word_t res) 
+{
   WP* wp = new_wp();
   strcpy(wp->expr, expr);
   wp->old = res;
