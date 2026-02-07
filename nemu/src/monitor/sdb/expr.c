@@ -219,11 +219,11 @@ int check_parentheses(int p, int q) {
 //bug!!!!!顺序反了
 int get_precedence(int type) {
   switch (type) {
-    case TK_OR: return 5;
-    case TK_AND: return 4;
+    case TK_OR: return 1;
+    case TK_AND: return 2;
     case TK_EQ: case TK_NEQ: return 3;
-    case '+': case '-': return 2;
-    case '*': case '/': return 1;
+    case '+': case '-': return 4;
+    case '*': case '/': return 5;
     default: return 0; // 一元 or invalid
   }
 }
