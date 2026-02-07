@@ -216,7 +216,7 @@ int check_parentheses(int p, int q) {
   return false;
 }
 
-
+//bug!!!!!
 int get_precedence(int type) {
   switch (type) {
     case TK_OR: return 5;
