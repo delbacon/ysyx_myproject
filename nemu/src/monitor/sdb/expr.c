@@ -61,7 +61,7 @@ static struct rule {
 
   {"\\+",              '+'      },     // plus
   {"\\-",              '-'      },     // minus
-  {"\\*",              '*'      },     // multiplication / TK_TK_DEREF
+  {"\\*",              '*'      },     // multiplication / TK_DEREF
   {"/",                '/'      },     // division
   {"&",                '&'      },     // bitwise and / address-of
 
@@ -230,7 +230,7 @@ int get_precedence(int type) {
 
 int find_main_op(int p, int q) 
 {
-  int ret = -1, par = 0;
+  int ret = -1, cnt = 0;
   int op_pre = 0;
   for (int i = p; i <= q; i++) {
     //跳过所有数字
@@ -239,27 +239,28 @@ int find_main_op(int p, int q)
     }
     //识别括号并计算是否匹配
     if (tokens[i].type == '(') {
-      par++;
+      cnt++;
     } else if (tokens[i].type == ')') {
-      if (par == 0) {
+      if (cnt == 0) {
         return -1;
       }
-      par--;
+      cnt--;
     //如果在一对括号之内，直接忽略
-    } else if (par > 0) {
+    } else if (cnt > 0) {
       continue;
     //否则判断运算优先级
     } else {
       int tmp_type = 0;
       tmp_type = get_precedence(tokens[i].type);
       //如果优先级更高，则更新返回值ret为优先级更高的位置
+      printf("tmp:%d  op_pre:%d\n",tmp_type,op_pre);
       if (tmp_type > op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
         op_pre = tmp_type;
         ret = i;
       }
     }
   }
-  if (par != 0) {
+  if (cnt != 0) {
     printf("Error: unmatched ()\n");
     return -1;
   }
@@ -287,10 +288,9 @@ static word_t eval_operation(int p, bool *legal) {
   }
   return 0;
 }
-
+// 一元运算
 static word_t calc1op(int op, word_t val, bool *success) {
   switch (op){
-  case '+': return val;
   case '-': return -val;
   case '*': return vaddr_read(val, 4);
   default: *success = false;
@@ -299,7 +299,7 @@ static word_t calc1op(int op, word_t val, bool *success) {
   return 0;
 }
 
-// binary operator
+// 二元运算
 static word_t calc2op(word_t val1, int op, word_t val2, bool *success) {
   switch(op) {
   case '+': return val1 + val2;
@@ -310,7 +310,8 @@ static word_t calc2op(word_t val1, int op, word_t val2, bool *success) {
               *success = false;
               return 0;
             } 
-            return (sword_t)val1 / (sword_t)val2; //
+            word_t ret = (sword_t)val1 / (sword_t)val2;
+            return ret;
   case TK_AND: return val1 && val2;
   case TK_OR: return val1 || val2;
   case TK_EQ: return val1 == val2;
