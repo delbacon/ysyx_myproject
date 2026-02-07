@@ -216,7 +216,7 @@ int check_parentheses(int p, int q) {
   return false;
 }
 
-//bug!!!!!
+//bug!!!!!顺序反了
 int get_precedence(int type) {
   switch (type) {
     case TK_OR: return 5;
@@ -252,9 +252,9 @@ int find_main_op(int p, int q)
     } else {
       int tmp_type = 0;
       tmp_type = get_precedence(tokens[i].type);
-      //如果优先级更高，则更新返回值ret为优先级更高的位置
+      //如果优先级更低，则更新返回值ret为优先级更低的位置
       printf("tmp:%d  op_pre:%d\n",tmp_type,op_pre);
-      if (tmp_type > op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
+      if (tmp_type > op_pre || !(tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
         op_pre = tmp_type;
         ret = i;
       }
