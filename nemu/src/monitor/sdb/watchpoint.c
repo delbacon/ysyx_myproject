@@ -65,12 +65,16 @@ static void free_wp(WP *wp) {
 }
 
 
+//监视某个地址的数据
 void wp_watch(char *expr, word_t res) {
   WP* wp = new_wp();
   strcpy(wp->expr, expr);
   wp->old = res;
   printf("Wp %d: %s\n", wp->NO, expr);
 }
+
+
+//移除某一个wp
 void remove_wp(int no) {
   assert(no < NR_WP);
   WP* wp = &wp_pool[no];
@@ -83,6 +87,7 @@ void wp_difftest() {
   while (h) {
     bool success;
     word_t new = expr(h->expr, &success);
+    //如果存储的值发生变化，执行
     if (h->old != new) {
       printf("Wp %d: %s\n"
         "Old value = %u %x\n"
