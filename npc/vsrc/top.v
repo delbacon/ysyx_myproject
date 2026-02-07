@@ -1,4 +1,4 @@
-
+/*
 module top(
   input clk,
   input rst,
@@ -51,7 +51,7 @@ module top(
 
 
 endmodule
-
+*/
 
 /*VGA
 module top(
@@ -108,7 +108,7 @@ assign vga_data = vga_mem[{h_addr, v_addr}];
 endmodule
 
 */
-/*
+
 //keyboard_ascii
 module top(
   input ps2_clk,
@@ -137,7 +137,7 @@ Keyboard_Ascii u_Keyboard_Ascii (
     .st      (st      )
 );
 endmodule
-*/
+
 
 /*Random_Gene
 module top(

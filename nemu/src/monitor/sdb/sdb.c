@@ -53,7 +53,7 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
-  
+
   return -1;
 }
 
@@ -140,6 +140,7 @@ static int cmd_x_N_EXPR(char *args){
   return 0;
 }
 
+//表达式计算
 static int cmd_p_EXPR(char *args){
   bool success;
   word_t res = expr(args,&success);
@@ -153,6 +154,7 @@ static int cmd_p_EXPR(char *args){
   return 0;
 }
 
+//监视点设置
 static int cmd_w_EXPR(char *args){ 
   bool success;
   word_t res = expr(args,&success);
@@ -165,6 +167,7 @@ static int cmd_w_EXPR(char *args){
   return 0;
 }
 
+//监视点删除
 static int cmd_d_N(char *args){ 
   char *arg_N = strtok(NULL," ");
   char *endptr;
