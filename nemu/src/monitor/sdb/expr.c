@@ -219,11 +219,11 @@ int check_parentheses(int p, int q) {
 
 int get_precedence(int type) {
   switch (type) {
-    case TK_OR: return 1;
-    case TK_AND: return 2;
+    case TK_OR: return 5;
+    case TK_AND: return 4;
     case TK_EQ: case TK_NEQ: return 3;
-    case '+': case '-': return 4;
-    case '*': case '/': return 5;
+    case '+': case '-': return 2;
+    case '*': case '/': return 1;
     default: return 0; // 一元 or invalid
   }
 }
@@ -254,7 +254,7 @@ int find_main_op(int p, int q)
       tmp_type = get_precedence(tokens[i].type);
       //如果优先级更高，则更新返回值ret为优先级更高的位置
       printf("tmp:%d  op_pre:%d\n",tmp_type,op_pre);
-      if (tmp_type < op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
+      if (tmp_type > op_pre || (tmp_type == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
         op_pre = tmp_type;
         ret = i;
       }
