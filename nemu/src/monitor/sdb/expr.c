@@ -228,7 +228,41 @@ int get_precedence(int type) {
   }
 }
 
-int find_main_op(int p, int q) 
+int find_main_op(int p, int q) {
+ int ret = -1, par = 0, op_pre = 0;
+  for (int i = p; i <= q; i++) {
+    if (tokens[i].type == '(') {
+      par++;
+    } else if (tokens[i].type == ')') {
+      if (par == 0) {
+        return -1;
+      }
+      par--;
+    } else if (TOKEN_TYPES(tokens[i].type, Literals)) {
+      continue;
+    } else if (par > 0) {
+      continue;
+    } else {
+      int tmp_pre = 0;
+      switch (tokens[i].type) {
+      case TK_OR: tmp_pre++;
+      case TK_AND: tmp_pre++;
+      case TK_EQ: case TK_NEQ: tmp_pre++;
+      case '+': case '-': tmp_pre++;
+      case '*': case '/': tmp_pre++;
+      case TK_NEG: case TK_DEREF: tmp_pre++; break;
+      default: return -1;
+      }
+      if (tmp_pre > op_pre || (tmp_pre == op_pre && !TOKEN_TYPES(tokens[i].type, Operators))) {
+        op_pre = tmp_pre;
+        ret = i;
+      }
+    }
+  }
+  if (par != 0) return -1;
+  return ret;
+}
+/*
 {
   int ret = -1, cnt = 0;
   int op_pre = 0;
@@ -266,7 +300,7 @@ int find_main_op(int p, int q)
   }
   return ret;
 }
-
+*/
 
 static word_t eval_operation(int p, bool *legal) { 
   switch (tokens[p].type)
