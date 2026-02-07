@@ -23,7 +23,7 @@ void am_init_monitor();
 void engine_start();
 int is_exit_status_bad();
 
-
+/*
 
 
 int main(int argc, char *argv[]) {
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   return is_exit_status_bad();
 }
 
-/*
+*/
 
 //test_expr
 
@@ -114,4 +114,3 @@ int main(int argc, char *argv[]) {
 
   return (passed == total) ? 0 : 1;
 }
-*/
