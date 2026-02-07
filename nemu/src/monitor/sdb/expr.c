@@ -52,7 +52,7 @@ static struct rule {
 
   {"0[xX][0-9a-fA-F]+", TK_HEX   },    // hex literal (fixed ++)
   {"[0-9]+",           TK_NUM   },     // decimal number
-  {"\\$[0-9,a-z-A-Z]+",          TK_REG   },     // register, e.g., $eax
+  {"\\$\\w+",          TK_REG   },     // register, e.g., $eax
 
   {"==",               TK_EQ    },     // equal
   {"!=",               TK_NEQ   },     // not equal
