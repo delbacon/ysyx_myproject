@@ -24,7 +24,7 @@ void engine_start();
 int is_exit_status_bad();
 
 
-
+/*
 
 int main(int argc, char *argv[]) {
   // Initialize the monitor. //
@@ -41,9 +41,10 @@ int main(int argc, char *argv[]) {
   return is_exit_status_bad();
 }
 
+*/
 
 //test_expr
-/*
+
 int main(int argc, char *argv[]) {
 #ifdef CONFIG_TARGET_AM
   am_init_monitor();
@@ -113,4 +114,3 @@ int main(int argc, char *argv[]) {
 
   return (passed == total) ? 0 : 1;
 }
-*/

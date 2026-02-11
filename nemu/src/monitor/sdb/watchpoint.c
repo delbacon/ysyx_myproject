@@ -42,8 +42,10 @@ void init_wp_pool() {
 
 /* TODO: Implement the functionality of watchpoint */
 
-static WP* new_wp() {
-  assert(free_);
+static WP* new_wp() 
+{
+  //如果还有空位置的话
+  assert(free_!=NULL);
   WP* ret = free_;
   free_ = free_->next;
   ret->next = head;
@@ -51,12 +53,13 @@ static WP* new_wp() {
   return ret;
 }
 
-static void free_wp(WP *wp) {
+static void free_wp(WP *wp)
+ {
   WP* h = head;
-  if (h == wp) head = NULL;
+  if (h == wp) head = wp->next;
   else {
-    while (h && h->next != wp) h = h->next;
-    assert(h);
+    while (h != NULL && h->next != wp) h = h->next;
+    assert(h!=NULL);
     h->next = wp->next;
   }
   wp->next = free_;
@@ -64,30 +67,37 @@ static void free_wp(WP *wp) {
 }
 
 
-void wp_watch(char *expr, word_t res) {
+//监视某个地址的数据
+void wp_watch(char *expr, word_t res) 
+{
   WP* wp = new_wp();
   strcpy(wp->expr, expr);
   wp->old = res;
-  printf("Watchpoint %d: %s\n", wp->NO, expr);
+  printf("Wp %d: %s\n", wp->NO, expr);
 }
+
+
+//移除某一个wp
 void remove_wp(int no) {
   assert(no < NR_WP);
   WP* wp = &wp_pool[no];
   free_wp(wp);
-  printf("Delete watchpoint %d: %s\n", wp->NO, wp->expr);
+  printf("Delete wp %d: %s\n", wp->NO, wp->expr);
 }
 
 void wp_difftest() {
   WP* h = head;
   while (h) {
-    bool _;
-    word_t new = expr(h->expr, &_);
+    bool success;
+    word_t new = expr(h->expr, &success);
+    //如果存储的值发生变化，执行
     if (h->old != new) {
-      printf("Watchpoint %d: %s\n"
+      printf("Wp %d: %s\n"
         "Old value = %u %x\n"
         "New value = %u %x\n"
         , h->NO, h->expr, h->old, h->old, new, new);
       h->old = new;
+      //暂停运行
       nemu_state.state = NEMU_STOP;
       return ;
     }
@@ -95,15 +105,15 @@ void wp_difftest() {
   }
   return ;
 }
-void wp_iterate() {
+void wp_display() {
   WP* h = head;
-  if (!h) {
-    puts("No watchpoints.");
+  if (h==NULL) {
+    printf("No wp.\n");
     return;
   }
-  printf("%-8s%-8s\n", "Num", "What");
+  printf("%-4s  %-4s  %-4s\n", "Num", "Wp", "Result");
   while (h) {
-    printf("%-8d%-8s\n", h->NO, h->expr);
+    printf("%-4d  %-4s  0x%-8x\n", h->NO, h->expr, h->old);
     h = h->next;
   }
 }

@@ -1,8 +1,8 @@
-
+/*
 module top(
   input clk,
-  input rst
-  /*
+  input rst,
+  
   output [7:0] seg0,
   output [7:0] seg1,
   output [7:0] seg2,
@@ -10,14 +10,14 @@ module top(
   output [7:0] seg5,
   output [7:0] seg6,
   output [7:0] seg7
-*/
+
 );
   wire [7:0] out;
   wire [3:0] pc;
   wire [7:0] test0, test1, test2, test3;
   sCPU u_sCPU(clk, rst, out, pc, test0, test1, test2, test3);
 
-/*
+
   bcd7seg inst_bcd7seg0(
     .b    (out[7:4] ),
     .h    (seg1)
@@ -48,10 +48,10 @@ module top(
     .b    (test3[3:0] ),
     .h    (seg7)
   );
-*/
+
 
 endmodule
-
+*/
 
 /*VGA
 module top(
@@ -108,7 +108,7 @@ assign vga_data = vga_mem[{h_addr, v_addr}];
 endmodule
 
 */
-/*
+
 //keyboard_ascii
 module top(
   input ps2_clk,
@@ -137,7 +137,7 @@ Keyboard_Ascii u_Keyboard_Ascii (
     .st      (st      )
 );
 endmodule
-*/
+
 
 /*Random_Gene
 module top(
