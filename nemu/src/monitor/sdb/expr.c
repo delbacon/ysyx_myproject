@@ -221,9 +221,9 @@ int get_precedence(int type) {
   switch (type) {
     case '+': case '-': return 5;
     case '*': case '/': return 4;
-    case TK_OR: return 3;
+    case TK_EQ: case TK_NEQ: return 3;
     case TK_AND: return 2;
-    case TK_EQ: case TK_NEQ: return 1;
+    case TK_OR: return 1;
     default: return 0; // 一元 or invalid
   }
 }

@@ -45,16 +45,24 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 }
 
 static void exec_once(Decode *s, vaddr_t pc) {
+  //snpc指向地址上的下一条指令，dnpc指向实际要执行的下一条指令
+  //静态指令是指程序代码中的指令, 动态指令是指程序运行过程中的指令
+  //实际执行的是dnpc,所以应该正确维护dnpc
   s->pc = pc;
   s->snpc = pc;
+  //isa这里取出指令到s->isa.inst中，并默认pc+len（len根据传参确定）,然后令dnpc等于snpc
   isa_exec_once(s);
   cpu.pc = s->dnpc;
-#ifdef CONFIG_ITRACE
+
+  #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
   int ilen = s->snpc - s->pc;
   int i;
+  //先取地址再取内容，这样取到的是第一个字节的数据，并且可以通过指针访问后续字节
+  //如果直接强制类型转换为uint8_t,会丢失第一个字节后的内容
   uint8_t *inst = (uint8_t *)&s->isa.inst;
+  //这里特殊处理x86是因为大端序和小端序？
 #ifdef CONFIG_ISA_x86
   for (i = 0; i < ilen; i ++) {
 #else
@@ -75,14 +83,19 @@ static void exec_once(Decode *s, vaddr_t pc) {
 #endif
 }
 
+//执行一条指令
 static void execute(uint64_t n) {
   Decode s;
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst ++;
     trace_and_difftest(&s, cpu.pc);
+    //如果nemu的状态为NEMU_RUNNING，则继续执行，否则跳出循环
     if (nemu_state.state != NEMU_RUNNING) break;
+    //IFDEF的作用是，如果宏定义CONFIG_DEVICE存在，则执行device_update()，否则不执行。
     IFDEF(CONFIG_DEVICE, device_update());
+
+
   }
 }
 
