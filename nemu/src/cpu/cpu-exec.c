@@ -47,7 +47,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 static void exec_once(Decode *s, vaddr_t pc) {
   //snpc指向地址上的下一条指令，dnpc指向实际要执行的下一条指令
   //静态指令是指程序代码中的指令, 动态指令是指程序运行过程中的指令
-  //实际执行的是dnpc,所以应该正确维护dnpc
+  //实际执行的是dnpc,所以在执行指令的过程中应该正确维护dnpc
   s->pc = pc;
   s->snpc = pc;
   //isa这里取出指令到s->isa.inst中，并默认pc+len（len根据传参确定）,然后令dnpc等于snpc
