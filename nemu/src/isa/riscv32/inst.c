@@ -132,11 +132,12 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, if(src2==0) {R(rd)=-1;} \
                                                                 else if(src1==min_val && src2==-1) {R(rd)=min_val;}
                                                                 else {R(rd)=(sword_t)src1 / (sword_t)src2;});
+  INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, if(src2==0) {R(rd)=-1;} \
+                                                                else {R(rd)=src1 / src2;});                                                            
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if(src2==0) {R(rd)=src1;} \
                                                                 else if(src1==min_val && src2==-1) {R(rd)=0;}
                                                                 else {R(rd)=(sword_t)src1 % (sword_t)src2;});
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, if(src2==0) {R(rd)=src1;} \
-                                                                else if(src1==min_val && src2==-1) {R(rd)=0;}
                                                                 else {R(rd)=src1 % src2;});                                                            
 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
