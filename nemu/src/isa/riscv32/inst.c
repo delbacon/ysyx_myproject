@@ -64,6 +64,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
 
 static int decode_exec(Decode *s) {
   s->dnpc = s->snpc;
+  word_t inst = s->isa.inst;
 
 #define INSTPAT_INST(s) ((s)->isa.inst)
 #define INSTPAT_MATCH(s, name, type, ... /* execute body */ ) { \
@@ -99,7 +100,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 011 ????? 00100 11", sltiu  , I, if(src1 < (word_t)BITS(imm ,11 ,0) || src1 == 0) {R(rd) = 1;} \
                                                                 else {R(rd) = 0;});//also seqz
   INSTPAT("??????? ????? ????? 111 ????? 00100 11", andi   , I, R(rd) = src1 & imm);
-  INSTPAT("0100000 ????? ????? 101 ????? 00100 11", srai   , I, R(rd) = src1 & imm);  
+  INSTPAT("0100000 ????? ????? 101 ????? 00100 11", srai   , I, R(rd) = (sword_t)src1 >> BITS(inst, 24, 20));//a=arch..算数右移，gcc默认带符号为算数右移  
 
   INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add    , R, R(rd) = src1 + src2);
   INSTPAT("0100000 ????? ????? 000 ????? 01100 11", sub    , R, R(rd) = src1 - src2);
