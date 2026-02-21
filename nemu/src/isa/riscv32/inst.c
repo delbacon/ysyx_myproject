@@ -104,10 +104,10 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 110 ????? 01100 11", or     , R, R(rd) = src1 | src2);//not test
 
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
-  
+
   //M extension
-           //0000001 10011 01000 110 01111 01100 11
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if(src2==0) {R(rd)=src1;} \
+                                                                else if(src1==min_val && src2==-1) {R(rd)=0;}
                                                                 else {R(rd)=(sword_t)src1 % (sword_t)src2;});
 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
