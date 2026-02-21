@@ -91,9 +91,10 @@ LDFLAGS  += -z noexecstack $(addprefix -T, $(LDSCRIPTS))
 ## 4. Arch-Specific Configurations
 
 ### Paste in arch-specific configurations (e.g., from `scripts/x86_64-qemu.mk`)
+override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
+override ARGS += -b
 -include $(AM_HOME)/scripts/$(ARCH).mk
 
-override ARGS += -b
 ## 5. Compilation Rules
 
 ### Rule (compile): a single `.c` -> `.o` (gcc)
