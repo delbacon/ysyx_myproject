@@ -120,6 +120,12 @@ static int decode_exec(Decode *s) {
 
   //M extension
   INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = (sword_t)src1 * (sword_t)src2);
+//  INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh , R, R(rd) = (sword_t)((sword_t)src1 * (sword_t)src2) >> 32);
+//  INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu, R, R(rd) = (word_t)((word_t)src1 * (word_t)src2) >> 32);
+//  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu, R, R(rd) = (word_t)((sword_t)src1 * (word_t)src2) >> 32);
+  INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, if(src2==0) {R(rd)=-1;} \
+                                                                else if(src1==min_val && src2==-1) {R(rd)=min_val;}
+                                                                else {R(rd)=(sword_t)src1 / (sword_t)src2;});
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if(src2==0) {R(rd)=src1;} \
                                                                 else if(src1==min_val && src2==-1) {R(rd)=0;}
                                                                 else {R(rd)=(sword_t)src1 % (sword_t)src2;});
