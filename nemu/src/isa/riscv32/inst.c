@@ -117,7 +117,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 010 ????? 01100 11", slt    , R, if((sword_t)src1 < (sword_t)src2) {R(rd) = 1;}\
                                                                 else {R(rd) = 0;} );
   INSTPAT("0000000 ????? ????? 011 ????? 01100 11", sltu   , R, if((src1 < src2)) {R(rd) = 1;}\
-                                                                else {R(rd) = 0;} );
+                                                                else {R(rd) = 0;} );//要求为src1=x0时，src2 != 0则rd=1，但是实际不用额外加逻辑去判断
   INSTPAT("0000000 ????? ????? 100 ????? 01100 11", xor    , R, R(rd) = src1 ^ src2);
   INSTPAT("0000000 ????? ????? 101 ????? 01100 11", srl    , R, R(rd) = src1 >> BITS(src2, 4, 0));
   INSTPAT("0100000 ????? ????? 101 ????? 01100 11", sra    , R, R(rd) = (sword_t)src1 >> BITS(src2, 4, 0));
