@@ -27,10 +27,8 @@ $(BINARY):: compile_git
 override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
 override ARGS += $(ARGS_DIFF)
 
-# 只有当构建目标来自abstract-machine时才添加-b参数
-ifneq ($(findstring abstract-machine,$(CURDIR)),)
   override ARGS += -b
-endif
+
 
 # Command to execute NEMU
 IMG ?=
