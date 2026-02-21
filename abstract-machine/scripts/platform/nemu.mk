@@ -1,3 +1,4 @@
+AM_BUILDING := yes
 AM_SRCS := platform/nemu/trm.c \
            platform/nemu/ioe/ioe.c \
            platform/nemu/ioe/timer.c \
