@@ -16,7 +16,6 @@
 #include "sdb.h"
 
 
-
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
