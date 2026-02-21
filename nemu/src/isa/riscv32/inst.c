@@ -108,8 +108,8 @@ static int decode_exec(Decode *s) {
 
   //M extension
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if(src2==0) {R(rd)=src1;} \
-                                                                else if((sword_t)src1 == min_val && (sword_t)src2 == -1){R(rd)=0;} \
                                                                 else {R(rd)=(sword_t)src1 % (sword_t)src2;});
+                                                                //除法如果overflow会自动截断(min_val) / -1 == max_val + 1)
   INSTPAT_END();
 
   R(0) = 0; // reset $zero to 0
