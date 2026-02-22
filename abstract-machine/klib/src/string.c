@@ -18,7 +18,11 @@ char *strcpy(char *dst, const char *src) {
   if (dst == NULL || src == NULL) return NULL; 
 
   char *ret = dst;
-  while((*dst++ = *src++) != '\0'){}
+  while(*src != '\0'){
+    *dst = *src;
+    dst++;
+    src++;
+  }
   *dst = '\0';
   return ret;
 }
@@ -34,11 +38,12 @@ char *strncpy(char *dst, const char *src, size_t n) {
       *dst = *src;
       src++;
     } else {
-      *dst = '\0'; // 填充 \0
+      *dst = '\0'; 
     }
     dst++;
     n--;
   }
+  
 
   return ret;
 }
@@ -48,7 +53,13 @@ char *strcat(char *dst, const char *src) {
 
   char *ret = dst;
   while(*dst != '\0') dst++;
-  while((*dst++ = *src++) != '\0'){}
+  
+  while(*src != '\0'){
+    *dst = *src;
+    dst++;
+    src++;
+  }
+  *dst = '\0';
   return ret;
 }
 
