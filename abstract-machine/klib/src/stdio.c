@@ -28,7 +28,7 @@ static void int2str(char *str, int num) {
   }
 
   int cnt = 0;
-  int temp_num = num; // 使用临时变量避免修改原始num
+  int temp_num = num; 
   
   // 计算数字位数
   do {
@@ -49,59 +49,62 @@ static void int2str(char *str, int num) {
   if (negative) {
     buf[0] = '-';
   }
-  
   // 复制到目标字符串
   strcpy(str, buf);
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
-
-  char *start = out;
-  char buf[32];
-
-  while(*fmt){
-    switch(*fmt){
-      case '%': 
-        fmt++;
-        switch(*fmt){
-          case 'c': {
-            char c = va_arg(ap, int);
-            *out++ = c;
-            break;
-          }
-          case 'd': {
-              int num = va_arg(ap, int);
-              // 将整数转换为字符串
-              char *p = buf + sizeof(buf) - 1;
-              int2str(p, num);
-          
-              // 复制到输出缓冲区
-              while (*p) {
-                *out++ = *p++;
-              }
-              break;
-            }
-          case 's': {
-              char *s = va_arg(ap, char *);
-              while (*s) {
-                *out++ = *s++;
-              }
-              break;
-            }
-          default:
-            break;
-        }   
-        fmt++;
-      default:
-        *out++ = *fmt;
-    }
-  }
-  *out = '\0';
-  return out - start;
+  panic("Not implemented");
 }
 
 int sprintf(char *out, const char *fmt, ...) {
-  panic("Not implemented");
+  char *start = out;
+  char buf[32];
+  va_list ap;
+  va_start(ap, fmt);
+
+  
+  while (*fmt) {
+    if (*fmt == '%') {
+      fmt++;
+      switch (*fmt) {
+        case 'c': {
+          char c = (char)va_arg(ap, int); // 明确类型转换
+          *out++ = c;
+          break;
+        }
+        case 'd': {
+          int num = va_arg(ap, int);
+          char *p = buf + sizeof(buf) - 1;
+          int2str(p, num); // 转换整数为字符串
+
+          // 复制到输出缓冲区
+          while (*p) {
+            *out++ = *p++;
+          }
+          break;
+        }
+        case 's': {
+          char *s = va_arg(ap, char *);
+          if (s == NULL) s = "(null)"; // 安全处理空指针
+          while (*s) {
+            *out++ = *s++;
+          }
+          break;
+        }
+        default:
+          // 忽略无效格式符
+          break;
+      }
+      fmt++;
+    } else {
+      *out++ = *fmt++; // 直接复制普通字符
+    }
+  }
+
+  *out = '\0'; // 添加字符串结束符
+  va_end(ap);
+  return out - start; // 返回写入字符数
 }
 
 int snprintf(char *out, size_t n, const char *fmt, ...) {
