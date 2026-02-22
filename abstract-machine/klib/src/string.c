@@ -15,72 +15,131 @@ size_t strlen(const char *s) {
 }
 
 char *strcpy(char *dst, const char *src) {
-  while(*src != '\0'){
-    *dst = *src;
-    src++;
-    dst++;
-  }
+  if (dst == NULL || src == NULL) return NULL; 
+
+  char *ret = dst;
+  while((*dst++ = *src++) != '\0'){}
   *dst = '\0';
-  return dst;
+  return ret;
 }
 
 //库函数里实现的不会自动添加\0
 char *strncpy(char *dst, const char *src, size_t n) {
+  if(dst == NULL || src == NULL) return NULL;
   if(n == 0) return dst;
 
-  while(n--){
-    //如果n>src的长度，则dst剩余部分由\0填充
-    if(*src == '\0'){
-      while(n--){
-        *dst = '\0';
-        dst++;
-      }
-//      *dst = '\0';
-      return dst;
+  char *ret = dst;
+  while (n > 0) {
+    if (*src != '\0') {
+      *dst = *src;
+      src++;
+    } else {
+      *dst = '\0'; // 填充 \0
     }
-
-    *dst = *src;
-    src++;
     dst++;
+    n--;
   }
-//  *dst = '\0';
 
-  return dst;
+  return ret;
 }
 
 char *strcat(char *dst, const char *src) {
+  if(dst == NULL || src == NULL) return NULL;
+
+  char *ret = dst;
   while(*dst != '\0') dst++;
-  while(*src != '\0'){
-    *dst = *src;
-    dst++;
-    src++;
-  }
-  *dst = '\0';
-  return dst;
+  while((*dst++ = *src++) != '\0'){}
+  return ret;
 }
 
 int strcmp(const char *s1, const char *s2) {
-  panic("Not implemented");
+  if (s1 == NULL || s2 == NULL) {
+    return (s1 == NULL) - (s2 == NULL); 
+  }
+
+    while( (*s1 != '\0') && (*s1 == *s2) ){ 
+      s1++;
+      s2++;
+    }
+    return (unsigned char)*s1 - (unsigned char)*s2;
 }
 
 int strncmp(const char *s1, const char *s2, size_t n) {
-  panic("Not implemented");
+  if(n == 0) return 0;
+  if (s1 == NULL || s2 == NULL) {
+    return (s1 == NULL) - (s2 == NULL); 
+  }
+
+    while( (*s1 != '\0') && (*s1 == *s2) && n>0){ 
+      s1++;
+      s2++;
+      n--; 
+    }
+    if(n==0) return 0;
+    return (unsigned char )*s1 - (unsigned char )*s2;
 }
 
 void *memset(void *s, int c, size_t n) {
-  panic("Not implemented");
+  if(s == NULL) return NULL;
+  
+  unsigned char *p = s;
+  while(n>0){
+    *p++ = (unsigned char)c;
+    n--;
+  }
+  return s;
 }
 
 void *memmove(void *dst, const void *src, size_t n) {
-  panic("Not implemented");
+  if(dst == NULL || src == NULL) return NULL;
+
+  unsigned char *p_dst = dst;
+  const unsigned char *p_src = src;
+    if (p_dst < p_src){
+        while (n>0){
+            *p_dst++ = *p_src++;
+            n--;
+        }
+    }
+    /* 如果目标地址在源地址之后，反向拷贝 */
+    else if (p_dst > p_src){
+        p_dst += n;
+        p_src += n;
+        while (n>0){
+            *(--p_dst) = *(--p_src);
+            n--;
+        }
+    }
+
+    return dst;
 }
 
 void *memcpy(void *out, const void *in, size_t n) {
-  panic("Not implemented");
+  if(out == NULL || in == NULL) return NULL;
+
+  unsigned char *p_dst = out;
+  const unsigned char *p_src = in;
+  while (n>0){
+    *p_dst++ = *p_src++;
+     n--;
+  }
+  return out;
 }
 
 int memcmp(const void *s1, const void *s2, size_t n) {
-  panic("Not implemented");
+  if (s1 == NULL || s2 == NULL) {
+    return (s1 == NULL) - (s2 == NULL); 
+  }
+
+  const unsigned char *p_s1 = s1;
+  const unsigned char *p_s2 = s2;
+    while( (*p_s1 != '\0') && (*p_s1 == *p_s2) && n>0){ 
+      p_s1++;
+      p_s2++;
+      n--; 
+    }
+    if(n==0) return 0;
+    return (unsigned char )*p_s1 - (unsigned char )*p_s2;
 }
 
 #endif
