@@ -63,27 +63,26 @@ int sprintf(char *out, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
 
-  
   while (*fmt) {
-    if (*fmt == '%') {
+    if (*fmt == '%') {//检测是否为格式化字符
       fmt++;
       switch (*fmt) {
         case 'c': {
-          char c = (char)va_arg(ap, int); // 明确类型转换
+          char c = (char)va_arg(ap, int); 
           *out++ = c;
           break;
         }
+
         case 'd': {
           int num = va_arg(ap, int);
           char *p = buf + sizeof(buf) - 1;
-          int2str(p, num); // 转换整数为字符串
-
-          // 复制到输出缓冲区
+          int2str(p, num);
           while (*p) {
             *out++ = *p++;
           }
           break;
         }
+
         case 's': {
           char *s = va_arg(ap, char *);
           if (s == NULL) s = "(null)"; // 安全处理空指针
@@ -92,6 +91,7 @@ int sprintf(char *out, const char *fmt, ...) {
           }
           break;
         }
+        
         default:
           // 忽略无效格式符
           break;
