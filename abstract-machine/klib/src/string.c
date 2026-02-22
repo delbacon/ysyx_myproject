@@ -30,7 +30,6 @@ char *strcpy(char *dst, const char *src) {
 //库函数里实现的不会自动添加\0
 char *strncpy(char *dst, const char *src, size_t n) {
   if(dst == NULL || src == NULL) return NULL;
-  if(n == 0) return dst;
 
   char *ret = dst;
   while (n > 0) {
@@ -53,7 +52,7 @@ char *strcat(char *dst, const char *src) {
 
   char *ret = dst;
   while(*dst != '\0') dst++;
-  
+
   while(*src != '\0'){
     *dst = *src;
     dst++;
