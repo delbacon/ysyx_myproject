@@ -157,6 +157,10 @@ static int cmd_p_EXPR(char *args){
 //监视点设置
 static int cmd_w_EXPR(char *args){ 
   bool success;
+  if(args==NULL){
+    printf("Warning: use 'w EXPR' to set watchpoint. .\n");
+    return 1;
+  }
   word_t res = expr(args,&success);
   if(!success){
     printf("Invalid expression.\n");

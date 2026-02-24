@@ -15,8 +15,6 @@
 
 #include "sdb.h"
 
-
-
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
@@ -93,8 +91,8 @@ void wp_difftest() {
     //如果存储的值发生变化，执行
     if (h->old != new) {
       printf("Wp %d: %s\n"
-        "Old value = %u %x\n"
-        "New value = %u %x\n"
+        "Old value = %u 0x%x\n"
+        "New value = %u 0x%x\n"
         , h->NO, h->expr, h->old, h->old, new, new);
       h->old = new;
       //暂停运行
