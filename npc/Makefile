@@ -81,13 +81,29 @@ endif
 
 all: default
 
-run: $(BIN)
-	@$^
+# build verilator & sim
+######################################################################################
+CSRCSRUN = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+TOP_MODULE = ysyx_26020055_top
+# verilator --cc --exe --build -j 0 --trace-vcd -Wall sim_main.cpp ./src/top.v
+obj_dir/V$(TOPNAME): $(VSRCS) $(SIMFILE)
+	verilator --cc --exe --build -j 0 --trace-vcd -Wall \
+	--top-module $(TOP_MODULE) \
+	    $(CSRCSRUN) $(VSRCS)
+
+run: obj_dir/V$(TOPNAME)
+	./obj_dir/V$(TOP_MODULE) 
 
 sim: $(SIMFILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	gktwave waveform.*
+	gtkwave waveform.*
 
+clean:
+	rm -rf obj_dir
+#######################################################################################
+
+run-NV: $(BIN)
+	@$^
 # yosys
 
 # Example:
@@ -117,10 +133,10 @@ $(TIMING_RPT): $(NETLIST_SYN_V) | check-yosys-sta check-sdc
 
 
 
-clean:
+clean-NV:
 	rm -rf $(BUILD_DIR)
 
 clean-yosys:
 	rm -rf $(O)
 
-.PHONY: default all clean run syn sta clean-yosys check-yosys-sta check-sdc
+.PHONY: default all clean run run-NV clean-NC syn sta clean-yosys check-yosys-sta check-sdc
