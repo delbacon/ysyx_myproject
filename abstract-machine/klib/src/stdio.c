@@ -6,9 +6,21 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 int printf(const char *fmt, ...) {
-  panic("Not implemented");
-}
+  char out[1024];
 
+  // 使用 va_list 处理变参
+  va_list args;
+  va_start(args, fmt);
+  int len = vsprintf(out, fmt, args); // 使用 vsprintf 处理格式化
+  va_end(args);
+
+  // 输出字符并统计数量
+  for (int i = 0; out[i] != '\0'; i++) {
+    putch(out[i]);
+  }
+
+  return len; // 返回实际输出字符数
+}
 
 static void int2str(char *str, int num) {
   int negative = 0;
@@ -54,15 +66,8 @@ static void int2str(char *str, int num) {
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
-  panic("Not implemented");
-}
-
-int sprintf(char *out, const char *fmt, ...) {
   char *start = out;
   char buf[32];
-  va_list ap;
-  va_start(ap, fmt);
-
   while (*fmt) {
     if (*fmt == '%') {//检测是否为格式化字符
       fmt++;
@@ -81,6 +86,17 @@ int sprintf(char *out, const char *fmt, ...) {
             *out++ = *p++;
           }
           break;
+        }
+
+        case 'x': {
+          int num = va_arg(ap, int);
+          char *p = buf + sizeof(buf) - 1;
+          int2str(p, num);
+          *out++ = '0';
+          *out++ = 'x';
+          while (*p) {
+            *out++ = *p++;
+          } 
         }
 
         case 's': {
@@ -103,8 +119,14 @@ int sprintf(char *out, const char *fmt, ...) {
   }
 
   *out = '\0'; // 添加字符串结束符
-  va_end(ap);
   return out - start; // 返回写入字符数
+}
+
+int sprintf(char *out, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  return vsprintf(out, fmt, ap);
+  va_end(ap);
 }
 
 int snprintf(char *out, size_t n, const char *fmt, ...) {

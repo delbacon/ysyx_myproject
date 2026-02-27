@@ -22,8 +22,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_26020055_top___024root final {
     VL_OUT8(jmp_op,3,0);
     CData/*5:0*/ ysyx_26020055_top__DOT__exu_op;
     CData/*3:0*/ ysyx_26020055_top__DOT__mem_op;
-    CData/*0:0*/ ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_1;
-    CData/*0:0*/ ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_3;
+    CData/*0:0*/ ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_2;
+    CData/*0:0*/ ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_5;
     CData/*0:0*/ ysyx_26020055_top__DOT__EXU__DOT__mem_on;
     CData/*7:0*/ ysyx_26020055_top__DOT__LSU__DOT__wmask;
     CData/*0:0*/ __VstlFirstIteration;

@@ -27,7 +27,7 @@ char *strcpy(char *dst, const char *src) {
   return ret;
 }
 
-//库函数里实现的不会自动添加\0
+//库函数里实现的不会在末尾自动添加\0
 char *strncpy(char *dst, const char *src, size_t n) {
   if(dst == NULL || src == NULL) return NULL;
 

@@ -85,6 +85,8 @@ all: default
 ######################################################################################
 CSRCSRUN = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 TOP_MODULE = ysyx_26020055_top
+IMG  ?= /home/delbacon/ysyx-workbench/am-kernels/tests/cpu-tests/build/div-minirv-npc.bin
+DEBUG ?= 0
 # verilator --cc --exe --build -j 0 --trace-vcd -Wall sim_main.cpp ./src/top.v
 obj_dir/V$(TOPNAME): $(VSRCS) $(SIMFILE)
 	verilator --cc --exe --build -j 0 --trace-vcd -Wall \
@@ -92,7 +94,7 @@ obj_dir/V$(TOPNAME): $(VSRCS) $(SIMFILE)
 	    $(CSRCSRUN) $(VSRCS)
 
 run: obj_dir/V$(TOPNAME)
-	./obj_dir/V$(TOP_MODULE) 
+	./obj_dir/V$(TOP_MODULE) $(IMG)
 
 sim: $(SIMFILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!

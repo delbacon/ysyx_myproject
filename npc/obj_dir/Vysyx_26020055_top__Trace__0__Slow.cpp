@@ -300,10 +300,15 @@ VL_ATTR_COLD void Vysyx_26020055_top___024root__trace_full_0_sub_0(Vysyx_2602005
                                              >> 7U))),5);
     bufp->fullBit(oldp+65,(((0x33U == (0x0000007fU 
                                        & vlSelfRef.inst)) 
-                            | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_3) 
-                               | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_1) 
-                                  | (0x6fU == (0x0000007fU 
-                                               & vlSelfRef.inst)))))));
+                            | ((0x3bU == (0x0000007fU 
+                                          & vlSelfRef.inst)) 
+                               | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_5) 
+                                  | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_2) 
+                                     | ((0x6fU == (0x0000007fU 
+                                                   & vlSelfRef.inst)) 
+                                        | (0x63U == 
+                                           (0x0000007fU 
+                                            & vlSelfRef.inst)))))))));
     bufp->fullBit(oldp+66,((3U == (0x0000007fU & vlSelfRef.inst))));
     bufp->fullBit(oldp+67,((0x23U == (0x0000007fU & vlSelfRef.inst))));
     bufp->fullCData(oldp+68,(((0x00100073U == vlSelfRef.inst)

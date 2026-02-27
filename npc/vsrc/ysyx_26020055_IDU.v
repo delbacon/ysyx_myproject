@@ -4,7 +4,7 @@
 //RV32I Base Instruction
 //用于判断opcode是否属于这类指令
 //==========================================================================================//
-`define R(opcode) (opcode == 7'b0110011)
+`define R(opcode) (opcode == 7'b0110011 || opcode == 7'b0110011 || opcode == 7'b0111011 ) //后两个是M扩展
 `define I(opcode) (opcode == 7'b1100111 || opcode == 7'b0000011 || opcode == 7'b0010011 )
 `define S(opcode) (opcode == 7'b0100011)
 `define B(opcode) (opcode == 7'b1100011)
@@ -114,7 +114,7 @@ module ysyx_26020055_IDU (
 
 //signal
     assign reg_wr = 
-        `R(opcode) || `I(opcode) || `U(opcode) || `J(opcode) ?
+        `R(opcode) || `I(opcode) || `U(opcode) || `J(opcode) || `B(opcode)?
             1'b1 :
 
             1'b0; // 默认

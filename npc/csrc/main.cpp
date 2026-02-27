@@ -10,42 +10,35 @@
 
 //
 #include "mem_load.h"
+#include "readbin.h"
 
 
-#define MAX_TIME 20000
+#define MAX_TIME 50000000
 #define TOPNAME ysyx_26020055_top
 
 #define CONCAT_V(x) V##x
 
 //void nvboard_bind_all_pins(TOP_NAME* TOPNAME);
 
-uint32_t PROM[64] = //{0x00a00093,0x00508113,0xffd10193};
+//uint32_t PROM[64] = //{0x00a00093,0x00508113,0xffd10193};
 //  {0x01400513,0x010000e7,0x00c000e7,0x00100073,0x00a50513,0x00008067};
 //  {0x123452b7,0x80000337,0xFFFFF3B7,0x123452b7,0x00100073};
 //{0x12345337,0x67830313,0x0ab00393,0x0062a023,0x00728223,0x0002a503,0x0042c583,0x00100073};
-{
-0x00000513,
-0x123455b7,
-0x67858593,
-0x00b52023,
-0x05500613,
-0x00c500a3,
-0x0a300693,
-0x00d501a3,
-0x00054703,
-0x00150783,
-0x00254283,
-0x00354283,
-0x00100073};
+//{0x00000513,0x123455b7,0x67858593,0x00b52023,0x05500613,0x00c500a3,0x0a300693,0x00d501a3,0x00054703,0x00150783,0x00254283,0x00354283,0x00100073};
 
 uint32_t *pROM = NULL;
 uint32_t *pRAM = NULL;
 
 //#define PROM_READ
+//#define _DEBUG
 
 //pcROM
 //===================================================//
-extern "C" int pROM_read(int raddr) {
+extern "C" int pROM_read(int vraddr) {
+//偏移地址是0x80000000，但是初始化的时候有一小会会回到0，这里是为了防止越界
+  uint32_t raddr = 0;
+  if(vraddr >= 0x80000000) raddr = vraddr - 0x80000000;
+
 #ifdef PROM_READ
   return PROM[(raddr>>2)];
 #else
@@ -63,7 +56,11 @@ void ebreak()
 
 //RAM
 //===================================================//
-extern "C" int pmem_read(int raddr) {
+extern "C" int pmem_read(int vraddr) {
+//偏移地址是0x80000000，但是初始化的时候有一小会会回到0，这里是为了防止越界
+  uint32_t raddr = 0 ;
+  if(vraddr >= 0x80000000) raddr = vraddr - 0x80000000;
+
   // 总是读取地址为`raddr & ~0x3u`的4字节返回
   uint32_t offset = raddr & 0x3;
   uint32_t addr = raddr >> 2;
@@ -75,10 +72,15 @@ extern "C" int pmem_read(int raddr) {
     default: return res;
   }
 }
-extern "C" void pmem_write(int waddr, int wdata, char wmask) {
+extern "C" void pmem_write(int vwaddr, int wdata, char wmask) {
+  
   // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
   // `wmask`中每比特表示`wdata`中1个字节的掩码,
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
+//偏移地址是0x80000000，但是初始化的时候有一小会会回到0，这里是为了防止越界
+  uint32_t waddr = 0 ;
+  if(vwaddr >= 0x80000000) waddr = vwaddr - 0x80000000;
+
   uint32_t offset = waddr & 0x3;
   uint32_t addr = waddr >> 2;
   uint32_t mask_off;
@@ -104,8 +106,25 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask) {
 
 int main(int argc, char** argv) {
     // 初始化 RAM & ROM
-    pROM = read_to_MEM("./resources/sum.hex");
-    pRAM = read_to_MEM("./resources/sum.hex");
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <riscv32_instructions.bin>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+    pROM = load_riscv32_instructions(argv[1]);
+    pRAM = load_riscv32_instructions(argv[1]);
+    if (!pROM || !pRAM) {
+        return EXIT_FAILURE;
+    }
+#ifdef _DEBUG
+    for (size_t i = 0; i < 10; i++) {  // 打印前10条
+        printf("instr[%zu] = 0x%08X\n", i, pROM[i]);
+    }
+    printf("\n");
+    for (size_t i = 0; i < 10; i++) {  // 打印前10条
+        printf("instr[%zu] = 0x%08X\n", i, pRAM[i]);
+    }
+#endif
+
     // 初始化 Verilator
     Verilated::commandArgs(argc, argv);
     // 創建 DUT (Design Under Test)
@@ -134,11 +153,20 @@ int main(int argc, char** argv) {
         if (sim_time == 10) {
             dut->rst = 0;
         }
-		    dut->eval();
 
+        dut->eval();
         // 評估模型
-        printf("pc:%x   simtime:%x  ",(dut->pc),sim_time);
-        printf("jmpop:%x  inst:%8x\n",dut->jmp_op,dut->inst);
+        if(dut->pc == 0x7f4) {
+          printf("Stop  pc:%x\n",dut->pc);
+          break;
+        }
+#ifdef _DEBUG
+        if(dut->clk){
+          printf("pc:%x   simtime:%x  ",(dut->pc),sim_time);
+          printf("jmpop:%x  inst:%8x\n",dut->jmp_op,dut->inst);
+        }
+#endif
+
         // 記錄波形
         tfp->dump(sim_time);
 /*        
@@ -153,17 +181,33 @@ int main(int argc, char** argv) {
 
         sim_time++;
     }
-    
+    //如果执行到ebreak,则打印测试通过
+
+    printf("Simulation ended at time %d   pc:%x\n", sim_time,dut->pc);
+
     // 關閉波形檔案
     tfp->close();
     
     // 清理記憶體
     delete tfp;
     delete dut;
+
+    #ifdef _DEBUG
     for(int i=0;i<5;i++){
       printf("RAM[%d]:%x\n",i,pRAM[i]);
     }
-    std::cout << "Simulation completed!" << std::endl;
+#endif
 
+    if (pROM) free(pROM);
+    if (pRAM) free(pRAM);
+
+    std::cout << "Simulation completed!" << std::endl;
+    if(ebreak_flag){
+      printf("\033[1;30;32mHIT GOOD TRAP\033[0m\n");
+      return 0;
+    }else {
+      printf("\033[1;30;31mHIT BAD TRAP\033[0m\n");
+      return -1;
+    }
     return 0;
   }

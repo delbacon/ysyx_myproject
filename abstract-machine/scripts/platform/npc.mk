@@ -25,7 +25,11 @@ image: image-dep
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
+# 修改使得可以运行（调用npc下的makefile的run指令）
 run: insert-arg
-	echo "TODO: add command here to run simulation"
+	@echo "Running NPC simulation..."
+	@echo "IMAGE variable contains: $(IMAGE)"
+	$(MAKE) -C $(NPC_HOME) run IMG=$(IMAGE).bin
+
 
 .PHONY: insert-arg

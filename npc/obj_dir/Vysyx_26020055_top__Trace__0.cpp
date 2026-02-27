@@ -114,10 +114,15 @@ void Vysyx_26020055_top___024root__trace_chg_0_sub_0(Vysyx_26020055_top___024roo
     bufp->chgCData(oldp+63,((0x0000001fU & (vlSelfRef.inst 
                                             >> 7U))),5);
     bufp->chgBit(oldp+64,(((0x33U == (0x0000007fU & vlSelfRef.inst)) 
-                           | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_3) 
-                              | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_1) 
-                                 | (0x6fU == (0x0000007fU 
-                                              & vlSelfRef.inst)))))));
+                           | ((0x3bU == (0x0000007fU 
+                                         & vlSelfRef.inst)) 
+                              | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_5) 
+                                 | ((IData)(vlSelfRef.ysyx_26020055_top__DOT__IDU__DOT____VdfgRegularize_h61fff987_0_2) 
+                                    | ((0x6fU == (0x0000007fU 
+                                                  & vlSelfRef.inst)) 
+                                       | (0x63U == 
+                                          (0x0000007fU 
+                                           & vlSelfRef.inst)))))))));
     bufp->chgBit(oldp+65,((3U == (0x0000007fU & vlSelfRef.inst))));
     bufp->chgBit(oldp+66,((0x23U == (0x0000007fU & vlSelfRef.inst))));
     bufp->chgCData(oldp+67,(((0x00100073U == vlSelfRef.inst)
