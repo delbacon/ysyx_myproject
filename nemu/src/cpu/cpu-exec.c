@@ -57,13 +57,19 @@ static void ring_buffer_init(ring_buffer_t *cb){
 }
 
 static int ring_buffer_put(ring_buffer_t *cb, char *c){ 
-  if(cb->cnt >= RING_BUFFER_SIZE){
+  if(cb->head >= RING_BUFFER_SIZE){
     return -1;
   }else{
     for(int i=0; i<128; i++){
       cb->buf[cb->head][i] = c[i];
     }
     cb->head = (cb->head + 1) % RING_BUFFER_SIZE;
+    //printf("%ld\n", cb->head);
+    const char *test = "\t\t\t  \033[1;30;31mINST STOP\033[0m";
+    for(int i=0; i<128; i++){
+      cb->buf[cb->head][i] = test[i];
+    }
+    
     cb->cnt ++;
     return 0;
   }
