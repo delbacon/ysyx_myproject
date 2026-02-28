@@ -33,9 +33,72 @@ static bool g_print_step = false;
 
 void device_update();
 
-static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
+
+//换行缓冲器的实现
+//主要是实现输出指令的缓存器
+//============================================================================//
+
+#define RING_BUFFER_SIZE 32
+
+typedef struct {
+  char buf[RING_BUFFER_SIZE][128];
+  size_t head;
+  size_t tail;
+  int cnt;
+} ring_buffer_t;
+
+static void ring_buffer_init(ring_buffer_t *cb){
+  cb->head = 0;
+  cb->tail = 0;
+  cb->cnt  = 0;
+  for(int i = 0; i < RING_BUFFER_SIZE; i++){
+    cb->buf[i][0] = '\0';
+  }
+}
+
+static int ring_buffer_put(ring_buffer_t *cb, char *c){ 
+  if(cb->cnt >= RING_BUFFER_SIZE){
+    return -1;
+  }else{
+    for(int i=0; i<128; i++){
+      cb->buf[cb->head][i] = c[i];
+    }
+    cb->head = (cb->head + 1) % RING_BUFFER_SIZE;
+    cb->cnt ++;
+    return 0;
+  }
+}
+/*
+static int ring_buffer_get(ring_buffer_t *cb, char *c){ 
+  if(cb->cnt==0){
+    return -1;
+  }else{
+    c = cb->buf[cb->tail];
+    cb->tail = (cb->tail + 1) % RING_BUFFER_SIZE;
+    cb->cnt --;
+    return 0;
+  }
+}
+*/
+//============================================================================//
+
+static void itrace_log_write(ring_buffer_t *cb){
 #ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+  if (ITRACE_COND) {
+    for(int i = 0; i < RING_BUFFER_SIZE; i++){
+      if(cb->buf[i][0] == '\0') break;
+      log_write("%s\n", cb->buf[i]);
+      cb->cnt-- ;
+    } 
+  }
+  //这里的_this->logbuf存储的是向log写入的数据，默认是执行的 inst 和 pc ,每次执行的时候都会往里面写内容
+#endif
+}
+
+static void trace_and_difftest(Decode *_this, vaddr_t dnpc, ring_buffer_t *cb) {
+#ifdef CONFIG_ITRACE_COND
+  ring_buffer_put(cb, _this->logbuf);
+
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
@@ -54,6 +117,9 @@ static void exec_once(Decode *s, vaddr_t pc) {
   isa_exec_once(s);
   cpu.pc = s->dnpc;
 
+//这里是实现 ITRACE 的功能，logbuf 是 log 缓存器
+//先把缓存器的地址赋给 p ，再对 p 进行一些操作
+//============================================================================//
   #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
@@ -62,7 +128,7 @@ static void exec_once(Decode *s, vaddr_t pc) {
   //先取地址再取内容，这样取到的是第一个字节的数据，并且可以通过指针访问后续字节
   //如果直接强制类型转换为uint8_t,会丢失第一个字节后的内容
   uint8_t *inst = (uint8_t *)&s->isa.inst;
-  //这里特殊处理x86是因为大端序和小端序？
+  //这里特殊处理x86是因为指令顺序不同
 #ifdef CONFIG_ISA_x86
   for (i = 0; i < ilen; i ++) {
 #else
@@ -82,16 +148,24 @@ static void exec_once(Decode *s, vaddr_t pc) {
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst, ilen);
 #endif
 }
+//============================================================================//
 
 //执行一条指令
 static void execute(uint64_t n) {
   Decode s;
+  
+  ring_buffer_t cb;
+  ring_buffer_init(&cb);
+
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst ++;
-    trace_and_difftest(&s, cpu.pc);
+    trace_and_difftest(&s, cpu.pc, &cb);
     //如果nemu的状态为NEMU_RUNNING，则继续执行，否则跳出循环
-    if (nemu_state.state != NEMU_RUNNING) break;
+    if (nemu_state.state != NEMU_RUNNING) {
+      itrace_log_write(&cb);
+      break;
+    }
     //IFDEF的作用是，如果宏定义CONFIG_DEVICE存在，则执行device_update()，否则不执行。
     IFDEF(CONFIG_DEVICE, device_update());
   }
@@ -114,6 +188,7 @@ void assert_fail_msg() {
 /* Simulate how the CPU works. */
 int cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INST_TO_PRINT);
+  
   switch (nemu_state.state) {
     case NEMU_END: case NEMU_ABORT: case NEMU_QUIT:
       printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
