@@ -8,15 +8,20 @@
 #include "svdpi.h"
 #include "Vysyx_26020055_top__Dpi.h"
 
+//get time
+#include <sys/time.h>  
+
 //
 #include "mem_load.h"
 #include "readbin.h"
 
 
-#define MAX_TIME 50000000
+#define MAX_TIME 5000000000
 #define TOPNAME ysyx_26020055_top
 
 #define CONCAT_V(x) V##x
+
+#define CONFIG_RTC_MMIO 0x10000000 + 0x0000048
 
 //void nvboard_bind_all_pins(TOP_NAME* TOPNAME);
 
@@ -32,6 +37,14 @@ uint32_t *pRAM = NULL;
 //#define PROM_READ
 //#define _DEBUG
 
+uint64_t get_time_us() {
+    struct timespec ts;
+    if (timespec_get(&ts, TIME_UTC) == 0) {
+        return 0; // 失败
+    }
+    return (uint64_t)ts.tv_sec * 1000000ULL + (uint64_t)(ts.tv_nsec / 1000);
+}
+uint64_t time_start = get_time_us();
 //pcROM
 //===================================================//
 extern "C" int pROM_read(int vraddr) {
@@ -64,7 +77,38 @@ extern "C" int pmem_read(int vraddr) {
   // 总是读取地址为`raddr & ~0x3u`的4字节返回
   uint32_t offset = raddr & 0x3;
   uint32_t addr = raddr >> 2;
-  uint32_t res = pRAM[addr] >> (offset * 8);
+  uint32_t res = 0;
+  //实现外设的访问
+  time_t now;
+  time(&now);
+  struct tm *local_tm = localtime(&now);
+
+  // 3. 提取各部分到 int 变量
+  uint32_t year  = local_tm->tm_year + 1900;  // tm_year 是从 1900 年开始的偏移
+  uint32_t month = local_tm->tm_mon + 1;      // tm_mon 范围是 0~11，所以 +1
+  uint32_t day   = local_tm->tm_mday;         // 1~31
+  uint32_t hour  = local_tm->tm_hour;         // 0~23
+  uint32_t min   = local_tm->tm_min;          // 0~59
+  uint32_t sec   = local_tm->tm_sec;          // 0~61（考虑闰秒）
+  if (vraddr == CONFIG_RTC_MMIO){
+    res = (uint32_t)(get_time_us() - time_start);return res;
+  }else if(vraddr == (CONFIG_RTC_MMIO + 4)){
+    res = (uint32_t)((get_time_us() - time_start) >> 32);return res;
+  }else if(vraddr == CONFIG_RTC_MMIO + 8){
+    res = sec;return res;
+  }else if(vraddr == CONFIG_RTC_MMIO + 12){
+    res = min;return res;
+  }else if(vraddr == CONFIG_RTC_MMIO + 16){
+    res = hour;return res;
+  }else if(vraddr == CONFIG_RTC_MMIO + 20){
+    res = day;return res;
+  }else if(vraddr == CONFIG_RTC_MMIO + 24){
+    res = month;return res;
+  }else if(vraddr == CONFIG_RTC_MMIO + 28){
+    res = year;return res;
+  }else{
+    res = pRAM[addr] >> (offset * 8);
+  }  
   switch(offset){
     case 1: return ((pRAM[addr+4] & 0x000000ff) << 24) + res;
     case 2: return ((pRAM[addr+4] & 0x0000ffff) << 16) + res;
@@ -78,6 +122,11 @@ extern "C" void pmem_write(int vwaddr, int wdata, char wmask) {
   // `wmask`中每比特表示`wdata`中1个字节的掩码,
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
 //偏移地址是0x80000000，但是初始化的时候有一小会会回到0，这里是为了防止越界
+  if(vwaddr == 0x10000000) { 
+    putchar((uint8_t)(wdata & 0xffu));
+    return ;
+  }
+  //printf("%x  %c\n",vwaddr,(char)wdata);
   uint32_t waddr = 0 ;
   if(vwaddr >= 0x80000000) waddr = vwaddr - 0x80000000;
 
@@ -142,9 +191,9 @@ int main(int argc, char** argv) {
   
     // 模擬時間
     int sim_time = 0;
-
+    //sim_time < MAX_TIME
     // 運行模擬
-  	while (sim_time < MAX_TIME) {
+  	while (1) {
 
 	   	// 時鐘切換
         dut->clk = !dut->clk;

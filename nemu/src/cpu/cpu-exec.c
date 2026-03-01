@@ -56,6 +56,8 @@ static void ring_buffer_init(ring_buffer_t *cb){
   }
 }
 
+
+#ifdef CONFIG_ITRACE_COND
 static int ring_buffer_put(ring_buffer_t *cb, char *c){ 
   if(cb->head >= RING_BUFFER_SIZE){
     return -1;
@@ -64,7 +66,7 @@ static int ring_buffer_put(ring_buffer_t *cb, char *c){
       cb->buf[cb->head][i] = c[i];
     }
     cb->head = (cb->head + 1) % RING_BUFFER_SIZE;
-    //printf("%ld\n", cb->head);
+    //printf("%ld\n", cb->head);  
     const char *test = "\t\t\t  \033[1;30;31mINST STOP\033[0m";
     for(int i=0; i<128; i++){
       cb->buf[cb->head][i] = test[i];
@@ -74,6 +76,7 @@ static int ring_buffer_put(ring_buffer_t *cb, char *c){
     return 0;
   }
 }
+#endif
 /*
 static int ring_buffer_get(ring_buffer_t *cb, char *c){ 
   if(cb->cnt==0){
@@ -103,8 +106,9 @@ static void itrace_log_write(ring_buffer_t *cb){
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc, ring_buffer_t *cb) {
 #ifdef CONFIG_ITRACE_COND
-  ring_buffer_put(cb, _this->logbuf);
-
+  if (ITRACE_COND){
+    ring_buffer_put(cb, _this->logbuf);
+  }
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));

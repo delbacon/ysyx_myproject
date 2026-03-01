@@ -6,7 +6,7 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 int printf(const char *fmt, ...) {
-  char out[1024];
+  char out[128];
 
   // 使用 va_list 处理变参
   va_list args;
@@ -22,7 +22,7 @@ int printf(const char *fmt, ...) {
   return len; // 返回实际输出字符数
 }
 
-static void int2str(char *str, int num) {
+static int int2str(char *str, int num) {
   int negative = 0;
   char buf[32];
   
@@ -34,7 +34,7 @@ static void int2str(char *str, int num) {
       // INT_MIN的绝对值无法用int表示，特殊处理
       strcpy(buf, "-2147483648");
       strcpy(str, buf);
-      return;
+      return 0;
     }
     num = -num;
   }
@@ -63,14 +63,23 @@ static void int2str(char *str, int num) {
   }
   // 复制到目标字符串
   strcpy(str, buf);
+  return cnt;
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
   char *start = out;
   char buf[32];
+  char buf_args[8];
+  int args_cnt=0;
+
   while (*fmt) {
     if (*fmt == '%') {//检测是否为格式化字符
       fmt++;
+      while(*fmt == '0' || *fmt == '1' || *fmt == '2' || *fmt == '3' || *fmt == '4' || *fmt == '5' || *fmt == '6' || *fmt == '7' || *fmt == '8' || *fmt == '9'){
+        buf_args[args_cnt] = *fmt;
+        args_cnt++;
+        fmt++;
+      }
       switch (*fmt) {
         case 'c': {
           char c = (char)va_arg(ap, int); 
@@ -81,7 +90,20 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
         case 'd': {
           int num = va_arg(ap, int);
           char *p = buf + sizeof(buf) - 1;
-          int2str(p, num);
+          int len = int2str(p, num);
+          if(args_cnt != 0){
+            char tmp;
+            if(buf_args[0] == '0' || buf_args[0] == '.' || buf_args[0] == '-'){
+              tmp = buf_args[0];
+              if(buf_args[1] == '1' || buf_args[1] == '2' || buf_args[1] == '3' || buf_args[1] == '4' || buf_args[1] == '5' || buf_args[1] == '6' || buf_args[1] == '7' || buf_args[1] == '8' || buf_args[1] == '9'){
+                int tmp_num = buf_args[1] - 48;
+                for(int i = 0; i < tmp_num && i < (tmp_num - len); i++){
+                  *out++ = tmp;
+                }
+              }
+            }
+            args_cnt = 0;
+          }
           while (*p) {
             *out++ = *p++;
           }
