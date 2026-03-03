@@ -152,10 +152,65 @@ config ITRACE_COND
   string "Only trace instructions when the condition is true"
   default "true"
 
+config ITRACE_LASTEST
+  depends on ITRACE 
+  bool "Trace lastest [N] INSTs"
+  default y
+
+config ITRACE_LASTEST_N
+  depends on ITRACE_LASTEST
+  int "Trace lastest [N] INSTs"
+  default 64
+
+config MTRACE
+	depends on TRACE && TARGET_NATIVE_ELF
+	bool "Enable memory tracer"
+	default y
+
+config MTRACE_START
+  depends on MTRACE
+  hex "Where memory tracing is enabled( unit: number of >=addr(0x) )"
+  default 0x80000000
+
+config MTRACE_END
+  depends on MTRACE
+  hex "Where memory tracing is disabled( unit: number of <addr(0x) )"
+  default 0x90000000
+
+config MTRACE_COND
+  depends on MTRACE
+  string "Only trace memory when the condition is true"
+  default "true"
+
+config FTRACE
+	depends on TRACE && TARGET_NATIVE_ELF
+	bool "Enable function tracer"
+	default y
+
+config FTRACE_INDENT
+  depends on FTRACE
+  bool "Printf function by using indentation in nemu-log.txt ."
+  default y
+  
+config FTRACE_COND
+  depends on FTRACE
+  string "Only trace function when the condition is true"
+  default "true"
+
 config DTRACE
 	depends on TRACE && TARGET_NATIVE_ELF
 	bool "Enable device tracer"
 	default y
+
+config DTRACE_START
+  depends on DTRACE
+  hex "Where device tracing is enabled( unit: number of >=addr(0x) )"
+  default 0xa0000000
+
+config DTRACE_END
+  depends on DTRACE
+  hex "Where device tracing is disabled( unit: number of <addr(0x) )"
+  default 0xa2000000
 
 config DTRACE_COND
   depends on DTRACE

@@ -18,6 +18,7 @@
 #include <cpu/difftest.h>
 #include <locale.h>
 #include "../monitor/sdb/sdb.h"
+#include <utils.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -33,81 +34,19 @@ static bool g_print_step = false;
 
 void device_update();
 
-
-//换行缓冲器的实现
-//主要是实现输出指令的缓存器
-//============================================================================//
-
-#define RING_BUFFER_SIZE 32
-
-typedef struct {
-  char buf[RING_BUFFER_SIZE][128];
-  size_t head;
-  size_t tail;
-  int cnt;
-} ring_buffer_t;
-
-static void ring_buffer_init(ring_buffer_t *cb){
-  cb->head = 0;
-  cb->tail = 0;
-  cb->cnt  = 0;
-  for(int i = 0; i < RING_BUFFER_SIZE; i++){
-    cb->buf[i][0] = '\0';
-  }
-}
-
-
-#ifdef CONFIG_ITRACE_COND
-static int ring_buffer_put(ring_buffer_t *cb, char *c){ 
-  if(cb->head >= RING_BUFFER_SIZE){
-    return -1;
-  }else{
-    for(int i=0; i<128; i++){
-      cb->buf[cb->head][i] = c[i];
-    }
-    cb->head = (cb->head + 1) % RING_BUFFER_SIZE;
-    //printf("%ld\n", cb->head);  
-    const char *test = "\t\t\t  \033[1;30;31mINST STOP\033[0m";
-    for(int i=0; i<128; i++){
-      cb->buf[cb->head][i] = test[i];
-    }
-    
-    cb->cnt ++;
-    return 0;
-  }
-}
-#endif
-/*
-static int ring_buffer_get(ring_buffer_t *cb, char *c){ 
-  if(cb->cnt==0){
-    return -1;
-  }else{
-    c = cb->buf[cb->tail];
-    cb->tail = (cb->tail + 1) % RING_BUFFER_SIZE;
-    cb->cnt --;
-    return 0;
-  }
-}
-*/
-//============================================================================//
-
-static void itrace_log_write(ring_buffer_t *cb){
-#ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) {
-    for(int i = 0; i < RING_BUFFER_SIZE; i++){
-      if(cb->buf[i][0] == '\0') break;
-      log_write("%s\n", cb->buf[i]);
-      cb->cnt-- ;
-    } 
-  }
-  //这里的_this->logbuf存储的是向log写入的数据，默认是执行的 inst 和 pc ,每次执行的时候都会往里面写内容
-#endif
-}
-
+#ifdef CONFIG_ITRACE_LASTEST
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc, ring_buffer_t *cb) {
-#ifdef CONFIG_ITRACE_COND
+#else
+static void trace_and_difftest(Decode *_this, vaddr_t dnpc){
+#endif
+
+#ifdef CONFIG_ITRACE_LASTEST
   if (ITRACE_COND){
     ring_buffer_put(cb, _this->logbuf);
+  }
+#elif CONFIG_ITRACE
+  if (ITRACE_COND){
+  log_write("%s\n", _this->logbuf); 
   }
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
@@ -163,19 +102,24 @@ static void exec_once(Decode *s, vaddr_t pc) {
 //执行一条指令
 static void execute(uint64_t n) {
   Decode s;
-  
+#ifdef CONFIG_ITRACE_LASTEST
   ring_buffer_t cb;
   ring_buffer_init(&cb);
-
+#endif
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst ++;
+#ifdef CONFIG_ITRACE_LASTEST
     trace_and_difftest(&s, cpu.pc, &cb);
     //如果nemu的状态为NEMU_RUNNING，则继续执行，否则跳出循环
     if (nemu_state.state != NEMU_RUNNING) {
       itrace_log_write(&cb);
       break;
     }
+#else
+    trace_and_difftest(&s, cpu.pc);
+    if(nemu_state.state != NEMU_RUNNING) break;
+#endif
     //IFDEF的作用是，如果宏定义CONFIG_DEVICE存在，则执行device_update()，否则不执行。
     IFDEF(CONFIG_DEVICE, device_update());
   }

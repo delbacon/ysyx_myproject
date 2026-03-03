@@ -60,16 +60,21 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   word_t ret = host_read(map->space + offset, len);
 #ifdef CONFIG_DTRACE_COND
   if (DTRACE_COND) {
-  word_t tmp_array[4];
-  for(int i=0;i<4;i++){
-    tmp_array[i] = (ret & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
+    if(addr >=CONFIG_DTRACE_START && addr < CONFIG_DTRACE_END){
+      word_t tmp_array[4];
+      for(int i=0;i<4;i++){
+        tmp_array[i] = (ret & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
+      }
+      log_write(ANSI_FMT("[DEV]",ANSI_FG_WHITE) 
+                ANSI_FMT("[READ ] ",ANSI_FG_RED) 
+                ANSI_FMT(FMT_PADDR": ",ANSI_FG_MAGENTA), addr);
+      for(int i=0;i<4;i++){
+        log_write("%02x ", tmp_array[i] );
+      }
+      log_write(ANSI_FMT("[%s]",ANSI_FG_GREEN), map->name);
+      log_write("\n");
+    }
   }
-  log_write("\033[1;30;31m[READ]\033[0m \033[30;32mDtracer:%s\033[0m  \033[30;33m0x%08x\033[0m: ", map->name, addr);
-  for(int i=0;i<4;i++){
-    log_write("%02x ", tmp_array[i] );
-  }
-  log_write("\n");
-}
 #endif
   return ret;
 }
@@ -82,15 +87,20 @@ void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
   invoke_callback(map->callback, offset, len, true);
 #ifdef CONFIG_DTRACE_COND
   if (DTRACE_COND) {
-  word_t tmp_array[4];
-  for(int i=0;i<4;i++){
-    tmp_array[i] = (data & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
+    if(addr >=CONFIG_DTRACE_START && addr < CONFIG_DTRACE_END){
+      word_t tmp_array[4];
+      for(int i=0;i<4;i++){
+        tmp_array[i] = (data & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
+      }
+      log_write(ANSI_FMT("[DEV]",ANSI_FG_WHITE) 
+                ANSI_FMT("[WRITE] ",ANSI_FG_BLUE) 
+                ANSI_FMT(FMT_PADDR": ",ANSI_FG_CYAN), addr);
+      for(int i=0;i<4;i++){
+        log_write("%02x ", tmp_array[i] );
+      }
+      log_write(ANSI_FMT("[%s]",ANSI_FG_GREEN), map->name);
+      log_write("\n");
+    }
   }
-  log_write("\033[1;30;31m[READ]\033[0m \033[30;32m%s:\033[0m \033[30;33m0x%08x\033[0m: ", map->name, addr);
-  for(int i=0;i<4;i++){
-    log_write("%02x ", tmp_array[i] );
-  }
-  log_write("\n");
-}
 #endif
 }
