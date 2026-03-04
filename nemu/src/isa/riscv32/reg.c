@@ -27,12 +27,12 @@ void isa_reg_display() {
   for(int i=0;i<32;i++){
     const char * regname =reg_name(i);
     if(strcmp(regname,"s10")==0 || strcmp(regname,"s11")==0){
-      printf("%s:%x ",reg_name(i),cpu.gpr[i]);
+      printf(ANSI_FMT("%s:", ANSI_FG_CYAN)"0x%08x	",reg_name(i),cpu.gpr[i]);
     }else{
-      printf("%s: %x ",reg_name(i),cpu.gpr[i]);
+      printf(ANSI_FMT("%s: ", ANSI_FG_CYAN)"0x%08x	",reg_name(i),cpu.gpr[i]);
     }
 
-    if(((i+1) % 8 == 0) && i != 0) printf("\n");
+    if(((i+1) % 4 == 0) && i != 0) printf("\n");
   }
 }
 
