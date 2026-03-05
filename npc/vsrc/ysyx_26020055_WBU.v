@@ -1,5 +1,5 @@
 //npc/vsrc/ysyx_26020055_WBU.v
-
+import "DPI-C" function void pc_get(int val) ;
 
 module ysyx_26020055_WBU (
     input clk,
@@ -31,6 +31,10 @@ module ysyx_26020055_WBU (
             pc <= next_pc;
     end
 
+    // 将 pc 同步到 C 中
+    always@(posedge clk) begin
+        pc_get(pc);
+    end
 //寄存器堆
 ysyx_26020055_RegisterFile u_RegisterFile (
     .clk(clk),

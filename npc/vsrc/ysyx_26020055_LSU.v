@@ -1,5 +1,5 @@
-import "DPI-C" function int pmem_read(input int vraddr);
-import "DPI-C" function void pmem_write(input int vwaddr, input int wdata, input byte wmask);
+import "DPI-C" function int pRAM_read(input int vraddr);
+import "DPI-C" function void pRAM_write(input int vwaddr, input int wdata, input byte wmask);
 
 
 module ysyx_26020055_LSU(
@@ -17,9 +17,9 @@ module ysyx_26020055_LSU(
     reg [31:0] pmem_rdata;
     always @(*) begin
         if (valid) begin // 有读写请求时
-            pmem_rdata = pmem_read(raddr);
+            pmem_rdata = pRAM_read(raddr);
             if (wen) begin // 有写请求时
-                pmem_write(waddr, wdata, wmask);
+                pRAM_write(waddr, wdata, wmask);
             end
         end else begin
             pmem_rdata = 0;
