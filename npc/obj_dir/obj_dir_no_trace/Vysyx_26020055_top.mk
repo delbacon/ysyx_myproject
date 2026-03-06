@@ -39,6 +39,8 @@ VM_MODPREFIX = Vysyx_26020055_top
 VM_USER_CFLAGS = \
   -I/home/delbacon/ysyx-workbench/npc/csrc/include \
   -I/home/delbacon/ysyx-workbench/npc/csrc/include \
+  -I/home/delbacon/ysyx-workbench/npc/csrc/include \
+  -I/home/delbacon/ysyx-workbench/npc/csrc/include \
   -DTOP_NAME="Vysyx_26020055_top" \
   -Wall \
   -Wextra \
@@ -46,6 +48,9 @@ VM_USER_CFLAGS = \
   -O3 \
   -I/usr/include/SDL2 \
   -D_REENTRANT \
+  -DCONFIG_MAX_INST_TO_PRINT=20 \
+  -DCONFIG_MAX_SIM_CYCLES=10000 \
+  -DCONFIG_EXT_M=1 \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \

@@ -2,13 +2,11 @@
 #include "../../include/sdb.h"
 #include "../../include/device.h"
 #include "../../include/monitor.h"
-
+#include "../../include/utils.h"
 #ifdef _NVBOARD
 void nvboard_bind_all_pins(TOP_NAME* TOPNAME);
 #endif
 
-//每次执行最大可以打印的指令数，超过就不会打印了
-#define MAX_INST_TO_PRINT 100
 
 
 #define SIMULATE_INIT(argc,argv) \
@@ -64,7 +62,9 @@ static void inst_print_N(){
 
 
 void exec_once(){
+    // 打印指令(<N)
     inst_print_N();
+
     int n = 2;//推进一个时钟周期
     while(n){
 	    // 時鐘切換
@@ -83,8 +83,8 @@ void exec_once(){
 	    cpu.sim_time++;
         n--;
         //ebreak
-	    if(cpu.sim_time % 100000000 == 0) reg_display();
-        wp_difftest();
+        
+        IFDEF(CONFIG_WATCHPOINT,wp_difftest());
     }
 }
 
@@ -100,7 +100,12 @@ void execute(uint64_t n){
 }
 
 int cpu_exec(uint64_t n){
-  g_print_step = (n < MAX_INST_TO_PRINT);
+//每次执行最大可以打印的指令数，超过就不会打印了
+#ifdef CONFIG_MAX_INST_TO_PRINT
+  g_print_step = (n < CONFIG_MAX_INST_TO_PRINT);
+#else
+  g_print_step = (n < 100);
+#endif 
   switch (cpu.state) {
     case STATE_EBREAK:case STATE_END:
         printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");

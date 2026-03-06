@@ -10,6 +10,7 @@
 
 #include "macro.h"
 
+
 //---------- ANSI ---------------//
 
 #define word_t uint32_t

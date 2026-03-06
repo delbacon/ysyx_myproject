@@ -2,7 +2,6 @@
 #include "include/monitor.h"
 
 
-
 CPU_T cpu = {.pROM=NULL,.pRAM=NULL,.pc=0,.inst=0,.gpr={0},.sim_time=0,.state=0}; 
 #define TOPNAME ysyx_26020055_top
 

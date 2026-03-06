@@ -26,7 +26,7 @@ GTKWAVE := gtkwave
 # Build Mode Configuration
 #-------------------------
 # Optimization level: 0, 1, 2, 3
-OPT ?= 2
+OPT ?= CONFIG_OPT_LEVEL
 
 
 # Verilator optimization flags
@@ -74,7 +74,6 @@ CXXFLAGS += $(INCFLAGS)
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 CXXFLAGS += -Wall -Wextra
 # 通过 -D(XXX) 可以在编译时传入宏定义
-
 
 
 # Linker flags
@@ -276,13 +275,62 @@ help:
 	@echo ""
 
 
+# ====================================================================
+# Kconfig-based Configuration System (for C/C++ macros)
+# ====================================================================
+KCONFIG_FILE := Kconfig
+CONFIG_FILE  := .config
+AUTOCONF_H   := csrc/include/config.h
+
+# Ensure include dir exists
+$(shell mkdir -p csrc/include)
+
+# Add config.h to include path (so your C code can #include "config.h")
+INCFLAGS += -I$(abspath ./csrc/include)
+
+# Auto-generate config.h from .config
+$(AUTOCONF_H): $(CONFIG_FILE) $(KCONFIG_FILE) | $(BUILD_DIR)
+	@echo "Generating $@ from $<"
+	$(PYTHON3) -c "from kconfiglib import Kconfig; k = Kconfig('$(KCONFIG_FILE)'); k.load_config('$(CONFIG_FILE)'); k.write_autoconf('$@')"
+
+# Default Python
+PYTHON3 ?= python3
+
+# Launch graphical configuration (requires kconfiglib + windows-curses on Windows)
+menuconfig:
+	PYTHONPATH=. python3 -c "from menuconfig import menuconfig; from kconfiglib import Kconfig; menuconfig(Kconfig('Kconfig'))" && touch .config
+
+# 从 .config 文件中提取 CONFIG_*=... 的行，并转为 -DCONFIG_*=...
+# 注意：跳过注释和空行；处理 y/n/数字/字符串
+ifneq ($(wildcard $(CONFIG_FILE)),)
+  # 读取 .config 内容
+  CONFIG_LINES := $(shell grep -E '^CONFIG_[A-Za-z0-9_]+=' $(CONFIG_FILE))
+
+  # 将 CONFIG_FOO=y 转为 -DCONFIG_FOO=1
+  # 将 CONFIG_BAR=n 转为 （忽略，不定义）
+  # 将 CONFIG_SIZE=1024 转为 -DCONFIG_SIZE=1024
+  # 将 CONFIG_NAME="hello" 转为 -DCONFIG_NAME=\"hello\" （注意引号转义）
+
+  # 先处理 =y → =1，=n → 忽略
+  CONFIG_DEFS := $(foreach line,$(CONFIG_LINES),\
+    $(if $(findstring =y,$(line)),\
+      -D$(patsubst %=y,%=1,$(line)),\
+      $(if $(findstring =n,$(line)),\
+        ,\
+        -D$(subst ",\",$(line))\
+      )\
+    )\
+  )
+  CXXFLAGS += $(CONFIG_DEFS)
+endif
 
 #-------------------------
 # Phony Targets
 #-------------------------
 .PHONY: default all clean clean-all clean-NV clean-yosys \
         run sim syn sta help \
-        check-yosys-sta check-sdc
+        check-yosys-sta check-sdc \
+		menuconfig defconfig savedefconfig
 
 # 为了能跑 git_commit ,也不要删掉这个！！
 include ../Makefile

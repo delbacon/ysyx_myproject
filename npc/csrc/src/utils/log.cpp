@@ -1,5 +1,5 @@
 #include "../../include/common.h"
-#include "../../include/debug.h"
+#include "../../include/utils.h"
 
 extern uint64_t g_nr_guest_inst;
 
