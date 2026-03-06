@@ -1,3 +1,8 @@
+# Include all filelist.mk to merge file lists
+FILELIST_MK = $(shell find -L ./src -name "filelist.mk")
+include $(FILELIST_MK)
+
+
 #-------------------------
 # Project Configuration
 #-------------------------
@@ -7,7 +12,7 @@ TOP_MODULE := ysyx_26020055_top
 
 # Directories
 BUILD_DIR = ./build
-OBJ_DIR = ./obj_dir
+OBJ_DIR = $(BUILD_DIR)/obj_dir
 OBJ_DIR_NO_TRACE = $(OBJ_DIR)/obj_dir_no_trace
 OBJ_DIR_WITH_TRACE = $(OBJ_DIR)/obj_dir_with_trace
 REPO_DIR = $(BUILD_DIR)/report
@@ -55,6 +60,7 @@ VSRCS := $(shell find $(abspath ./vsrc) -name "*.v" -o -name "*.sv")
 
 # Find all C/C++ sources (unified definition)
 CSRCS := $(shell find $(abspath ./csrc) \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" \))
+CSRCS += $(filter-out $(SRCS-BLACKLIST-y),$(SRCS-y))
 # CSRCS += $(SRC_AUTO_BIND)
 
 # Total sources
@@ -112,13 +118,19 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 # Simulation Targets
 #-------------------------
 # Image file for simulation (use relative path)
-IMG ?= ../am-kernels/tests/cpu-tests/build/div-minirv-npc.bin
-
+IMG ?= ../am-kernels/tests/cpu-tests/build/div-minirv-npc
+IMG = ../am-kernels/tests/am-tests/build/amtest-minirv-npc
 # Check if image file exists
-ifeq ($(wildcard $(IMG)),)
-  $(warning Warning: IMG not found: $(IMG))
+ifeq ($(wildcard $(IMG).bin),)
+  $(warning Warning: IMG not found: $(IMG).bin)
 endif
 
+# Run args
+LOGFILE ?= build/npc-log.txt
+
+RUNARGS =  -l $(LOGFILE) $(IMG).bin
+RUNARGS_NO_TRACE ?=  --elf-input  $(IMG).elf $(RUNARGS)
+RUNARGS_WITH_TRACE ?=  --elf-input  $(IMG).elf $(RUNARGS)
 # 不带波形追踪的可执行文件（用于 run）
 OBJ_NO_TRACE = $(OBJ_DIR_NO_TRACE)/V$(TOPNAME)
 # 带 --trace-fst 的可执行文件（用于 sim）
@@ -155,11 +167,11 @@ $(OBJ_WITH_TRACE): $(VSRCS) $(CSRCS) $(BUILD_DIR) $(OBJ_DIR_WITH_TRACE)
 
 # run 使用无 trace 版本
 run: $(OBJ_NO_TRACE)
-	@if [ ! -f "$(IMG)" ]; then \
-		echo "Error: Image file not found: $(IMG)"; \
+	@if [ ! -f "$(IMG).bin" ]; then \
+		echo "Error: Image file not found: $(IMG).bin"; \
 		exit 1; \
 	fi
-	./$(OBJ_NO_TRACE) $(IMG)
+	./$(OBJ_NO_TRACE) $(RUNARGS_NO_TRACE)
 
 # sim 使用带 trace 版本，并打开波形
 sim: $(OBJ_WITH_TRACE)
@@ -168,7 +180,7 @@ sim: $(OBJ_WITH_TRACE)
 		echo "Error: Image file not found: $(IMG)"; \
 		exit 1; \
 	fi
-	./$(OBJ_WITH_TRACE) $(IMG)
+	./$(OBJ_WITH_TRACE) $(RUNARGS_WITH_TRACE)
 
 	$(GTKWAVE) waveform.* 2>/dev/null || echo "gtkwave not found or no waveform"
 

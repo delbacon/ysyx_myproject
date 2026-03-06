@@ -11,9 +11,12 @@ void nvboard_bind_all_pins(TOP_NAME* TOPNAME);
 
 #define SIMULATE_INIT(argc,argv) \
 
+void init_disasm();
 
-static int g_print_step;
+uint64_t g_nr_guest_inst = 0;
+static int g_print_step = false;
 static int g_timer;
+static ring_buffer_t itrace_cb;
 
 // 声明仿真对象 dut 和 波形輸出 tfp
 // 后面会在 SIMULATE_INIT 中初始化
@@ -21,7 +24,10 @@ static Vysyx_26020055_top* dut = nullptr;
 static VerilatedFstC* tfp = nullptr;
 
 
+
+
 // 初始化仿真信号
+//============== SIM ===================//
 static void simulate_signal_init(){
     dut->clk = 0;
     dut->rst = 1;
@@ -53,18 +59,23 @@ static void simulator_end(){
     }
         delete dut;
 }
+//=======================================//
 
-static void inst_print_N(){
+static void inst_print_N(char *c){
     if(g_print_step){
-        inst_print();
+        printf("%s\n",c);
     } 
 }
 
-
+static void trace_and_difftest(char *c){
+#ifdef CONFIG_ITRACE_LASTEST
+    itrace_buf_write(&itrace_cb, c);
+#elif CONFIG_ITRACE
+    log_write("%s\n", c); 
+#endif
+    IFDEF(CONFIG_WATCHPOINT,wp_difftest());
+}
 void exec_once(){
-    // 打印指令(<N)
-    inst_print_N();
-
     int n = 2;//推进一个时钟周期
     while(n){
 	    // 時鐘切換
@@ -83,19 +94,51 @@ void exec_once(){
 	    cpu.sim_time++;
         n--;
         //ebreak
-        
-        IFDEF(CONFIG_WATCHPOINT,wp_difftest());
     }
+    g_nr_guest_inst++;
 }
 
 
 void execute(uint64_t n){
-
+    int ilen = sizeof(word_t);
     while (n) {
-        if(cpu.state != STATE_RUNNING) return;
+        char c[256];
+        char *start = c;
+        word_t pc = cpu.pc;
+        word_t inst = cpu.inst;
+        uint8_t *inst_str = (uint8_t *)malloc(ilen);
+        
+
+        start += snprintf(start, 64, ANSI_FMT("0x%08x: ",ANSI_FG_BLUE) ANSI_FG_CYAN, pc);
+        for (int i = sizeof(cpu.inst) - 1; i >= 0; i --) {
+            uint8_t byte = (inst >> (8 * i)) & 0xff;
+            start += snprintf(start, 4, " %02x", byte);
+            inst_str[i] = byte;
+        }
+        start += snprintf(start, 16, ANSI_NONE "\t\t");
+        void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+        //跳过初始化时产生的 0x00000000 指令,避免反汇编失败
+        if (inst != 0x0){
+            disassemble(start, 64, (uint64_t)pc, inst_str, ilen);
+        }
+        // 打印指令(<N)
+        inst_print_N(c);
+
         exec_once();
+
+        trace_and_difftest(c);
+
+        free(inst_str);
+        //如果nemu的状态为NEMU_RUNNING，则继续执行，否则跳出循环
+        if (cpu.state != STATE_RUNNING) {
+
+#ifdef CONFIG_ITRACE_LASTEST
+            itrace_log_write(&itrace_cb);
+#endif
+            break;
+        }
+
         n--;
-        if(cpu.state == STATE_EBREAK) break;
     }
 }
 
@@ -132,9 +175,10 @@ int cpu_exec(uint64_t n){
 }
 
 
-
-
 void simulator_init(int argc, char** argv){
+    init_disasm();
+    itrace_init(&itrace_cb);
+
     simulator_start(argc, argv);
     sdb_mainloop();
 }

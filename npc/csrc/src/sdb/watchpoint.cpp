@@ -14,7 +14,7 @@
 ***************************************************************************************/
 
 #include "../../include/sdb.h"
-
+#include "../../include/cpu.h"
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;

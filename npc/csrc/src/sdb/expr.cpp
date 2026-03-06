@@ -16,7 +16,10 @@
 
 #include <ctype.h>
 #include "../../include/sdb.h"
-
+#include "../../include/utils.h"
+#include "../../include/debug.h"
+#include "../../include/memory.h"
+#include "../../include/cpu.h"
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */

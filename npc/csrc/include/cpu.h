@@ -30,8 +30,6 @@ extern CPU_T cpu;
 
 extern "C" void inst_get(int inst);
 
-void inst_print();
-
 extern "C" void pc_get(int val);
 
 extern "C" void reg_get(int reg_idx, int val);

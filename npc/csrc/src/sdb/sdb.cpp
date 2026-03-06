@@ -36,6 +36,7 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
+  if(cpu.state == STATE_EBREAK) return -1;
   cpu.state = STATE_END;
   return -1;
 }

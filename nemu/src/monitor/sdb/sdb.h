@@ -17,7 +17,6 @@
 #define __SDB_H__
 
 #include <common.h>
-
 #define NR_WP 32
 #define TOKEN_SIZE 64
 

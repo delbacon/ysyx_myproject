@@ -22,7 +22,7 @@ uint32_t *load_riscv32_instructions(const char *filename) {
         fclose(fp);
         return NULL;
     }
-
+    
     size_t num_instructions = (size_t)file_size / 4;
     uint32_t *instructions =  (uint32_t*)malloc(file_size * 2);  // 分配原始字节空间
 

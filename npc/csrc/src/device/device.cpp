@@ -22,6 +22,15 @@ int device_write(uint32_t addr, uint32_t wdata)
     return -1; 
 }
 
+const char* device_get_name(word_t addr) {
+  for (size_t i = 0; i < sizeof(device_ranges) / sizeof(device_ranges[0]); i++) {
+    if (addr >= device_ranges[i].start && addr < device_ranges[i].end) {
+      return device_ranges[i].name;
+    }
+  }
+  return "DRAM";
+}
+
 void device_init()
 {
     rtc_init();
