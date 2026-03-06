@@ -1,5 +1,9 @@
 #include "../../include/monitor.h"
 #include <getopt.h>
+#include "../../include/debug.h"
+#include "../../include/cpu.h"
+#include "../../include/utils.h"
+
 
 static const char *log_file = "build/npc-log.txt" ;
 

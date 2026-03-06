@@ -18,6 +18,7 @@ typedef struct {
     uint32_t *pROM;
     uint32_t *pRAM;
     uint32_t pc;
+    uint32_t inst;
     uint32_t gpr[32];
     int sim_time;
     int state;
@@ -26,6 +27,10 @@ typedef struct {
 // 声明全局变量（extern 表示“在别处定义”）
 extern CPU_T cpu;
 
+
+extern "C" void inst_get(int inst);
+
+void inst_print();
 
 extern "C" void pc_get(int val);
 

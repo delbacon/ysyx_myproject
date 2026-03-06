@@ -2,7 +2,6 @@
 #define __MEMORY_H__
 
 #include "common.h"
-#include "cpu.h"
 
 //-------- mem_access ---------//
 

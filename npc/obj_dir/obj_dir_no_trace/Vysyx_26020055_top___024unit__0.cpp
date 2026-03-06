@@ -24,6 +24,16 @@ void Vysyx_26020055_top___024unit____Vdpiimwrap_pROM_read_TOP____024unit(IData/*
     pROM_read__Vfuncrtn = (pROM_read__Vfuncrtn__Vcvt);
 }
 
+extern "C" void inst_get(int vraddr);
+
+void Vysyx_26020055_top___024unit____Vdpiimwrap_inst_get_TOP____024unit(IData/*31:0*/ vraddr) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+        Vysyx_26020055_top___024unit____Vdpiimwrap_inst_get_TOP____024unit\n"); );
+    // Body
+    int vraddr__Vcvt;
+    vraddr__Vcvt = vraddr;
+    inst_get(vraddr__Vcvt);
+}
+
 extern "C" void pc_get(int val);
 
 void Vysyx_26020055_top___024unit____Vdpiimwrap_pc_get_TOP____024unit(IData/*31:0*/ val) {

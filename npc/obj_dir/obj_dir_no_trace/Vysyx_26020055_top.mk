@@ -37,20 +37,27 @@ VM_PREFIX = Vysyx_26020055_top
 VM_MODPREFIX = Vysyx_26020055_top
 # User CFLAGS (from -CFLAGS on Verilator command line)
 VM_USER_CFLAGS = \
-  -O2 \
   -I/home/delbacon/ysyx-workbench/npc/csrc/include \
   -I/home/delbacon/ysyx-workbench/npc/csrc/include \
   -DTOP_NAME="Vysyx_26020055_top" \
   -Wall \
   -Wextra \
+  -MMD \
+  -O3 \
+  -I/usr/include/SDL2 \
+  -D_REENTRANT \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \
   -lreadline \
+  -lSDL2 \
+  -lSDL2_image \
+  -lSDL2_ttf \
 
 # User .cpp files (from .cpp's on Verilator command line)
 VM_USER_CLASSES = \
   main \
+  inst \
   reg \
   simulator \
   clock \
@@ -63,6 +70,7 @@ VM_USER_CLASSES = \
   watchpoint \
   ebreak \
   log \
+  trace \
 
 # User .cpp directories (from .cpp's on Verilator command line)
 VM_USER_DIR = \
@@ -86,19 +94,21 @@ VPATH += $(VM_USER_DIR)
 
 main.o: /home/delbacon/ysyx-workbench/npc/csrc/main.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
+inst.o: /home/delbacon/ysyx-workbench/npc/csrc/src/cpu/inst.cpp 
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
 reg.o: /home/delbacon/ysyx-workbench/npc/csrc/src/cpu/reg.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
 simulator.o: /home/delbacon/ysyx-workbench/npc/csrc/src/cpu/simulator.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
-clock.o: /home/delbacon/ysyx-workbench/npc/csrc/src/device/clock.c 
+clock.o: /home/delbacon/ysyx-workbench/npc/csrc/src/device/clock.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
-device.o: /home/delbacon/ysyx-workbench/npc/csrc/src/device/device.c 
+device.o: /home/delbacon/ysyx-workbench/npc/csrc/src/device/device.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
-mem_access.o: /home/delbacon/ysyx-workbench/npc/csrc/src/memory/mem_access.c 
+mem_access.o: /home/delbacon/ysyx-workbench/npc/csrc/src/memory/mem_access.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
-readbin.o: /home/delbacon/ysyx-workbench/npc/csrc/src/memory/readbin.c 
+readbin.o: /home/delbacon/ysyx-workbench/npc/csrc/src/memory/readbin.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
-monitor.o: /home/delbacon/ysyx-workbench/npc/csrc/src/monitor/monitor.c 
+monitor.o: /home/delbacon/ysyx-workbench/npc/csrc/src/monitor/monitor.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
 expr.o: /home/delbacon/ysyx-workbench/npc/csrc/src/sdb/expr.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
@@ -106,9 +116,11 @@ sdb.o: /home/delbacon/ysyx-workbench/npc/csrc/src/sdb/sdb.cpp
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
 watchpoint.o: /home/delbacon/ysyx-workbench/npc/csrc/src/sdb/watchpoint.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
-ebreak.o: /home/delbacon/ysyx-workbench/npc/csrc/src/utils/ebreak.c 
+ebreak.o: /home/delbacon/ysyx-workbench/npc/csrc/src/utils/ebreak.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
 log.o: /home/delbacon/ysyx-workbench/npc/csrc/src/utils/log.cpp 
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
+trace.o: /home/delbacon/ysyx-workbench/npc/csrc/src/utils/trace.cpp 
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST)  -c -o $@ $<
 
 ### Link rules... (from --exe)

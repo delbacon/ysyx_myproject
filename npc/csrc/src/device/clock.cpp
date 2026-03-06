@@ -1,5 +1,6 @@
 #include "../../include/device.h"  
 #include <time.h>
+#include "cpu.h"
 
 static uint64_t time_start=0;
 uint64_t get_time_us() {

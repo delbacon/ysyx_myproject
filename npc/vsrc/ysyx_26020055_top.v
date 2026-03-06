@@ -10,6 +10,7 @@ module ysyx_26020055_top (
 //wire [31:0] inst;
 //wire [31:0] pc;
 ysyx_26020055_IFU IFU (
+	.clk(clk),
 	.pc(pc),    //input
     .inst(inst)     //output
 );

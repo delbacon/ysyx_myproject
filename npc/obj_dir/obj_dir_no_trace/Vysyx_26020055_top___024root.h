@@ -39,7 +39,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_26020055_top___024root final {
     IData/*31:0*/ ysyx_26020055_top__DOT__LSU__DOT__pmem_rdata;
     IData/*31:0*/ ysyx_26020055_top__DOT__WBU__DOT__next_pc;
     IData/*31:0*/ __Vfunc_pROM_read__0__Vfuncout;
-    IData/*31:0*/ __Vfunc_pRAM_read__2__Vfuncout;
+    IData/*31:0*/ __Vfunc_pRAM_read__3__Vfuncout;
     IData/*16:0*/ __VdfgRegularize_h6e95ff9d_0_0;
     IData/*31:0*/ __VactIterCount;
     QData/*32:0*/ ysyx_26020055_top__DOT__EXU__DOT__alu__DOT__res;

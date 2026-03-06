@@ -1,5 +1,6 @@
 #include "../../include/utils.h"
 #include "../../include/memory.h"
+#include "../../include/cpu.h"
 void ebreak()
 {
 	cpu.state = STATE_EBREAK ;

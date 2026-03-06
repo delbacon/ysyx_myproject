@@ -1,5 +1,5 @@
 #include "../../include/simulator.h"
-
+#include "../../include/sdb.h"
 #include "../../include/device.h"
 #include "../../include/monitor.h"
 
@@ -17,7 +17,7 @@ void nvboard_bind_all_pins(TOP_NAME* TOPNAME);
 static int g_print_step;
 static int g_timer;
 
-// 全局变量,声明仿真对象 dut 和 波形輸出 tfp
+// 声明仿真对象 dut 和 波形輸出 tfp
 // 后面会在 SIMULATE_INIT 中初始化
 static Vysyx_26020055_top* dut = nullptr;
 static VerilatedFstC* tfp = nullptr;
@@ -56,31 +56,43 @@ static void simulator_end(){
         delete dut;
 }
 
+static void inst_print_N(){
+    if(g_print_step){
+        inst_print();
+    } 
+}
 
 
 void exec_once(){
-	// 時鐘切換
-    dut->clk = !dut->clk;
-    if (cpu.sim_time == 10) {
-        dut->rst = 0;
-    }
-	//更新
-    dut->eval();
+    inst_print_N();
+    int n = 2;//推进一个时钟周期
+    while(n){
+	    // 時鐘切換
+        dut->clk = !dut->clk;
+        if (cpu.sim_time == 10) {
+            dut->rst = 0;
+        }
+	    //更新
+        dut->eval();
 
 #ifdef WAVE_TRACE
-    // 記錄波形
-    tfp->dump(cpu.sim_time);
+        // 記錄波形
+        tfp->dump(cpu.sim_time);
 #endif
 
-	cpu.sim_time++;
-    //ebreak
-	if(cpu.sim_time % 100000000 == 0) reg_display();
+	    cpu.sim_time++;
+        n--;
+        //ebreak
+	    if(cpu.sim_time % 100000000 == 0) reg_display();
+        wp_difftest();
+    }
 }
 
 
 void execute(uint64_t n){
-    if(cpu.state != STATE_RUNNING) return;
+
     while (n) {
+        if(cpu.state != STATE_RUNNING) return;
         exec_once();
         n--;
         if(cpu.state == STATE_EBREAK) break;
@@ -90,23 +102,26 @@ void execute(uint64_t n){
 int cpu_exec(uint64_t n){
   g_print_step = (n < MAX_INST_TO_PRINT);
   switch (cpu.state) {
-    case STATE_EBREAK:
+    case STATE_EBREAK:case STATE_END:
         printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
         simulator_end();
         return 1;
     default: cpu.state = STATE_RUNNING;
   }
 
+  
   uint64_t timer_start = get_time_us();
   execute(n);
   uint64_t timer_end = get_time_us();
+  
+  
   g_timer += timer_end - timer_start;
+
+
 
   switch (cpu.state) {
     case STATE_RUNNING: cpu.state = STATE_STOP; break;
   }
-
-
 
     return 0;
 }

@@ -106,7 +106,7 @@ $(OBJ_DIR_WITH_TRACE):
 #-------------------------
 # Rules for NVBoard
 #-------------------------
-# include $(NVBOARD_HOME)/scripts/nvboard.mk
+include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 
 #-------------------------
@@ -284,4 +284,5 @@ help:
         run sim syn sta help \
         check-yosys-sta check-sdc
 
-
+# 为了能跑 git_commit ,也不要删掉这个！！
+include ../Makefile

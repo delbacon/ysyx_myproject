@@ -110,21 +110,3 @@ uint32_t* read_to_MEM(const char *fname)
 }
 
 
-/*
-e.g:
-uint32_t *pROM = NULL;
-uint32_t *pRAM = NULL;
-
-int main(int argc, char *argv[])
-{
-	read_to_ROM(pROM,argv[1]);
-	read_to_RAM(pRAM,argv[2]);
-
-    ....
-
-	free_mem();
-
-	return 0;
-}
-*/
-

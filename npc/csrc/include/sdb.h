@@ -15,7 +15,9 @@
 
 #ifndef __SDB_H__
 #define __SDB_H__
-#include "../../include/monitor.h"
+
+#include "monitor.h"
+
 #define NR_WP 32
 #define TOKEN_SIZE 64
 

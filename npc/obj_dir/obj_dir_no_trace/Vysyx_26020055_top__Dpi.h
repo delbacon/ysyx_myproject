@@ -18,6 +18,8 @@ extern "C" {
     // DPI IMPORTS
     // DPI import at /home/delbacon/ysyx-workbench/npc/vsrc/ysyx_26020055_EXU.v:3:30
     extern void ebreak();
+    // DPI import at /home/delbacon/ysyx-workbench/npc/vsrc/ysyx_26020055_IFU.v:2:30
+    extern void inst_get(int vraddr);
     // DPI import at /home/delbacon/ysyx-workbench/npc/vsrc/ysyx_26020055_LSU.v:1:29
     extern int pRAM_read(int vraddr);
     // DPI import at /home/delbacon/ysyx-workbench/npc/vsrc/ysyx_26020055_LSU.v:2:30

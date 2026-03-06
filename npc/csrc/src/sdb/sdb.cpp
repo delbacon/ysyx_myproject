@@ -1,6 +1,6 @@
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "sdb.h"
+#include "../../include/sdb.h"
 #include <limits.h>
 
 #include "../../include/simulator.h"

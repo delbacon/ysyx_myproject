@@ -13,8 +13,6 @@
 #include "svdpi.h"
 #include "Vysyx_26020055_top__Dpi.h"
 
-
-
 #include "memory.h"
 #include "device.h"
 #include "utils.h"

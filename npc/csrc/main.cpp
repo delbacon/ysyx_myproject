@@ -1,13 +1,9 @@
-//include
-#include "include/memory.h"
-#include "include/device.h"
-#include "include/utils.h"
-#include "include/cpu.h"
 #include "include/simulator.h"
 #include "include/monitor.h"
 
 
-CPU_T cpu = {0}; 
+
+CPU_T cpu = {.pROM=NULL,.pRAM=NULL,.pc=0,.inst=0,.gpr={0},.sim_time=0,.state=0}; 
 #define TOPNAME ysyx_26020055_top
 
 

@@ -2,7 +2,6 @@
 #define __UTILS_H__
 
 #include "common.h"
-#include "cpu.h"
 
 extern "C" void ebreak();
 

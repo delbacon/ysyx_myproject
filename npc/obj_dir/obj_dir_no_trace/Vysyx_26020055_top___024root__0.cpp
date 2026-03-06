@@ -39,6 +39,7 @@ bool Vysyx_26020055_top___024root___trigger_anySet__act(const VlUnpacked<QData/*
     return (0U);
 }
 
+void Vysyx_26020055_top___024unit____Vdpiimwrap_inst_get_TOP____024unit(IData/*31:0*/ vraddr);
 void Vysyx_26020055_top___024unit____Vdpiimwrap_pc_get_TOP____024unit(IData/*31:0*/ val);
 void Vysyx_26020055_top___024unit____Vdpiimwrap_reg_get_TOP____024unit(IData/*31:0*/ reg_idx, IData/*31:0*/ val);
 void Vysyx_26020055_top___024unit____Vdpiimwrap_pROM_read_TOP____024unit(IData/*31:0*/ vraddr, IData/*31:0*/ &pROM_read__Vfuncrtn);
@@ -60,6 +61,7 @@ void Vysyx_26020055_top___024root___nba_sequent__TOP__0(Vysyx_26020055_top___024
     CData/*0:0*/ __VdlySet__ysyx_26020055_top__DOT__WBU__DOT__u_RegisterFile__DOT__rf__v0;
     __VdlySet__ysyx_26020055_top__DOT__WBU__DOT__u_RegisterFile__DOT__rf__v0 = 0;
     // Body
+    Vysyx_26020055_top___024unit____Vdpiimwrap_inst_get_TOP____024unit(vlSelfRef.inst);
     Vysyx_26020055_top___024unit____Vdpiimwrap_pc_get_TOP____024unit(vlSelfRef.pc);
     __VdlySet__ysyx_26020055_top__DOT__WBU__DOT__u_RegisterFile__DOT__rf__v0 = 0U;
     ysyx_26020055_top__DOT__WBU__DOT__u_RegisterFile__DOT__unnamedblk1__DOT__i = 0U;
@@ -791,9 +793,9 @@ void Vysyx_26020055_top___024root___nba_sequent__TOP__0(Vysyx_26020055_top___024
                              ? 4U : 2U) : ((1U & (IData)(vlSelfRef.ysyx_26020055_top__DOT__mem_op))
                                             ? 1U : 0U))));
     if (vlSelfRef.ysyx_26020055_top__DOT____Vcellinp__EXU__mem_on) {
-        Vysyx_26020055_top___024unit____Vdpiimwrap_pRAM_read_TOP____024unit(vlSelfRef.ysyx_26020055_top__DOT__EXU__DOT__alu_out, vlSelfRef.__Vfunc_pRAM_read__2__Vfuncout);
+        Vysyx_26020055_top___024unit____Vdpiimwrap_pRAM_read_TOP____024unit(vlSelfRef.ysyx_26020055_top__DOT__EXU__DOT__alu_out, vlSelfRef.__Vfunc_pRAM_read__3__Vfuncout);
         vlSelfRef.ysyx_26020055_top__DOT__LSU__DOT__pmem_rdata 
-            = vlSelfRef.__Vfunc_pRAM_read__2__Vfuncout;
+            = vlSelfRef.__Vfunc_pRAM_read__3__Vfuncout;
         if ((0x23U == (0x0000007fU & vlSelfRef.inst))) {
             Vysyx_26020055_top___024unit____Vdpiimwrap_pRAM_write_TOP____024unit(vlSelfRef.ysyx_26020055_top__DOT__EXU__DOT__alu_out, vlSelfRef.ysyx_26020055_top__DOT__rs2_data, (IData)(vlSelfRef.ysyx_26020055_top__DOT__LSU__DOT__wmask));
         }
