@@ -67,12 +67,36 @@ static void inst_print_N(char *c){
     } 
 }
 
-static void trace_and_difftest(char *c){
+static void trace_and_difftest(CPU_T s, char *c){
 #ifdef CONFIG_ITRACE_LASTEST
     itrace_buf_write(&itrace_cb, c);
 #elif CONFIG_ITRACE
     log_write("%s\n", c); 
 #endif
+
+#ifdef CONFIG_FTRACE
+    word_t rd = get_rd(s.inst);
+    word_t inst = s.inst;
+    
+    // 判断是否为 jal 或 jalr 指令
+    if (is_jal(inst)) {
+        // jal 指令：跳转并链接
+        //printf("[FTRACE] JAL instruction detected at inst 0x%08x\n", inst);
+        // 在这里添加你的 FTRACE 逻辑
+        if(rd == 1) ftrace_call(s.pc, s.dnpc); 
+
+    } else if (is_jalr(inst)) {
+        uint32_t imm = get_jalr_imm(inst);
+        // jalr 指令：寄存器跳转并链接
+        //printf("[FTRACE] JALR instruction detected at inst 0x%08x\n", inst);
+        // 在这里添加你的 FTRACE 逻辑
+        if(s.inst == 0x00008067) ftrace_ret(s.pc);
+        else if (rd == 1) ftrace_call(s.pc, s.dnpc);
+        else if (rd == 0 && imm == 0) ftrace_call(s.pc, s.dnpc); 
+        // jr rs1 -> jalr x0, 0(rs1), which may be other control flow e.g. 'goto','for'
+    }
+#endif
+
     IFDEF(CONFIG_WATCHPOINT,wp_difftest());
 }
 void exec_once(){
@@ -121,12 +145,13 @@ void execute(uint64_t n){
         if (inst != 0x0){
             disassemble(start, 64, (uint64_t)pc, inst_str, ilen);
         }
+
         // 打印指令(<N)
         inst_print_N(c);
 
         exec_once();
 
-        trace_and_difftest(c);
+        trace_and_difftest(cpu, c);
 
         free(inst_str);
         //如果nemu的状态为NEMU_RUNNING，则继续执行，否则跳出循环

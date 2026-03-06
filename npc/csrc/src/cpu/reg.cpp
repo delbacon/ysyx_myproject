@@ -16,6 +16,10 @@ void pc_get(int val){
   cpu.pc = val;
 }
 
+void dnpc_get(int val){
+  cpu.dnpc = val;
+}
+
 
 void reg_get(int reg_idx, int val) { 
     cpu.gpr[reg_idx] = val;
