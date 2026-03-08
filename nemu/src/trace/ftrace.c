@@ -1,5 +1,5 @@
 #include <cpu/cpu.h>
-#include <utils.h>
+#include <trace/ftrace.h>
 
 //elf解析
 #define _GNU_SOURCE
@@ -8,64 +8,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <elf.h>
-
-//itrace 相关函数:
-//============================================================================//
-//换行缓冲区的实现
-
-void ring_buffer_init(ring_buffer_t *cb){
-  cb->head = 0;
-  cb->tail = 0;
-  cb->cnt  = 0;
-  for(int i = 0; i < RING_BUFFER_SIZE; i++){
-    cb->buf[i][0] = '\0';
-  }
-}
-
-int ring_buffer_put(ring_buffer_t *cb, char *c){ 
-  if(cb->head >= RING_BUFFER_SIZE){
-    return -1;
-  }else{
-    for(int i=0; i<128; i++){
-      cb->buf[cb->head][i] = c[i];
-    }
-    cb->head = (cb->head + 1) % RING_BUFFER_SIZE;
-    cb->cnt ++;
-    return 0;
-  }
-}
-
-void itrace_log_write(ring_buffer_t *cb){
-  if (ITRACE_COND) {
-    log_write("\t\t\t  " ANSI_FMT("The lastest %d INSTs", ANSI_BG_BLUE) "\n",
-     RING_BUFFER_SIZE);
-
-    int index = cb->head;
-    //如果缓冲区被写满，就从最新写入的单元+1开始输出
-    if(cb->cnt > RING_BUFFER_SIZE)
-        for(int i = index-1; ((i-index) % RING_BUFFER_SIZE) < RING_BUFFER_SIZE ; i++){
-          if(cb->buf[i][0] == '\0') break;
-          log_write("%03d: %s\n",(i-index+1), cb->buf[(i+1) % RING_BUFFER_SIZE]);
-          cb->cnt-- ;
-        } 
-    //否则从头开始输出
-    else {
-      for(int i = 0; i < index; i++){
-        if(cb->buf[i][0] == '\0') break;
-        log_write("%03d: %s\n",i , cb->buf[i]);
-      }
-    }
-    log_write("\t\t\t  %s\n", ANSI_FMT("INST STOP", ANSI_BG_RED));
-  }
-  //这里的_this->logbuf存储的是向log写入的数据，默认是执行的 inst 和 pc ,每次执行的时候都会往里面写内容
-}
-//============================================================================//
-
-
-
 //ftrace相关函数:
 //============================================================================//
-#ifdef CONFIG_FTRACE
 //elf文件的读取与函数名 & 对应地址的获取
 //======================================//
 //函数定义
@@ -73,6 +17,7 @@ void itrace_log_write(ring_buffer_t *cb){
 ElfFunction *func_list = NULL;
 int func_num = 0;
 
+static size_t count=0;
 
 
 
@@ -90,7 +35,6 @@ static int parse_elf64_functions_with_size(ElfFunction **out_funcs, char *elf_da
     size_t capacity = 256;
     ElfFunction *funcs = malloc(capacity * sizeof(ElfFunction));
     if (funcs == NULL) return -1;
-    size_t count = 0;
 
     //遍历节头表
     for (int i = 0; i < shnum; i++) {
@@ -145,7 +89,7 @@ static int parse_elf64_functions_with_size(ElfFunction **out_funcs, char *elf_da
     ElfFunction *final = realloc(funcs, count * sizeof(ElfFunction));
     if (!final) goto cleanup;
     *out_funcs = final;
-    return (int)count;
+    return 0;
 
 cleanup:
     for (size_t i = 0; i < count; i++) {
@@ -169,7 +113,6 @@ static int parse_elf32_functions_with_size(ElfFunction **out_funcs, char *elf_da
     size_t capacity = 256;
     ElfFunction *funcs = malloc(capacity * sizeof(ElfFunction));
     if (funcs == NULL) return -1;
-    size_t count = 0;
 
     //遍历节头表
     for (int i = 0; i < shnum; i++) {
@@ -224,7 +167,7 @@ static int parse_elf32_functions_with_size(ElfFunction **out_funcs, char *elf_da
     ElfFunction *final = realloc(funcs, count * sizeof(ElfFunction));
     if (!final) goto cleanup;
     *out_funcs = final;
-    return (int)count;
+    return 0;
 
 cleanup:
     for (size_t i = 0; i < count; i++) {
@@ -234,7 +177,7 @@ cleanup:
     return -1;
 }
 
-int parse_elf_functions_with_size(ElfFunction **out_funcs, char *elf_data) {
+static int parse_elf_functions_with_size(ElfFunction **out_funcs, char *elf_data) {
     //如果没有读到elf文件，或者函数指针为空，则返回-1
     if (!elf_data) {
         return -1;
@@ -250,7 +193,7 @@ int parse_elf_functions_with_size(ElfFunction **out_funcs, char *elf_data) {
     
     return -1;
 }
-void free_elf_functions(ElfFunction *funcs, int count) {
+static void free_elf_functions(ElfFunction *funcs) {
     if (!funcs) return;
     for (int i = 0; i < count; i++) {
         free(funcs[i].name);
@@ -258,7 +201,7 @@ void free_elf_functions(ElfFunction *funcs, int count) {
     free(funcs);
 }
 
-int init_elf_file(const char *elf_file)  {
+static int init_elf_file(const char *elf_file)  {
     if (elf_file==NULL) return -1;
 
     printf("init elf file: %s\n",elf_file);
@@ -341,6 +284,12 @@ void ftrace_ret(vaddr_t pc){
     call_depth--;
 }
 
-#endif
+int init_ftrace(const char *elf_file){
+    return init_elf_file(elf_file);
+}
 
+void ftrace_free(ElfFunction *funcs)
+{
+    free_elf_functions(funcs) ;
+}
 //============================================================================//

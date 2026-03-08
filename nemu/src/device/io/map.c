@@ -17,6 +17,7 @@
 #include <memory/host.h>
 #include <memory/vaddr.h>
 #include <device/map.h>
+#include <trace/dtrace.h>
 
 #define IO_SPACE_MAX (32 * 1024 * 1024)
 
@@ -58,24 +59,9 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   paddr_t offset = addr - map->low;
   invoke_callback(map->callback, offset, len, false); // prepare data to read
   word_t ret = host_read(map->space + offset, len);
-#ifdef CONFIG_DTRACE_COND
-  if (DTRACE_COND) {
-    if(addr >=CONFIG_DTRACE_START && addr < CONFIG_DTRACE_END){
-      word_t tmp_array[4];
-      for(int i=0;i<4;i++){
-        tmp_array[i] = (ret & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
-      }
-      log_write(ANSI_FMT("[DEV]",ANSI_FG_WHITE) 
-                ANSI_FMT("[READ ] ",ANSI_FG_RED) 
-                ANSI_FMT(FMT_PADDR": ",ANSI_FG_MAGENTA), addr);
-      for(int i=0;i<4;i++){
-        log_write("%02x ", tmp_array[i] );
-      }
-      log_write(ANSI_FMT("[%s]",ANSI_FG_GREEN), map->name);
-      log_write("\n");
-    }
-  }
-#endif
+
+  IFDEF(CONFIG_DTRACE, dtrace_read(addr, ret, map);)
+
   return ret;
 }
 
@@ -85,22 +71,6 @@ void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
   paddr_t offset = addr - map->low;
   host_write(map->space + offset, len, data);
   invoke_callback(map->callback, offset, len, true);
-#ifdef CONFIG_DTRACE_COND
-  if (DTRACE_COND) {
-    if(addr >=CONFIG_DTRACE_START && addr < CONFIG_DTRACE_END){
-      word_t tmp_array[4];
-      for(int i=0;i<4;i++){
-        tmp_array[i] = (data & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
-      }
-      log_write(ANSI_FMT("[DEV]",ANSI_FG_WHITE) 
-                ANSI_FMT("[WRITE] ",ANSI_FG_BLUE) 
-                ANSI_FMT(FMT_PADDR": ",ANSI_FG_CYAN), addr);
-      for(int i=0;i<4;i++){
-        log_write("%02x ", tmp_array[i] );
-      }
-      log_write(ANSI_FMT("[%s]",ANSI_FG_GREEN), map->name);
-      log_write("\n");
-    }
-  }
-#endif
+
+  IFDEF(CONFIG_DTRACE, dtrace_write(addr, len, data, map);)
 }

@@ -19,6 +19,7 @@
 #include <locale.h>
 #include "../monitor/sdb/sdb.h"
 #include <utils.h>
+#include <trace/itrace.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -34,26 +35,19 @@ static bool g_print_step = false;
 
 void device_update();
 
-#ifdef CONFIG_ITRACE_LASTEST
-static void trace_and_difftest(Decode *_this, vaddr_t dnpc, ring_buffer_t *cb) {
-#else
-static void trace_and_difftest(Decode *_this, vaddr_t dnpc){
-#endif
 
-#ifdef CONFIG_ITRACE_LASTEST
-  if (ITRACE_COND){
-    ring_buffer_put(cb, _this->logbuf);
-  }
-#elif CONFIG_ITRACE
-  if (ITRACE_COND){
-  log_write("%s\n", _this->logbuf); 
-  }
-#endif
+
+static void trace_and_difftest(Decode *_this, vaddr_t dnpc){
+  MUXDEF(CONFIG_ITRACE_LASTEST,itrace_list_put(_this->logbuf);
+                              ,log_write("%s\n", _this->logbuf);)
+  
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+  
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
   //打开wp_difftest
   IFDEF(CONFIG_WATCHPOINT, wp_difftest());
+
 }
 
 static void exec_once(Decode *s, vaddr_t pc) {
@@ -66,60 +60,24 @@ static void exec_once(Decode *s, vaddr_t pc) {
   isa_exec_once(s);
   cpu.pc = s->dnpc;
 
-//这里是实现 ITRACE 的功能，logbuf 是 log 缓存器
-//先把缓存器的地址赋给 p ，再对 p 进行一些操作
-//============================================================================//
-  #ifdef CONFIG_ITRACE
-  char *p = s->logbuf;
-  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-  int ilen = s->snpc - s->pc;
-  int i;
-  //先取地址再取内容，这样取到的是第一个字节的数据，并且可以通过指针访问后续字节
-  //如果直接强制类型转换为uint8_t,会丢失第一个字节后的内容
-  uint8_t *inst = (uint8_t *)&s->isa.inst;
-  //这里特殊处理x86是因为指令顺序不同
-#ifdef CONFIG_ISA_x86
-  for (i = 0; i < ilen; i ++) {
-#else
-  for (i = ilen - 1; i >= 0; i --) {
-#endif
-    p += snprintf(p, 4, " %02x", inst[i]);
-  }
-  int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
-  int space_len = ilen_max - ilen;
-  if (space_len < 0) space_len = 0;
-  space_len = space_len * 3 + 1;
-  memset(p, ' ', space_len);
-  p += space_len;
-
-  void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-  disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
-      MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst, ilen);
-#endif
+  IFDEF(CONFIG_ITRACE, itrace_list_write(s);)
 }
-//============================================================================//
-
 //执行一条指令
 static void execute(uint64_t n) {
   Decode s;
-#ifdef CONFIG_ITRACE_LASTEST
-  ring_buffer_t cb;
-  ring_buffer_init(&cb);
-#endif
+
+  IFDEF(CONFIG_ITRACE_LASTEST, void itrace_list_init();itrace_list_init();)
+
   for (;n > 0; n --) {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst ++;
-#ifdef CONFIG_ITRACE_LASTEST
-    trace_and_difftest(&s, cpu.pc, &cb);
+
+    trace_and_difftest(&s, cpu.pc);
     //如果nemu的状态为NEMU_RUNNING，则继续执行，否则跳出循环
-    if (nemu_state.state != NEMU_RUNNING) {
-      itrace_log_write(&cb);
+    if(nemu_state.state != NEMU_RUNNING) {
+      IFDEF(CONFIG_ITRACE_LASTEST, void itrace_log_write();itrace_log_write();)
       break;
     }
-#else
-    trace_and_difftest(&s, cpu.pc);
-    if(nemu_state.state != NEMU_RUNNING) break;
-#endif
     //IFDEF的作用是，如果宏定义CONFIG_DEVICE存在，则执行device_update()，否则不执行。
     IFDEF(CONFIG_DEVICE, device_update());
   }

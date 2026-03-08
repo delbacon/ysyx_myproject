@@ -75,38 +75,4 @@ uint64_t get_time();
   } while (0)
 
 
-
-
-// ---------- trace ------------//
-
-//----- itrace -----//  
-#define RING_BUFFER_SIZE  MUXDEF(CONFIG_ITRACE_LASTEST_N, CONFIG_ITRACE_LASTEST_N, 32)
-
-typedef struct {
-  char buf[RING_BUFFER_SIZE][128];
-  size_t head;
-  size_t tail;
-  int cnt;
-} ring_buffer_t;
-
-void ring_buffer_init(ring_buffer_t *cb);
-int ring_buffer_put(ring_buffer_t *cb, char *c);
-void itrace_log_write(ring_buffer_t *cb);
-
-
-//----- ftrace -----//
-//存储 elf 文件中函数名和对应地址范围的结构体
-typedef struct {
-    char *name;
-    word_t start;  
-    word_t end;    
-    word_t size;   
-} ElfFunction;
-
-//函数声明
-int parse_elf_functions_with_size(ElfFunction **out_funcs, char *elf_data);
-void free_elf_functions(ElfFunction *funcs, int count);
-
-void ftrace_call(vaddr_t pc, vaddr_t pc_target);
-void ftrace_ret(vaddr_t pc);
 #endif

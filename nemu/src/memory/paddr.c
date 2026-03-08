@@ -17,6 +17,7 @@
 #include <memory/paddr.h>
 #include <device/mmio.h>
 #include <isa.h>
+#include <trace/mtrace.h>
 
 #if   defined(CONFIG_PMEM_MALLOC)
 static uint8_t *pmem = NULL;
@@ -27,48 +28,20 @@ static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 uint8_t* guest_to_host(paddr_t paddr) { return pmem + paddr - CONFIG_MBASE; }
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
 
-//后面可以用utils的宏定义优化一下可读性
+
 static word_t pmem_read(paddr_t addr, int len) {
   word_t ret = host_read(guest_to_host(addr), len);
-#ifdef CONFIG_MTRACE_COND
-  if (MTRACE_COND) {
-    if(addr >=CONFIG_MTRACE_START && addr < CONFIG_MTRACE_END){
-      word_t tmp_array[4];
-      for(int i=0;i<4;i++){
-        tmp_array[i] = (ret & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
-      }
-      log_write(ANSI_FMT("[MEM]",ANSI_FG_GREEN) 
-                ANSI_FMT("[READ ] ",ANSI_FG_RED) 
-                ANSI_FMT(FMT_PADDR": ",ANSI_FG_MAGENTA), addr);
-      for(int i=0;i<4;i++){
-        log_write("%02x ", tmp_array[i] );
-      }
-      log_write("\n");
-    }
-  }
-#endif
+
+  IFDEF(CONFIG_MTRACE,mtrace_read(addr, len, ret);)
+
   return ret;
 }
 
 static void pmem_write(paddr_t addr, int len, word_t data) {
   host_write(guest_to_host(addr), len, data);
-#ifdef CONFIG_MTRACE_COND
-  if (MTRACE_COND) {
-    if(addr >=CONFIG_MTRACE_START && addr < CONFIG_MTRACE_END){
-      word_t tmp_array[8];
-      for(int i=0;i<sizeof(word_t);i++){
-        tmp_array[i] = (data & (~0xffu >> (8 * i)) ) >> (8 * (3-i));
-      }
-      log_write(ANSI_FMT("[MEM]",ANSI_FG_GREEN) 
-                ANSI_FMT("[WRITE] ",ANSI_FG_BLUE) 
-                ANSI_FMT(FMT_PADDR": ",ANSI_FG_CYAN), addr);
-      for(int i=0;i<4;i++){
-        log_write("%02x ", tmp_array[i] );
-      }
-      log_write("\n");
-    }
-  }
-#endif
+
+  IFDEF(CONFIG_MTRACE,mtrace_write(addr, len, data);)
+
 }
 
 static void out_of_bound(paddr_t addr) {

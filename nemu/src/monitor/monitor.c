@@ -15,6 +15,7 @@
 
 #include <isa.h>
 #include <memory/paddr.h>
+#include <trace/ftrace.h>
 
 void init_rand();
 void init_log(const char *log_file);
@@ -23,7 +24,6 @@ void init_difftest(char *ref_so_file, long img_size, int port);
 void init_device();
 void init_sdb();
 void init_disasm();
-int  init_elf_file(const char *elf_file);
 
 static void welcome() {
   Log("Trace: %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
@@ -119,7 +119,7 @@ void init_monitor(int argc, char *argv[]) {
   init_mem();
 
   /* Initialize elf file. */
-  IFDEF(CONFIG_FTRACE,init_elf_file(elf_file));
+  IFDEF(CONFIG_FTRACE,init_ftrace(elf_file));
 
   /* Initialize devices. */
   IFDEF(CONFIG_DEVICE, init_device());

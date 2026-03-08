@@ -132,6 +132,7 @@ config TRACE
   bool "Enable tracer"
   default y
 
+
 config TRACE_START
   depends on TRACE
   int "When tracing is enabled (unit: number of instructions)"
@@ -147,41 +148,42 @@ config ITRACE
   bool "Enable instruction tracer"
   default y
 
-config ITRACE_COND
-  depends on ITRACE
-  string "Only trace instructions when the condition is true"
-  default "true"
+if ITRACE
+  menu "Itrace Config"
 
-config ITRACE_LASTEST
-  depends on ITRACE 
-  bool "Trace lastest [N] INSTs"
-  default y
+  config ITRACE_LASTEST
+    depends on ITRACE 
+    bool "Trace lastest [N] INSTs"
+    default y
+  
+  config ITRACE_LASTEST_N
+    depends on ITRACE_LASTEST
+    int "Trace lastest [N] INSTs"
+    default 64
 
-config ITRACE_LASTEST_N
-  depends on ITRACE_LASTEST
-  int "Trace lastest [N] INSTs"
-  default 64
+  endmenu
+endif
 
 config MTRACE
 	depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
 	bool "Enable memory tracer"
 	default y
 
-config MTRACE_START
-  depends on MTRACE
-  hex "Where memory tracing is enabled( unit: number of >=addr(0x) )"
-  default 0x80000000
+if MTRACE
+  menu "Mtrace Config"
 
-config MTRACE_END
-  depends on MTRACE
-  hex "Where memory tracing is disabled( unit: number of <addr(0x) )"
-  default 0x90000000
+  config MTRACE_START
+    depends on MTRACE
+    hex "Where memory tracing is enabled( unit: number of >=addr(0x) )"
+    default 0x80000000
 
-config MTRACE_COND
-  depends on MTRACE
-  string "Only trace memory when the condition is true"
-  default "true"
-
+  config MTRACE_END
+    depends on MTRACE
+    hex "Where memory tracing is disabled( unit: number of <addr(0x) )"
+    default 0x90000000
+  endmenu
+endif
+  
 config FTRACE
 	depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
 	bool "Enable function tracer"
@@ -191,16 +193,14 @@ config FTRACE_INDENT
   depends on FTRACE
   bool "Printf function by using indentation in nemu-log.txt ."
   default y
-  
-config FTRACE_COND
-  depends on FTRACE
-  string "Only trace function when the condition is true"
-  default "true"
 
 config DTRACE
 	depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
 	bool "Enable device tracer"
 	default y
+
+if DTRACE
+  menu "Dtrace Config"
 
 config DTRACE_START
   depends on DTRACE
@@ -212,10 +212,8 @@ config DTRACE_END
   hex "Where device tracing is disabled( unit: number of <addr(0x) )"
   default 0xa2000000
 
-config DTRACE_COND
-  depends on DTRACE
-  string "Only trace device when the condition is true"
-  default "true"
+  endmenu
+endif
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF
@@ -232,7 +230,6 @@ config WATCHPOINT
   help
     Enable watchpoint with a reference design.
     Note that this will significantly reduce the performance of NEMU.
-
 choice
   prompt "Reference design"
   default DIFFTEST_REF_SPIKE if ISA_riscv
@@ -241,6 +238,7 @@ choice
   depends on DIFFTEST
 config DIFFTEST_REF_QEMU
   bool "QEMU, communicate with socket"
+
 if ISA_riscv
 config DIFFTEST_REF_SPIKE
   bool "Spike"
