@@ -4,6 +4,11 @@
 
 //#define PROM_READ
 
+
+uint32_t* guest_to_host(paddr_t paddr) { return (uint32_t*)(cpu.pRAM + paddr - CONFIG_MBASE); }
+paddr_t host_to_guest(uint32_t *haddr) { return (paddr_t)(haddr - cpu.pRAM + CONFIG_MBASE); }
+
+
 //pcROM
 //===================================================//
 int pROM_read(int vraddr) {
@@ -54,30 +59,32 @@ int pRAM_read(int vraddr) {
 #endif
 
     return res;
-  }
-//-----------------------------------------------------------------------------------------//
+  }else if(vraddr >= PMEM_LEFT && vraddr < PMEM_RIGHT){
 
   // 实现内存的访问
 //-----------------------------------------------------------------------------------------//
   res = ((uint64_t)(cpu.pRAM[(raddr >> 2)+4]) <<  8 * (4 - offset)) | (cpu.pRAM[raddr >> 2] >> (offset * 8)) ;
 #ifdef CONFIG_MTRACE
-  if(vraddr >=CONFIG_MTRACE_START && vraddr < CONFIG_MTRACE_END){
-    word_t tmp_array[4];
-    for(int i=0;i<4;i++){
-      tmp_array[i] = (res & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
+    if(vraddr >=CONFIG_MTRACE_START && vraddr < CONFIG_MTRACE_END){
+      word_t tmp_array[4];
+      for(int i=0;i<4;i++){
+        tmp_array[i] = (res & (0xff000000u >> (8 * i)) ) >> (8 * (3-i));
+      }
+      log_write(ANSI_FMT("[MEM]",ANSI_FG_GREEN) 
+                ANSI_FMT("[READ ] ",ANSI_FG_RED) 
+                ANSI_FMT(FMT_PADDR": ",ANSI_FG_MAGENTA), vraddr);
+      for(int i=0;i<4;i++){
+        log_write("%02x ", tmp_array[i] );
+      }
+      log_write("\n");
     }
-    log_write(ANSI_FMT("[MEM]",ANSI_FG_GREEN) 
-              ANSI_FMT("[READ ] ",ANSI_FG_RED) 
-              ANSI_FMT(FMT_PADDR": ",ANSI_FG_MAGENTA), vraddr);
-    for(int i=0;i<4;i++){
-      log_write("%02x ", tmp_array[i] );
-    }
-    log_write("\n");
-  }
 #endif
 //-----------------------------------------------------------------------------------------//
-  return res;
+    return res;
+  }
+  return -1;
 }
+
 void pRAM_write(int vwaddr, int wdata, char wmask) {
   // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
   // `wmask`中每比特表示`wdata`中1个字节的掩码,

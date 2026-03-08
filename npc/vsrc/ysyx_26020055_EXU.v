@@ -91,7 +91,7 @@ module ysyx_26020055_EXU (
                             uncal_data :
                         (mem_on == 1) ?
                             rdata :
-                            alu_out;    
+                            alu_out+1;    
     assign mem_wr_addr = alu_out;
     assign mem_rd_addr = alu_out;
 endmodule

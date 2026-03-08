@@ -59,6 +59,8 @@ extern "C" void inst_get(int inst);
 
 
 //================================================//
+const char *reg_name(int reg_idx);
+
 
 extern "C" void pc_get(int val);
 

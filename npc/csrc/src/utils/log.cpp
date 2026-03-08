@@ -7,6 +7,7 @@ FILE *log_fp = NULL;
 void log_init(const char *log_file) {
   log_fp = stdout;
   if (log_file != NULL) {
+    printf("Log is written to %s\n", log_file);
     FILE *fp = fopen(log_file, "w");
     if(fp==NULL){
       printf("Can not open '%s'", log_file);
@@ -18,6 +19,8 @@ void log_init(const char *log_file) {
 }
 
 bool log_enable() {
-  return MUXDEF(CONFIG_TRACE, (g_nr_guest_inst >= CONFIG_TRACE_START) &&
-         (g_nr_guest_inst <= CONFIG_TRACE_END), false);
+  return MUXDEF(CONFIG_LOG_ENABLE, 
+         MUXDEF(CONFIG_TRACE ,(g_nr_guest_inst >= CONFIG_TRACE_START) &&
+                              (g_nr_guest_inst <= CONFIG_TRACE_END) ,true)
+                                  , false);
 }

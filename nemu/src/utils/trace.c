@@ -55,8 +55,7 @@ void itrace_log_write(ring_buffer_t *cb){
         log_write("%03d: %s\n",i , cb->buf[i]);
       }
     }
-    const char *inst_end = ANSI_FMT("INST STOP", ANSI_BG_RED);
-    log_write("\t\t\t  %s\n", inst_end);
+    log_write("\t\t\t  %s\n", ANSI_FMT("INST STOP", ANSI_BG_RED));
   }
   //这里的_this->logbuf存储的是向log写入的数据，默认是执行的 inst 和 pc ,每次执行的时候都会往里面写内容
 }
@@ -66,7 +65,7 @@ void itrace_log_write(ring_buffer_t *cb){
 
 //ftrace相关函数:
 //============================================================================//
-
+#ifdef CONFIG_FTRACE
 //elf文件的读取与函数名 & 对应地址的获取
 //======================================//
 //函数定义
@@ -312,7 +311,6 @@ static char *ftrace_get_func_name(vaddr_t pc){
     
 }
 void ftrace_call(vaddr_t pc, vaddr_t pc_target){ 
-    char *func_name = ftrace_get_func_name(pc_target);
     call_depth++;
     //if (call_depth <= 2) return; // ignore _trm_init & main
     log_write(ANSI_FMT(FMT_PADDR":",ANSI_BG_BLUE),pc);
@@ -325,11 +323,10 @@ void ftrace_call(vaddr_t pc, vaddr_t pc_target){
 #endif
 
     log_write("call [%s@" FMT_PADDR "]" ANSI_NONE "\n",
-		func_name,pc_target);
+		ftrace_get_func_name(pc_target),pc_target);
 }
 
 void ftrace_ret(vaddr_t pc){
-    char *func_name = ftrace_get_func_name(pc);
     //if (call_depth <= 2) return; // ignore _trm_init & main
 
     log_write(ANSI_FMT(FMT_PADDR":",ANSI_BG_YELLOW),pc);
@@ -340,9 +337,10 @@ void ftrace_ret(vaddr_t pc){
 #else
     log_write("f%d_",call_depth);
 #endif
-    log_write("ret [%s]" ANSI_NONE "\n",func_name);
+    log_write("ret [%s]" ANSI_NONE "\n",ftrace_get_func_name(pc));
     call_depth--;
 }
 
+#endif
 
 //============================================================================//

@@ -1,3 +1,4 @@
+#include "../../include/trace.h"
 #include "../../include/utils.h"
 #include "../../include/cpu.h"
 //elf解析
@@ -11,6 +12,11 @@
 //============================================================================//
 //换行缓冲区的实现
 
+void inst_print_N(int g_print_step, char *c){
+    if(g_print_step){
+        printf("%s\n",c);
+    } 
+}
 static void ring_buffer_init(ring_buffer_t *cb){
   cb->head = 0;
   cb->tail = 0;

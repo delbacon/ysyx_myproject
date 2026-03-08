@@ -27,6 +27,8 @@ void gdb_exit();
 
 void init_isa();
 
+
+
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   assert(direction == DIFFTEST_TO_REF);
   if (direction == DIFFTEST_TO_REF) {

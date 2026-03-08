@@ -8,7 +8,7 @@ const char *regs[] = {
 };
 //cpu.gpr存的是寄存器的值，reg_name返回的是对应寄存器的名称
 
-static const char *reg_name(int reg_idx) {
+const char *reg_name(int reg_idx) {
     return regs[reg_idx];
 }
 

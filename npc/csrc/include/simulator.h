@@ -16,6 +16,7 @@
 #include "memory.h"
 #include "device.h"
 #include "utils.h"
+#include "trace.h"
 #include "cpu.h"
 
 void exec_once();

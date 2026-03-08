@@ -1,21 +1,47 @@
-#include "../../include/monitor.h"
+#include "monitor.h"
 #include <getopt.h>
-#include "../../include/debug.h"
-#include "../../include/cpu.h"
-#include "../../include/utils.h"
-
+#include "debug.h"
+#include "cpu.h"
+#include "utils.h"
+#include "../../include/memory.h"
 
 static char *log_file = NULL ;
+static char *diff_so_file = NULL;
 static char *img_file = NULL;
 static char *elf_file = NULL;
+static int difftest_port = 1234;
+
 
 void init_log(const char *log_file);
 void init_sdb();
 int  init_elf_file(const char *elf_file);
 void pmem_init(char *file);
+void init_difftest(char *ref_so_file, long img_size, int port);
+
+static long load_img() {
+  if (img_file == NULL) {
+    Log("No image is given. Use the default build-in image.");
+    return 4096; // built-in image size
+  }
+
+  FILE *fp = fopen(img_file, "rb");
+  //if(fp == NULL) panic("Can not open '%s'", img_file);
+
+  fseek(fp, 0, SEEK_END);
+  long size = ftell(fp);
+
+  Log("The image is %s, size = %ld", img_file, size);
+
+  fclose(fp);
+  return size;
+}
 
 static void welcome() {
-  Log("Trace: %s", MUXDEF(CONFIG_LOG_ENABLE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
+  Log("Trace : %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
+  Log("Itrace: %s", MUXDEF(CONFIG_ITRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
+  Log("Mtrace: %s", MUXDEF(CONFIG_MTRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
+  Log("Dtrace: %s", MUXDEF(CONFIG_DTRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
+  Log("Ftrace: %s", MUXDEF(CONFIG_FTRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
   IFDEF(CONFIG_LOG_ENABLE, Log("If trace is enabled, a log file will be generated "
         "to record the trace. This may lead to a large log file. "
         "If it is not necessary, you can disable it in menuconfig"));
@@ -30,8 +56,8 @@ static int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
     {"batch"    , no_argument      , NULL, 'b'},
     {"log"      , required_argument, NULL, 'l'},
-    //{"diff"     , required_argument, NULL, 'd'},
-    //{"port"     , required_argument, NULL, 'p'},
+    {"diff"     , required_argument, NULL, 'd'},
+    {"port"     , required_argument, NULL, 'p'},
     {"elf-input", required_argument, NULL, 'e' },
     {"help"     , no_argument      , NULL, 'h'},
     {0          , 0                , NULL,  0 },
@@ -40,9 +66,9 @@ static int parse_args(int argc, char *argv[]) {
   while ( (o = getopt_long(argc, argv, "-bhl:d:p:", table, NULL)) != -1) {
     switch (o) {
       case 'b': sdb_set_batch_mode(); break;
-      //case 'p': sscanf(optarg, "%d", &difftest_port); break;
+      case 'p': sscanf(optarg, "%d", &difftest_port); break;
       case 'l': log_file = optarg; break;
-      //case 'd': diff_so_file = optarg; break;
+      case 'd': diff_so_file = optarg; break;
       case 'e': elf_file = optarg; break;
       case 1: img_file = optarg;break;
       default:
@@ -67,6 +93,10 @@ void monitor_init(int argc,char **argv) {
 
   /* Open the log file. */
   log_init(log_file);
+
+  long img_size = load_img();
+
+  init_difftest(diff_so_file, img_size, difftest_port);
 
   /* Initialize the simple debugger. */
   init_sdb();

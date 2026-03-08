@@ -163,7 +163,7 @@ config ITRACE_LASTEST_N
   default 64
 
 config MTRACE
-	depends on TRACE && TARGET_NATIVE_ELF
+	depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
 	bool "Enable memory tracer"
 	default y
 
@@ -183,7 +183,7 @@ config MTRACE_COND
   default "true"
 
 config FTRACE
-	depends on TRACE && TARGET_NATIVE_ELF
+	depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
 	bool "Enable function tracer"
 	default y
 
@@ -198,7 +198,7 @@ config FTRACE_COND
   default "true"
 
 config DTRACE
-	depends on TRACE && TARGET_NATIVE_ELF
+	depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
 	bool "Enable device tracer"
 	default y
 
@@ -226,7 +226,7 @@ config DIFFTEST
     Note that this will significantly reduce the performance of NEMU.
 
 config WATCHPOINT
-  depends on TARGET_NATIVE_ELF
+  depends on TARGET_NATIVE_ELF && ENGINE_INTERPRETER
   bool "Enable watchpoint"
   default n
   help

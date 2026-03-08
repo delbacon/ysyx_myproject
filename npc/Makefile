@@ -11,14 +11,13 @@ NXDC_FILES = constr/$(TOPNAME).nxdc
 TOP_MODULE := ysyx_26020055_top
 
 # Directories
-BUILD_DIR = ./build
+BUILD_DIR = $(NPC_HOME)/build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 OBJ_DIR_NO_TRACE = $(OBJ_DIR)/obj_dir_no_trace
 OBJ_DIR_WITH_TRACE = $(OBJ_DIR)/obj_dir_with_trace
-REPO_DIR = $(BUILD_DIR)/report
 
 # Binary output
-BIN = $(BUILD_DIR)/$(TOPNAME)
+BIN = $(IMG).bin
 
 #-------------------------
 # Tool Chain Configuration
@@ -82,8 +81,11 @@ CXXFLAGS += -Wall -Wextra
 # 通过 -D(XXX) 可以在编译时传入宏定义
 
 
-# Linker flags
-LDFLAGS += -lreadline
+# Linker flags 动态库链接
+LDFLAGS += "-lreadline"
+LDFLAGS += -Wl,--no-as-needed 
+LDFLAGS += -L$(NEMU_HOME)/build -Wl,-rpath=$(NEMU_HOME)/build -lriscv32-nemu-interpreter-so
+LDFLAGS += -Wl,--as-needed  
 #-------------------------
 # Rules for Constraint Files
 #-------------------------
@@ -108,6 +110,8 @@ $(OBJ_DIR_NO_TRACE):
 
 $(OBJ_DIR_WITH_TRACE):
 	@mkdir -p $(OBJ_DIR_WITH_TRACE)
+
+
 #-------------------------
 # Rules for NVBoard
 #-------------------------
@@ -118,23 +122,22 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 # Simulation Targets
 #-------------------------
 # Image file for simulation (use relative path)
-IMG ?= ../am-kernels/tests/cpu-tests/build/div-minirv-npc
-IMG = ../am-kernels/tests/am-tests/build/amtest-minirv-npc
-# Check if image file exists
-ifeq ($(wildcard $(IMG).bin),)
-  $(warning Warning: IMG not found: $(IMG).bin)
-endif
-
+# IMG ?= ../am-kernels/tests/cpu-tests/build/div-minirv-npc.bin
+# IMG ?= ../am-kernels/tests/am-tests/build/amtest-minirv-npc.bin
+ELF_FILE = $(IMG).elf
+DIFF_FILE = $(NEMU_HOME)/build/libriscv32-nemu-interpreter-so.so
 # Run args
-LOGFILE ?= build/npc-log.txt
+LOG_FILE = $(IMG).log
 
-RUNARGS =  -l $(LOGFILE) $(IMG).bin
-RUNARGS_NO_TRACE ?=  --elf-input  $(IMG).elf $(RUNARGS)
-RUNARGS_WITH_TRACE ?=  --elf-input  $(IMG).elf $(RUNARGS)
+RUNARGS =  -l $(LOG_FILE) 
+RUNARGS += --diff  $(DIFF_FILE)
+RUNARGS += $(BIN) # RUN
+RUNARGS_NO_TRACE ?=  --elf-input  $(ELF_FILE) $(RUNARGS)
+RUNARGS_WITH_TRACE ?=  --elf-input  $(ELF_FILE) $(RUNARGS)
 # 不带波形追踪的可执行文件（用于 run）
-OBJ_NO_TRACE = $(OBJ_DIR_NO_TRACE)/V$(TOPNAME)
+OBJ_NO_TRACE = $(OBJ_DIR)/V$(TOPNAME)
 # 带 --trace-fst 的可执行文件（用于 sim）
-OBJ_WITH_TRACE = $(OBJ_DIR_WITH_TRACE)/V$(TOPNAME)
+OBJ_WITH_TRACE = $(OBJ_DIR)/V$(TOPNAME)_with_trace
 
 # 通用参数（不含 trace）
 VERILATOR_COMMON_FLAGS = --cc --exe --build -j 0 -Wall --top-module $(TOP_MODULE)
@@ -145,8 +148,15 @@ CXXFLAGS_NO_TRACE = $(CXXFLAGS)
 # 带 trace 的 CXXFLAGS（额外加上 -DWAVE_TRACE 参数）
 CXXFLAGS_WITH_TRACE = $(CXXFLAGS) -DWAVE_TRACE
 
+
+# 收集所有头文件依赖
+HEADERS := $(shell find $(abspath ./csrc/include) -name "*.h")
+KCONFIG_FILE := $(NPC_HOME)/Kconfig
+CONFIG_FILE := $(NPC_HOME)/.config
+CONFIG_HEADER := $(NPC_HOME)/csrc/include/config.h
+
 # 编译不带 trace 的版本
-$(OBJ_NO_TRACE): $(VSRCS) $(CSRCS) $(BUILD_DIR) $(OBJ_DIR_NO_TRACE)
+$(OBJ_NO_TRACE): $(VSRCS) $(CSRCS) $(HEADERS) $(CONFIG_HEADER) | $(BUILD_DIR) $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	verilator $(VERILATOR_COMMON_FLAGS) \
 		$(CSRCS) $(VSRCS) \
@@ -156,7 +166,7 @@ $(OBJ_NO_TRACE): $(VSRCS) $(CSRCS) $(BUILD_DIR) $(OBJ_DIR_NO_TRACE)
 		-o $(notdir $@)
 
 # 编译带 --trace-fst 的版本
-$(OBJ_WITH_TRACE): $(VSRCS) $(CSRCS) $(BUILD_DIR) $(OBJ_DIR_WITH_TRACE)
+$(OBJ_WITH_TRACE): $(VSRCS) $(CSRCS) $(HEADERS) $(CONFIG_HEADER) | $(BUILD_DIR) $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	verilator $(VERILATOR_COMMON_FLAGS) --trace-fst \
 		$(CSRCS) $(VSRCS) \
@@ -167,20 +177,20 @@ $(OBJ_WITH_TRACE): $(VSRCS) $(CSRCS) $(BUILD_DIR) $(OBJ_DIR_WITH_TRACE)
 
 # run 使用无 trace 版本
 run: $(OBJ_NO_TRACE)
-	@if [ ! -f "$(IMG).bin" ]; then \
-		echo "Error: Image file not found: $(IMG).bin"; \
+	@if [ ! -f "$(BIN)" ]; then \
+		echo "Error: Image file not found: $(BIN)"; \
 		exit 1; \
 	fi
-	./$(OBJ_NO_TRACE) $(RUNARGS_NO_TRACE)
+	$(OBJ_NO_TRACE) $(RUNARGS_NO_TRACE)
 
 # sim 使用带 trace 版本，并打开波形
 sim: $(OBJ_WITH_TRACE)
 	$(call git_commit, "sim RTL")
-	@if [ ! -f "$(IMG)" ]; then \
-		echo "Error: Image file not found: $(IMG)"; \
+	@if [ ! -f "$(BIN)" ]; then \
+		echo "Error: Image file not found: $(BIN)"; \
 		exit 1; \
 	fi
-	./$(OBJ_WITH_TRACE) $(RUNARGS_WITH_TRACE)
+	$(OBJ_WITH_TRACE) $(RUNARGS_WITH_TRACE)
 
 	$(GTKWAVE) waveform.* 2>/dev/null || echo "gtkwave not found or no waveform"
 
@@ -290,9 +300,7 @@ help:
 # ====================================================================
 # Kconfig-based Configuration System (for C/C++ macros)
 # ====================================================================
-KCONFIG_FILE := Kconfig
-CONFIG_FILE  := .config
-AUTOCONF_H   := csrc/include/config.h
+
 
 # Ensure include dir exists
 $(shell mkdir -p csrc/include)
@@ -300,41 +308,47 @@ $(shell mkdir -p csrc/include)
 # Add config.h to include path (so your C code can #include "config.h")
 INCFLAGS += -I$(abspath ./csrc/include)
 
-# Auto-generate config.h from .config
-$(AUTOCONF_H): $(CONFIG_FILE) $(KCONFIG_FILE) | $(BUILD_DIR)
-	@echo "Generating $@ from $<"
-	$(PYTHON3) -c "from kconfiglib import Kconfig; k = Kconfig('$(KCONFIG_FILE)'); k.load_config('$(CONFIG_FILE)'); k.write_autoconf('$@')"
-
 # Default Python
 PYTHON3 ?= python3
 
 # Launch graphical configuration (requires kconfiglib + windows-curses on Windows)
 menuconfig:
-	PYTHONPATH=. python3 -c "from menuconfig import menuconfig; from kconfiglib import Kconfig; menuconfig(Kconfig('Kconfig'))" && touch .config
+	@echo "Starting menuconfig interface..."
+	@PYTHONPATH=. python3 -c "from menuconfig import menuconfig; from kconfiglib import Kconfig; menuconfig(Kconfig('Kconfig'))" && touch $(NPC_HOME)/.config
+	@echo "Configuration updated, regenerating config header..."
+	@$(MAKE) gen-config
+	@echo "Menuconfig completed successfully."
+# Ensure include dir exists
+$(shell mkdir -p csrc/include)
 
-# 从 .config 文件中提取 CONFIG_*=... 的行，并转为 -DCONFIG_*=...
-# 注意：跳过注释和空行；处理 y/n/数字/字符串
-ifneq ($(wildcard $(CONFIG_FILE)),)
-  # 读取 .config 内容
-  CONFIG_LINES := $(shell grep -E '^CONFIG_[A-Za-z0-9_]+=' $(CONFIG_FILE))
+# Add config.h to include path (so your C code can #include "config.h")
+INCFLAGS += -I$(abspath ./csrc/include)
 
-  # 将 CONFIG_FOO=y 转为 -DCONFIG_FOO=1
-  # 将 CONFIG_BAR=n 转为 （忽略，不定义）
-  # 将 CONFIG_SIZE=1024 转为 -DCONFIG_SIZE=1024
-  # 将 CONFIG_NAME="hello" 转为 -DCONFIG_NAME=\"hello\" （注意引号转义）
-
-  # 先处理 =y → =1，=n → 忽略
-  CONFIG_DEFS := $(foreach line,$(CONFIG_LINES),\
-    $(if $(findstring =y,$(line)),\
-      -D$(patsubst %=y,%=1,$(line)),\
-      $(if $(findstring =n,$(line)),\
-        ,\
-        -D$(subst ",\",$(line))\
-      )\
-    )\
-  )
-  CXXFLAGS += $(CONFIG_DEFS)
-endif
+# Generate config header when .config changes
+$(CONFIG_HEADER): $(CONFIG_FILE)
+	@echo "Generating config header from .config..."
+	@mkdir -p $(dir $@)
+	@if [ -f $< ]; then \
+	{ \
+		echo "/* Auto-generated from .config, do not edit! */"; \
+		while IFS='=' read -r key val; do \
+			case "$$key" in \#*) continue ;; esac; \
+			if [ -n "$$key" ] && [ "$${key#CONFIG_}" != "$$key" ]; then \
+				if [ "$$val" = "y" ]; then \
+					echo "#define $$key 1"; \
+				elif [ "$$val" = "n" ]; then \
+					echo "/* #undef $$key */"; \
+				else \
+					# Handle string values by removing quotes or keeping numeric values as is \
+					clean_val=$$(echo "$$val" | sed 's/^"\(.*\)"$$/\1/' | sed 's/\\"/"/g'); \
+					echo "#define $$key $$clean_val"; \
+				fi; \
+			fi; \
+		done < $<; \
+	} > $@.tmp && mv $@.tmp $@; \
+	else \
+		echo "/* Auto-generated from .config, do not edit! */" > $@; \
+	fi
 
 #-------------------------
 # Phony Targets
@@ -343,6 +357,9 @@ endif
         run sim syn sta help \
         check-yosys-sta check-sdc \
 		menuconfig defconfig savedefconfig
+
+# Generate config header target
+gen-config: $(CONFIG_HEADER)
 
 # 为了能跑 git_commit ,也不要删掉这个！！
 include ../Makefile
