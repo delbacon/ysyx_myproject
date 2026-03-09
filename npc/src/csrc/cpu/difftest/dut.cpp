@@ -59,7 +59,6 @@ void difftest_skip_dut(int nr_ref, int nr_dut) {
 
 void init_difftest(char *ref_so_file, long img_size, int port) {
   assert(ref_so_file != NULL);
-
   void *handle;
   handle = dlopen(ref_so_file, RTLD_LAZY);
   assert(handle);
@@ -76,7 +75,7 @@ void init_difftest(char *ref_so_file, long img_size, int port) {
 //  ref_difftest_raise_intr = dlsym(handle, "difftest_raise_intr");
 //  assert(ref_difftest_raise_intr);
 
-  void (*ref_difftest_init)(int) = (void (*)(int))dlsym(handle, "difftest_init");
+void (*ref_difftest_init)(int) = (void (*)(int))dlsym(handle, "difftest_init");
   assert(ref_difftest_init);
 
   Log("Differential testing: %s", ANSI_FMT("ON", ANSI_FG_GREEN));
@@ -84,14 +83,17 @@ void init_difftest(char *ref_so_file, long img_size, int port) {
       "This will help you a lot for debugging, but also significantly reduce the performance. "
       "If it is not necessary, you can turn it off in menuconfig.", ref_so_file);
 
+  printf("About to call ref_difftest_init(%d)\n", port); fflush(stdout);
   ref_difftest_init(port);
-  ref_difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR), img_size, DIFFTEST_TO_REF);
+  printf("Returned from ref_difftest_init\n"); fflush(stdout);
+  ref_difftest_memcpy(RESET_VECTOR, pROM_guest_to_host(RESET_VECTOR), img_size, DIFFTEST_TO_REF);
   ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
 }
 
 
 static bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-  if(cpu.pc == ref_r->pc){
+printf("pc:%x refpc:%x",cpu.dnpc,ref_r->pc);
+  if(cpu.dnpc == ref_r->pc){
     for(int i = 0; i < RISCV_GPR_NUM; i++){
       if(cpu.gpr[i] != ref_r->gpr[i]){
         printf("reg[%s] = 0x%x, ref_reg[%s] = 0x%x\n", reg_name(i), cpu.gpr[i], reg_name(i), ref_r->gpr[i]);
@@ -104,6 +106,7 @@ static bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
 
 
 static void checkregs(CPU_state *ref, vaddr_t pc) {
+  printf("CHECK\n");
   if (!isa_difftest_checkregs(ref, pc)) {
     npc_state.state = NPC_ABORT;
     npc_state.halt_pc = pc;
@@ -112,6 +115,7 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
 }
 
 void difftest_step(vaddr_t pc, vaddr_t npc) {
+  printf("\ndiff step\n");  
   CPU_state ref_r;
 
   if (skip_dut_nr_inst > 0) {

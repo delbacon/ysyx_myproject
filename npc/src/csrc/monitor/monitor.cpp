@@ -25,7 +25,7 @@ static long load_img() {
   }
 
   FILE *fp = fopen(img_file, "rb");
-  //if(fp == NULL) panic("Can not open '%s'", img_file);
+  if(fp == NULL) panic("Can not open '%s'", img_file);
 
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
@@ -99,6 +99,7 @@ void init_monitor(int argc,char **argv) {
   IFDEF(CONFIG_FTRACE,init_ftrace(elf_file));
 
   long img_size = load_img();
+  printf("Image:%ld\n",img_size);
 
   IFDEF(CONFIG_DIFFTEST, init_difftest(diff_so_file, img_size, difftest_port));
 

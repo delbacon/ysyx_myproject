@@ -32,7 +32,7 @@ run: insert-arg
 	$(MAKE) -C $(NPC_HOME) run IMG=$(IMAGE)
 
 sim: insert-arg
-	@echo "Running NPC simulation..."
+	@echo "Simming NPC simulation..."
 	@echo "IMAGE variable contains: $(IMAGE)"
 	$(MAKE) -C $(NPC_HOME) sim IMG=$(IMAGE)
 

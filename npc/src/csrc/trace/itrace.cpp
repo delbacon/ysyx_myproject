@@ -36,14 +36,14 @@ void itrace_log_write(){
 
     int index = cb->head;
     //如果缓冲区被写满，就从最新写入的单元+1开始输出
-    if(cb->cnt > RING_BUFFER_SIZE)
-        for(int i = index-1; ((i-index) % RING_BUFFER_SIZE) < RING_BUFFER_SIZE ; i++){
-          if(cb->buf[i][0] == '\0') break;
+    if(cb->cnt > RING_BUFFER_SIZE){
+        for(int i = index-1; ((i-index) % RING_BUFFER_SIZE) < RING_BUFFER_SIZE-1 ; i++){
+          //if(cb->buf[i][0] == '\0') break;
           log_write("%03d: %s\n",(i-index+1), cb->buf[(i+1) % RING_BUFFER_SIZE]);
           cb->cnt-- ;
         } 
     //否则从头开始输出
-    else {
+      }else {
       for(int i = 0; i < index; i++){
         if(cb->buf[i][0] == '\0') break;
         log_write("%03d: %s\n",i , cb->buf[i]);

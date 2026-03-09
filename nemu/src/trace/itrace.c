@@ -1,7 +1,7 @@
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <trace/itrace.h>
-
+#ifdef CONFIG_ITRACE
 //itrace 相关函数:
 //============================================================================//
 //换行缓冲区的实现
@@ -93,6 +93,6 @@ int itrace_list_put(char *c){
 void itrace_list_init(){
     ring_buffer_init();
 }
-
+#endif
 //============================================================================//
 

@@ -38,18 +38,21 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
   }
 }
 
-__EXPORT void difftest_regcpy(void *dut, bool direction) {
-  if(direction == DIFFTEST_TO_DUT){
-    for(int i = 0; i < RISCV_GPR_NUM; i++){
-      ((uint32_t *)dut)[i] = cpu.gpr[i];
 
+
+__EXPORT void difftest_regcpy(void *dut, bool direction) {
+  int i = 0;
+  if(direction == DIFFTEST_TO_DUT){
+    for(i = 0; i < RISCV_GPR_NUM; i++){
+      ((uint32_t *)dut)[i] = cpu.gpr[i];
     }
 
   }else if(direction == DIFFTEST_TO_REF){
-    for(int i = 0; i < RISCV_GPR_NUM; i++){
+    for(i = 0; i < RISCV_GPR_NUM; i++){
       cpu.gpr[i] = ((uint32_t *)dut)[i];
     }
   }
+  ((uint32_t *)dut)[i+1] = cpu.dnpc;
 }
 
 __EXPORT void difftest_exec(uint64_t n) {

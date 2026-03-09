@@ -33,11 +33,11 @@ BIN = $(IMG).bin
 # Image file for simulation (use relative path)
 LOG_FILE = $(BUILD_DIR)/npc-log.txt
 ELF_FILE = $(IMG).elf
-DIFF_FILE = $(NEMU_HOME)/build/libriscv32-nemu-interpreter-so.so
+DIFF_FILE = /home/delbacon/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so
 # Run args
 override RUNARGS ?=  --log $(LOG_FILE)
 override RUNARGS += --diff $(DIFF_FILE)
-override RUNARGS += --elf $(ELF_FILE)
+override RUNARGS += --elf-input $(ELF_FILE)
 override RUNARGS += $(BIN) # RUN
 
 # run 使用无 trace 版本

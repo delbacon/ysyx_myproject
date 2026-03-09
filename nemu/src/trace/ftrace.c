@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <elf.h>
+
+#ifdef CONFIG_FTRACE
 //ftrace相关函数:
 //============================================================================//
 //elf文件的读取与函数名 & 对应地址的获取
@@ -292,4 +294,5 @@ void ftrace_free(ElfFunction *funcs)
 {
     free_elf_functions(funcs) ;
 }
+#endif
 //============================================================================//

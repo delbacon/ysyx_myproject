@@ -1,7 +1,7 @@
 #include <cpu/cpu.h>
 #include <utils.h>
 
-
+#ifdef CONFIG_MTRACE
 void mtrace_write(paddr_t addr, int len, word_t data){
     if(addr >=CONFIG_MTRACE_START && addr < CONFIG_MTRACE_END){
        word_t tmp_array[8];
@@ -34,3 +34,4 @@ void mtrace_read(paddr_t addr, int len, word_t data){
         log_write("\n");
     }
 }
+#endif

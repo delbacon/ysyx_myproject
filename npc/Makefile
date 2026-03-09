@@ -35,7 +35,7 @@ include $(FILELIST_MK)
 
 # Filter out directories and files in blacklist to obtain the final set of source files
 DIRS-BLACKLIST-y += $(DIRS-BLACKLIST)
-SRCS-BLACKLIST-y += $(if $(DIRS-BLACKLIST-y), $(shell find -L $(DIRS-BLACKLIST-y) -name "*.cpp"),)
+SRCS-BLACKLIST-y += $(if $(DIRS-BLACKLIST-y), $(shell find -L $(DIRS-BLACKLIST-y)  -o -name "*.cpp"),)
 SRCS-BLACKLIST-y += $(SRCS-BLACKLIST)
 
 SRCS-y += $(if $(DIRS-y), $(shell find -L $(DIRS-y) -name "*.cpp"),)
@@ -58,6 +58,7 @@ CFLAGS_TRACE += -DMTRACE_COND=$(if $(CONFIG_MTRACE_COND),$(call remove_quote,$(C
 CFLAGS_TRACE += -DDTRACE_COND=$(if $(CONFIG_DTRACE_COND),$(call remove_quote,$(CONFIG_DTRACE_COND)),true)
 
 CFLAGS  += $(CFLAGS_BUILD) $(CFLAGS_TRACE) -D__GUEST_ISA__=$(GUEST_ISA)
+CFLAGS  += -fpermissive
 LDFLAGS += $(CFLAGS_BUILD)
 
 

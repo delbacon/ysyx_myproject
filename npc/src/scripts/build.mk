@@ -43,7 +43,6 @@ VERILATOR_CFLAGS += -x-assign fast --x-initial fast --noassert
 
 # Linker flags 动态库链接
 LDFLAGS += -lreadline
-LDFLAGS += -L$(NEMU_HOME)/build -Wl,-rpath=$(NEMU_HOME)/build -lriscv32-nemu-interpreter-so
 
 # 不带 trace 的 CXXFLAGS
 CXXFLAGS_NO_TRACE = $(CXXFLAGS)

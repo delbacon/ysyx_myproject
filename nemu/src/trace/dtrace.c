@@ -1,6 +1,7 @@
 #include <trace/dtrace.h>
 #include <utils.h>
 
+#ifdef CONFIG_DTRACE
 void dtrace_read(vaddr_t addr, word_t ret, IOMap *map){
     if(addr >=CONFIG_DTRACE_START && addr < CONFIG_DTRACE_END){
       word_t tmp_array[4];
@@ -35,3 +36,4 @@ void dtrace_write(vaddr_t addr, int len , word_t data, IOMap *map){
       log_write("\n");
     }
 }
+#endif
