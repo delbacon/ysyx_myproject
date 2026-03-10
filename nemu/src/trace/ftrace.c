@@ -45,7 +45,7 @@ static int parse_elf64_functions_with_size(ElfFunction **out_funcs, char *elf_da
             //指向符号表相关结构体
             Elf64_Sym *syms = (Elf64_Sym *)((char *)elf_data + shdrs[i].sh_offset);
             //符号表条目总数
-            size_t sym_count = shdrs[i].sh_size / sizeof(Elf32_Sym);
+            size_t sym_count = shdrs[i].sh_size / sizeof(Elf64_Sym);
             //获取字符串表
             char *strtab = (char *)elf_data + shdrs[shdrs[i].sh_link].sh_offset;
 
@@ -91,7 +91,7 @@ static int parse_elf64_functions_with_size(ElfFunction **out_funcs, char *elf_da
     ElfFunction *final = realloc(funcs, count * sizeof(ElfFunction));
     if (!final) goto cleanup;
     *out_funcs = final;
-    return 0;
+    return count;
 
 cleanup:
     for (size_t i = 0; i < count; i++) {
@@ -169,7 +169,7 @@ static int parse_elf32_functions_with_size(ElfFunction **out_funcs, char *elf_da
     ElfFunction *final = realloc(funcs, count * sizeof(ElfFunction));
     if (!final) goto cleanup;
     *out_funcs = final;
-    return 0;
+    return count;
 
 cleanup:
     for (size_t i = 0; i < count; i++) {
@@ -190,9 +190,13 @@ static int parse_elf_functions_with_size(ElfFunction **out_funcs, char *elf_data
     
     if (memcmp(e_ident, ELFMAG, SELFMAG) != 0 ) return -1;
 
-    if(e_ident[EI_CLASS] == ELFCLASS32) return parse_elf32_functions_with_size(out_funcs, elf_data);
-    else if(e_ident[EI_CLASS] == ELFCLASS64) return parse_elf64_functions_with_size(out_funcs, elf_data);
-    
+    if(e_ident[EI_CLASS] == ELFCLASS32) {
+        Log("ELF32 file\n");
+        return parse_elf32_functions_with_size(out_funcs, elf_data);
+    }else if(e_ident[EI_CLASS] == ELFCLASS64){
+        Log("ELF64 file\n");   
+        return parse_elf64_functions_with_size(out_funcs, elf_data);
+    }
     return -1;
 }
 static void free_elf_functions(ElfFunction *funcs) {
@@ -206,10 +210,10 @@ static void free_elf_functions(ElfFunction *funcs) {
 static int init_elf_file(const char *elf_file)  {
     if (elf_file==NULL) return -1;
 
-    printf("init elf file: %s\n",elf_file);
+    Log("init elf file: %s\n",elf_file);
     int fd = open(elf_file, O_RDONLY);
     if (fd < 0) {
-        printf("open %s failed\n", elf_file);
+        Log("open %s failed\n", elf_file);
         perror("open");
         return -1;
     }
@@ -229,7 +233,7 @@ static int init_elf_file(const char *elf_file)  {
     }
     char *elf_data = (char *)map;
     func_num = parse_elf_functions_with_size(&func_list, elf_data);
-    printf("parse elf file success, func_num: %d\n", func_num);
+    Log("parse elf file success, func_num: %d\n", func_num);
     return 0;
 }
 
@@ -251,7 +255,7 @@ static char *ftrace_get_func_name(vaddr_t pc){
             }
         }
     }
-    printf("can not find function name for pc: %08x\n", pc);
+    Log("can not find function name for pc: %08x\n", pc);
     return NULL;
     
 }

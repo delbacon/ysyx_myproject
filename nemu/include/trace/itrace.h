@@ -1,11 +1,10 @@
-#ifndef __ITRACE_H__
-#define __ITRACE_H__ 
+#ifndef __TRACE_ITRACE_H__
+#define __TRACE_ITRACE_H__ 
 
 #include <common.h>
 
-
 //----- itrace -----//  
-#define RING_BUFFER_SIZE  MUXDEF(CONFIG_ITRACE_LASTEST_N, CONFIG_ITRACE_LASTEST_N, 32)
+#define RING_BUFFER_SIZE MUXDEF(CONFIG_ITRACE, CONFIG_ITRACE_LASTEST_N, 32)
 
 typedef struct {
   char buf[RING_BUFFER_SIZE][128];

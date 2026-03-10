@@ -23,9 +23,10 @@ compile_git:
 $(BINARY):: compile_git
 
 # Some convenient rules
-
+IMG_NOBIN ?=  # from am
 override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
 override ARGS += $(ARGS_DIFF)
+override ARGS += --elf-input=$(IMG_NOBIN).elf
 # override ARGS += --elf-input=build/$(NAME)
 # Command to execute NEMU
 IMG ?=

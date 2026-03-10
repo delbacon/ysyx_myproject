@@ -29,11 +29,11 @@ image: image-dep
 run: insert-arg
 	@echo "Running NPC simulation..."
 	@echo "IMAGE variable contains: $(IMAGE)"
-	$(MAKE) -C $(NPC_HOME) run IMG=$(IMAGE)
+	$(MAKE) -C $(NPC_HOME) run IMG=$(IMAGE).bin IMG_NOBIN=$(IMAGE)
 
 sim: insert-arg
 	@echo "Simming NPC simulation..."
 	@echo "IMAGE variable contains: $(IMAGE)"
-	$(MAKE) -C $(NPC_HOME) sim IMG=$(IMAGE)
+	$(MAKE) -C $(NPC_HOME) sim IMG=$(IMAGE).bin IMG_NOBIN=$(IMAGE)
 
 .PHONY: insert-arg

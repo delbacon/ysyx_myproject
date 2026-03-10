@@ -25,15 +25,16 @@ override ARGS += $(ARGS_DIFF)
 IMG ?=
 
 # Binary output
-BIN = $(IMG).bin
+BIN = $(IMG)
 
 
 # Simulation Targets
 #-------------------------
 # Image file for simulation (use relative path)
-LOG_FILE = $(BUILD_DIR)/npc-log.txt
-ELF_FILE = $(IMG).elf
-DIFF_FILE = /home/delbacon/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so
+IMG_NOBIN ?= # from am
+LOG_FILE = $(IMG_NOBIN)-log.txt
+ELF_FILE = $(IMG_NOBIN).elf
+DIFF_FILE = $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 # Run args
 override RUNARGS ?=  --log $(LOG_FILE)
 override RUNARGS += --diff $(DIFF_FILE)

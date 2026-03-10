@@ -1,6 +1,7 @@
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <trace/itrace.h>
+#include <common.h>
 #ifdef CONFIG_ITRACE
 //itrace 相关函数:
 //============================================================================//
@@ -35,16 +36,22 @@ void itrace_log_write(){
      RING_BUFFER_SIZE);
 
     int index = cb->head;
+    int i = 0;
     //如果缓冲区被写满，就从最新写入的单元+1开始输出
-    if(cb->cnt > RING_BUFFER_SIZE)
-        for(int i = index-1; ((i-index) % RING_BUFFER_SIZE) < RING_BUFFER_SIZE ; i++){
+    if(cb->cnt > RING_BUFFER_SIZE){
+        for(i = index; (i-index) <= RING_BUFFER_SIZE ; i++){
           if(cb->buf[i][0] == '\0') break;
-          log_write("%03d: %s\n",(i-index+1), cb->buf[(i+1) % RING_BUFFER_SIZE]);
+          log_write("%03d: %s\n",(i-index), cb->buf[(i) % RING_BUFFER_SIZE]);
           cb->cnt-- ;
         } 
+        for(int j = 0; j < index - 1; j++){
+          if(cb->buf[j][0] == '\0') break;
+          log_write("%03d: %s\n",(i-index+j), cb->buf[(j+1) % RING_BUFFER_SIZE]);
+          cb->cnt-- ;
+        }
     //否则从头开始输出
-    else {
-      for(int i = 0; i < index; i++){
+      }else {
+      for(i = 0; i < index; i++){
         if(cb->buf[i][0] == '\0') break;
         log_write("%03d: %s\n",i , cb->buf[i]);
       }

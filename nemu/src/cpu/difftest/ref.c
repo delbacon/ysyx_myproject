@@ -52,7 +52,7 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
       cpu.gpr[i] = ((uint32_t *)dut)[i];
     }
   }
-  ((uint32_t *)dut)[i+1] = cpu.dnpc;
+  ((uint32_t *)dut)[32] = cpu.pc;
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
@@ -68,4 +68,5 @@ __EXPORT void difftest_init(int port) {
   init_mem();
   /* Perform ISA dependent initialization. */
   init_isa();
+  Log("Differential testing Lib linked successfully\n");
 }

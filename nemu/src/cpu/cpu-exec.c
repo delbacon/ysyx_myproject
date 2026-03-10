@@ -64,7 +64,6 @@ static void exec_once(Decode *s, vaddr_t pc) {
 }
 //执行一条指令
 static void execute(uint64_t n) {
-  printf("execute running...,cpu.pc=%x\n",cpu.pc);
   Decode s;
 
   IFDEF(CONFIG_ITRACE_LASTEST, void itrace_list_init();itrace_list_init();)

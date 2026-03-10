@@ -83,16 +83,14 @@ void (*ref_difftest_init)(int) = (void (*)(int))dlsym(handle, "difftest_init");
       "This will help you a lot for debugging, but also significantly reduce the performance. "
       "If it is not necessary, you can turn it off in menuconfig.", ref_so_file);
 
-  printf("About to call ref_difftest_init(%d)\n", port); fflush(stdout);
   ref_difftest_init(port);
-  printf("Returned from ref_difftest_init\n"); fflush(stdout);
   ref_difftest_memcpy(RESET_VECTOR, pROM_guest_to_host(RESET_VECTOR), img_size, DIFFTEST_TO_REF);
   ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
 }
 
 
 static bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-printf("pc:%x refpc:%x",cpu.dnpc,ref_r->pc);
+//printf("pc:%x ref_pc:%x\n",cpu.dnpc,ref_r->pc);
   if(cpu.dnpc == ref_r->pc){
     for(int i = 0; i < RISCV_GPR_NUM; i++){
       if(cpu.gpr[i] != ref_r->gpr[i]){
@@ -106,7 +104,6 @@ printf("pc:%x refpc:%x",cpu.dnpc,ref_r->pc);
 
 
 static void checkregs(CPU_state *ref, vaddr_t pc) {
-  printf("CHECK\n");
   if (!isa_difftest_checkregs(ref, pc)) {
     npc_state.state = NPC_ABORT;
     npc_state.halt_pc = pc;
@@ -115,7 +112,6 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
 }
 
 void difftest_step(vaddr_t pc, vaddr_t npc) {
-  printf("\ndiff step\n");  
   CPU_state ref_r;
 
   if (skip_dut_nr_inst > 0) {

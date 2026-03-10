@@ -45,7 +45,7 @@ static int parse_elf64_functions_with_size(ElfFunction **out_funcs, char *elf_da
             //指向符号表相关结构体
             Elf64_Sym *syms = (Elf64_Sym *)((char *)elf_data + shdrs[i].sh_offset);
             //符号表条目总数
-            size_t sym_count = shdrs[i].sh_size / sizeof(Elf32_Sym);
+            size_t sym_count = shdrs[i].sh_size / sizeof(Elf64_Sym);
             //获取字符串表
             char *strtab = (char *)elf_data + shdrs[shdrs[i].sh_link].sh_offset;
 
@@ -91,7 +91,7 @@ static int parse_elf64_functions_with_size(ElfFunction **out_funcs, char *elf_da
     final = (ElfFunction *)realloc(funcs, count * sizeof(ElfFunction));
     if (!final) goto cleanup;
     *out_funcs = final;
-    return 0;
+    return count;
 
 cleanup:
     for (size_t i = 0; i < count; i++) {
@@ -169,7 +169,7 @@ static int parse_elf32_functions_with_size(ElfFunction **out_funcs, char *elf_da
     final = (ElfFunction *)realloc(funcs, count * sizeof(ElfFunction));
     if (!final) goto cleanup;
     *out_funcs = final;
-    return 0;
+    return count;
 
 cleanup:
     for (size_t i = 0; i < count; i++) {
@@ -190,9 +190,13 @@ static int parse_elf_functions_with_size(ElfFunction **out_funcs, char *elf_data
     
     if (memcmp(e_ident, ELFMAG, SELFMAG) != 0 ) return -1;
 
-    if(e_ident[EI_CLASS] == ELFCLASS32) return parse_elf32_functions_with_size(out_funcs, elf_data);
-    else if(e_ident[EI_CLASS] == ELFCLASS64) return parse_elf64_functions_with_size(out_funcs, elf_data);
-    
+    if(e_ident[EI_CLASS] == ELFCLASS32) {
+        Log("ELF32\n");
+        return parse_elf32_functions_with_size(out_funcs, elf_data);
+    }else if(e_ident[EI_CLASS] == ELFCLASS64){
+        Log("ELF64\n");
+        return parse_elf64_functions_with_size(out_funcs, elf_data);
+    }
     return -1;
 }
 static void free_elf_functions(ElfFunction *funcs) {
