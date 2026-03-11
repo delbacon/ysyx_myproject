@@ -26,6 +26,7 @@ module ysyx_26020055_RegisterFile #(ADDR_WIDTH = 5, DATA_WIDTH = 32) (
     assign rdata1 = (raddr1==0)?32'd0 : rf[raddr1];
     assign rdata2 = (raddr2==0)?32'd0 : rf[raddr2];
 
+// 向仿真环境输出寄存器值
     always@(*) begin
         for(int i=0;i<32;i=i+1)begin
             reg_get_HDL(i, rf[i]);

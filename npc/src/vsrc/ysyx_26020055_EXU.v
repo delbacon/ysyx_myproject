@@ -1,97 +1,104 @@
-`define MAX_OP 6
-
-import "DPI-C" function void ebreak ();
-
 /* verilator lint_off UNUSEDSIGNAL */
 
 module ysyx_26020055_EXU (
-    input [31:0] rs1_data,
-    input [31:0] rs2_data,
-    input [31:0] imm,
-    input [`MAX_OP-1:0]  exu_op,
-    input [3:0] jmp_op,
-    input [3:0] uncal_op,
-    input [3:0] sys_op,
-    input [31:0] pc,
-    input [31:0] rdata,
-    input mem_on,
-
-    output reg jmp_taken,
-    output reg [31:0] pc_jmp_target,
-    output [31:0] reg_wr_data,
-    output reg [31:0] mem_rd_addr,
-    output reg [31:0] mem_wr_addr
+    input      [31:0]pc           ,
+    //imm_data    
+    input      [31:0]imm          ,
+    //reg_data    
+    input      [31:0]src1         ,
+    input      [31:0]src2         ,
+    //alu_ctrl    
+    input      [3:0] alu_op       ,//ALU工作模式
+    input      [1:0] alu_base     ,//ALU输入类型
+    input            alu_asrc     ,//ALU输入a的来源
+    //branch_ctrl
+    input      [2:0] branch_op    ,//分支工作模式
+    output reg       branch_flag  ,//是否跳转
+    output reg [31:0]branch_target,//跳转地址
+    //out
+    output     [31:0]alu_out        
 );
-//exu_op拆解
-    wire [3:0] alu_op;  // alu_op
-    wire  exu_src;      // src2选择
-    assign exu_src = exu_op[5];
-//   assign exu_addr = exu_op[4];
-    assign alu_op = exu_op[3:0];
 
+//alu
+//======================================================//
+    reg [31:0] a,b;
+//alu_asrc
+    wire [31:0] a_reg;
+    assign a_reg = alu_asrc ? pc : src1;
 
-//源数据
-    wire [31:0] src1;
-    wire [31:0] src2;
-
-    assign src1 = rs1_data;
-    assign src2 = exu_src ? imm : rs2_data;//源选择 exu_src
-
-
-//ALU
-    wire alu_zero,alu_cout,alu_overflow;
-    wire [31:0] alu_out;
-    ysyx_26020055_ALU alu (
-        .a(src1),
-        .b(src2),
-        .op(alu_op),
-        .y(alu_out),
-        .zero(alu_zero),
-        .cout(alu_cout),
-        .overflow(alu_overflow)
-    );
-
-//jmp语句解析
-    reg [31:0] rd_jmp_data;
+//alu_base
+    localparam  ALU_BASE_REG_REG = 2'b00,
+                ALU_BASE_REG_IMM = 2'b01,
+                ALU_BASE_PC_4    = 2'b10;
     always@(*)begin
-        case(jmp_op)
-            4'd2:   //jalr
-                begin   jmp_taken = 1; rd_jmp_data = pc + 4; pc_jmp_target = (src1 + imm) & ~1;  end
-            default:
-                begin   jmp_taken = 1'd0; rd_jmp_data = 32'd0; pc_jmp_target = 32'd0;    end
+        case(alu_base)
+            ALU_BASE_REG_REG:begin
+                a = a_reg;
+                b = src2;
+            end
+            ALU_BASE_REG_IMM:begin
+                a = a_reg;
+                b = imm;
+            end
+            ALU_BASE_PC_4:begin
+                a = a_reg;
+                b = 32'd4;
+            end
+            default:begin
+                a = 32'd0;
+                b = 32'd0;
+            end
+        endcase
+    end
+    wire zero,less;
+ysyx_26020055_ALU u_ysyx_26020055_ALU (
+    .a          (a      ),
+    .b          (b      ),
+    .alu_op     (alu_op ),
+    .alu_out    (alu_out),
+    .zero       (zero   ),
+    .less       (less   ) 
+);
+//======================================================//
+
+
+//branch_op
+//======================================================//
+    localparam  BRANCH_OP_IDLE         = 3'b000,
+                BRANCH_OP_JAL          = 3'b001,
+                BRANCH_OP_JALR         = 3'b010,
+                BRANCH_OP_BEQ          = 3'b100,
+                BRANCH_OP_BNE          = 3'b101,
+                BRANCH_OP_BLT_AND_BLTU = 3'b110,
+                BRANCH_OP_BGE_AND_BGEU = 3'b111;
+
+//branch_flag
+    always@(*)begin
+        case(branch_op)
+            BRANCH_OP_IDLE         :    branch_flag = 0;
+            BRANCH_OP_JAL          :    branch_flag = 1;
+            BRANCH_OP_JALR         :    branch_flag = 1;
+            BRANCH_OP_BEQ          :    branch_flag =  zero;//相等的时候跳转
+            BRANCH_OP_BNE          :    branch_flag = ~zero;//不相等的时候跳转
+            BRANCH_OP_BLT_AND_BLTU :    branch_flag =  less;//小于的时候跳转
+            BRANCH_OP_BGE_AND_BGEU :    branch_flag =  (~less || zero);//大于等于的时候跳转
+            default:    branch_flag = 0;
         endcase
     end
 
-//uncal语句解析
-    reg uncal_flag;
-    reg [31:0] uncal_data;
-    always @(*) begin
-        case(uncal_op)
-            4'b1:
-                begin   uncal_flag = 1; uncal_data = imm; end //ecall
-			default: 
-                begin   uncal_flag = 0; uncal_data = 0; end
+//branch_target
+    always@(*)begin
+        case(branch_op)
+            BRANCH_OP_JAL,BRANCH_OP_JALR: begin
+                branch_target = alu_out;
+            end
+            BRANCH_OP_BEQ,BRANCH_OP_BNE,BRANCH_OP_BLT_AND_BLTU,BRANCH_OP_BGE_AND_BGEU: begin
+                branch_target = pc + imm;
+            end
+            default: branch_target = 32'd0;
         endcase
     end
+        
+//======================================================//
 
-//sys语句解析
-    always @(*) begin
-        case(sys_op)
-            4'd2:
-                begin	ebreak();	end //ebreak
-			default: ;
-        endcase
-    end
-
-//out
-    //data
-    assign reg_wr_data = (jmp_taken == 1)? 
-                            rd_jmp_data :
-                        (uncal_flag == 1)? 
-                            uncal_data :
-                        (mem_on == 1) ?
-                            rdata :
-                            alu_out;    
-    assign mem_wr_addr = alu_out;
-    assign mem_rd_addr = alu_out;
 endmodule

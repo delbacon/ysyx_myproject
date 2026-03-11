@@ -1,268 +1,433 @@
 // npc/vsrc/ysyx_26020055_IDU.v
 // IDU 负责译码
-
-//RV32I Base Instruction
-//用于判断opcode是否属于这类指令
-//==========================================================================================//
-`define R(opcode) (opcode == 7'b0110011 || opcode == 7'b0110011 || opcode == 7'b0111011 ) //后两个是M扩展
-`define I(opcode) (opcode == 7'b1100111 || opcode == 7'b0000011 || opcode == 7'b0010011 )
-`define S(opcode) (opcode == 7'b0100011)
-`define B(opcode) (opcode == 7'b1100011)
-`define U(opcode) (opcode == 7'b0110111 || opcode == 7'b0010111 )
-`define J(opcode) (opcode == 7'b1101111)
-//==========================================================================================//
-
-//提取指令的标志{func7,func3,opcode},用于判断是否是这一条指令
-//特别地，对于sys指令，为整个inst
-//==============17'b============================================================================//
-`define LUI     17'b???????_???_0110111					//f
-`define AUIPC   17'b???????_???_0010111
-`define JAL     17'b???????_???_1101111
-`define JALR    17'b???????_000_1100111					//f
-`define BEQ     17'b???????_???_1100011
-`define BNE     17'b???????_???_1100111
-`define BLT     17'b???????_???_1100111
-`define BGE     17'b???????_???_1100111
-`define BLTU    17'b???????_???_1100111
-`define BGEU    17'b???????_???_1100111
-`define LB      17'b???????_000_0000011
-`define LH      17'b???????_001_0000011
-`define LW      17'b???????_010_0000011                  //f
-`define LBU     17'b???????_100_0000011					 //f
-`define LHU     17'b???????_101_0000011
-`define SB      17'b???????_000_0100011					 //f	
-`define SH      17'b???????_001_0100011
-`define SW      17'b???????_010_0100011					 //f
-`define ADDI    17'b???????_000_0010011                  //f
-`define SLTI    17'b???????_???_0010011
-`define SLTIU   17'b???????_???_0010011
-`define XORI    17'b???????_???_0010011
-`define ORI     17'b???????_???_0010011
-`define ANDI    17'b???????_???_0010011
-`define SLLI    17'b???????_???_0010011
-`define SRLI    17'b???????_???_0010011
-`define SRAI    17'b???????_???_0010011
-`define ADD     17'b0000000_000_0110011					//f
-`define SUB     17'b???????_???_0110011
-`define SLL     17'b???????_???_0110011
-`define SLT     17'b???????_???_0110011
-`define SLTU    17'b???????_???_0110011
-`define XOR     17'b???????_???_0110011
-`define SRL     17'b???????_???_0110011
-`define SRA     17'b???????_???_0110011
-`define OR      17'b???????_???_0110011
-`define AND     17'b???????_???_0110011
-`define EBREAK  32'b000000000001_00000_000_00000_1110011 //f
-//==========================================================================================//
-
-
-
+import "DPI-C" function void ebreak ();
 
 module ysyx_26020055_IDU (
-//    input         clk,
-//    input         reset,
-    input [31:0]  inst,
-
-    output [4:0]  rs1,
-    output [4:0]  rs2,
-    output [4:0]  rd,
-    output [31:0] imm,
-
-    output        reg_wr,
-    output        mem_rd,
-    output        mem_wr,
-    output reg [5:0]  exu_op,//需要alu计算的inst
-    output reg [3:0]  jmp_op,//涉及跳转的inst（包括需要计算的）
-	output reg [3:0]  mem_op,//读写内存byte数
-	output reg [3:0]  uncal_op,//不用计算的inst
-    output reg [3:0]  sys_op//系统级指令
+    input [31:0] inst,
+    //addr
+    output reg [4:0] rs1      ,
+    output reg [4:0] rs2      ,
+    output reg [4:0] rd       ,
+    //imm
+    output reg [31:0]imm      ,
+    //ALU
+    output reg [3:0] alu_op   ,//ALU工作模式
+    output reg [1:0] alu_base ,//ALU输入类型
+    output           alu_asrc ,//ALU输入a的来源
+    //reg
+    output reg       reg_wen  ,//reg写使能
+    //mem
+    output reg [2:0] mem_op   ,//mem工作模式(byte/half/word)
+    output reg       mem_wen  ,//mem写使能
+    output reg       mem_toreg,//mem读结果写入到reg
+    //branch
+    output reg [2:0] branch_op
 );
-// 指令译码
+
+    localparam  OP_LOAD   = 7'b0000011, 
+                OP_STORE  = 7'b0100011, 
+                OP_BRANCH = 7'b1100011,
+                OP_IMM    = 7'b0010011,
+                OP_NOIMM  = 7'b0110011,
+                OP_JAL    = 7'b1101111,
+                OP_JALR   = 7'b1100111,
+                OP_LUI    = 7'b0110111,
+                OP_AUIPC  = 7'b0010111;
+
+// 操作数和寄存器地址获取
     wire [6:0] opcode;
     wire [2:0] funct3;
     wire [6:0] funct7;
 
-    assign opcode = inst[6:0];
-    assign funct3 = inst[14:12];
-    assign funct7 = inst[31:25];
-
-//reg
-    assign rs1 = inst[19:15];
-    assign rs2 = inst[24:20];
-    assign rd  = inst[11:7];
-
-//imm
-    // 默认为 0,R-type不涉及imm,所以不考虑
-    assign imm = 
-        /* I-type */
-        `I(opcode) ? 
-            {{20{inst[31]}}, inst[31:20]} :
-        /* S-type */
-        `S(opcode) ?
-            {{20{inst[31]}}, inst[31:25], inst[11:7]} :
-        /* B-type */
-        `B(opcode) ?   
-            {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0} : // BEQ/BNE/...
-        /* U-type */
-        `U(opcode) ? 
-            {inst[31], inst[30:12], 12'b0} : 
-        /* J-type */
-        `J(opcode) ? 
-            {{12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0} : 
-
-            32'b0; // 默认
-
-//signal
-    assign reg_wr = 
-        `R(opcode) || `I(opcode) || `U(opcode) || `J(opcode) || `B(opcode)?
-            1'b1 :
-
-            1'b0; // 默认
-  
-    //注意不是所有I-type指令都需要mem_rd
-    assign mem_rd = 
-        (opcode == 7'b0000011) ?
-            1'b1 :
-
-            1'b0;
-
-    assign mem_wr = 
-        `S(opcode) ?
-            1'b1 :
-
-            1'b0;
+    assign  opcode = inst[6:0];
+    assign  rs1    = inst[19:15];
+    assign  rs2    = inst[24:20];
+    assign  rd     = inst[11:7];
+    assign  funct3 = inst[14:12];
+    assign  funct7 = inst[31:25];
 
 
-/*
-    exu_op操作码（工作模式），具体如下
-      0:+,  1:-,
-      2:<,  3:>,  4:==,
-      5:<u, 6:>u,
-      7:^,  8: |, 9:&,
-      10:<<,11:>>,           逻辑左右移
-      12:>>>                算术右移 
+// 解析指令
+//==================================================================================================//
+// 立即数获取
+//====================================================//
+    reg [2:0] imm_op;
+    localparam  IMM_OP_IMM_AND_JALR_AND_LOAD = 3'b000,
+                IMM_OP_LUI_AND_AUIPC = 3'b001,
+                IMM_OP_STORE = 3'b010,
+                IMM_OP_BRANCH = 3'b011,
+                IMM_OP_JAL = 3'b100;
+    
+    // 根据 opcode 选择对应类型的立即数输出
+    always @(*) begin
+        case (opcode)
+            OP_LOAD  : imm_op = IMM_OP_IMM_AND_JALR_AND_LOAD;   // LOAD
+            OP_STORE : imm_op = IMM_OP_STORE;                   // STORE
+            OP_BRANCH: imm_op = IMM_OP_BRANCH;                  // BRANCH
+            OP_IMM   : imm_op = IMM_OP_IMM_AND_JALR_AND_LOAD;   // OP-IMM
+            OP_NOIMM : imm_op = 3'b000;                         // OP (no imm)
+            OP_JAL   : imm_op = IMM_OP_JAL;                     // JAL
+            OP_JALR  : imm_op = IMM_OP_IMM_AND_JALR_AND_LOAD;   // JALR
+            OP_LUI   : imm_op = IMM_OP_LUI_AND_AUIPC;           // LUI
+            OP_AUIPC : imm_op = IMM_OP_LUI_AND_AUIPC;           // AUIPC
+            default:   imm_op = 3'b000;
+        endcase
+    end
 
-    jmp_op:
-        0:IDLE
-        1:jal   2:jalr
+    wire [31:0] immI, immU, immS, immB, immJ;
+    assign immI = {{20{inst[31]}}, inst[31:20]};
+    assign immU = {inst[31:12], 12'b0};
+    assign immS = {{20{inst[31]}}, inst[31:25], inst[11:7]};
+    assign immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
+    assign immJ = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
 
-	mem_op:
-		0:IDLE
-		1:1byte
-		2:2byte
-		3:4byte
+    always @(*) begin
+        case (imm_op)
+            IMM_OP_IMM_AND_JALR_AND_LOAD  : imm = immI;   
+            IMM_OP_STORE                  : imm = immS;   
+            IMM_OP_BRANCH                 : imm = immB;   
+            //op-noimm
+            IMM_OP_JAL                    : imm = immJ;   
+            IMM_OP_LUI_AND_AUIPC          : imm = immU;   
+            default:   imm = 32'h0;
+        endcase
+    end
 
-	uncal_op:
-		0:IDLE
-		1:lui
+// ALU 状态获取
+//====================================================//
+    localparam  ALU_ADD=4'b0000, 
+                ALU_SUB=4'b1000, 
+                ALU_LEFTSHIFT0=4'b0001 ,   
+                ALU_SIGNED_LESS=4'b0010 ,
+                ALU_UNSIGNED_LESS=4'b1010,
+                ALU_OUTPUT_B0=4'b0011,     
+                ALU_XOR0=4'b0100,            
+                ALU_LOGIC_RIGHTSHIFT=4'b0101, 
+                ALU_ARTH_RIGHTSHIFT=4'b1101,
+                ALU_OR0=4'b0110,
+                ALU_AND0=4'b0111;
 
-    sys_op:
-        0:IDLE
-        1:ecall
-        2:ebreak
-*/
-//exu_op,自定义的一个用于exu的opcode
-//最高位置为1表示src2为imm
-    //jmp_op & exu_op
+
+// OP_JALR:
+    localparam  IMM_FUNCT3_JALR  = 3'b000;
+
+// OP_IMM:
+    localparam  IMM_FUNCT3_ADDI  = 3'b000,
+                IMM_FUNCT3_SLTI  = 3'b010,
+                IMM_FUNCT3_SLTIU = 3'b011,
+                IMM_FUNCT3_XORI  = 3'b100,
+                IMM_FUNCT3_ORI   = 3'b110,
+                IMM_FUNCT3_ANDI  = 3'b111,
+                IMM_FUNCT3_SLLI  = 3'b001,
+                IMM_FUNCT3_SRLI_OR_SRAI  = 3'b101;
+
+                localparam  IMM_FUNCT7_SLLI = 7'b0000000,
+                            IMM_FUNCT7_SRLI = 7'b0000000,
+                            IMM_FUNCT7_SRAI = 7'b0100000;
+//OP_NOIMM:
+    localparam  NOIMM_FUNCT3_ADD_OR_SUB = 3'b000,
+                NOIMM_FUNCT3_SLL = 3'b001,
+                NOIMM_FUNCT3_SLT = 3'b010,
+                NOIMM_FUNCT3_SLTU= 3'b011,
+                NOIMM_FUNCT3_XOR = 3'b100,
+                NOIMM_FUNCT3_SRL_OR_SRA = 3'b101,
+                NOIMM_FUNCT3_OR  = 3'b110,
+                NOIMM_FUNCT3_AND = 3'b111;
+
+                localparam  IMM_FUNCT7_ADD = 7'b0000000,
+                            IMM_FUNCT7_SUB = 7'b0100000,
+                            IMM_FUNCT7_SLL = 7'b0000000,
+                            IMM_FUNCT7_SLT = 7'b0000000,
+                            IMM_FUNCT7_SLTU= 7'b0000000,
+                            IMM_FUNCT7_XOR = 7'b0000000,
+                            IMM_FUNCT7_SRL = 7'b0000000,
+                            IMM_FUNCT7_SRA = 7'b0100000,
+                            IMM_FUNCT7_OR  = 7'b0000000,
+                            IMM_FUNCT7_AND = 7'b0000000;
+
+//OP_BRANCH:
+    localparam  BRANCH_FUNCT3_BEQ = 3'b000,
+                BRANCH_FUNCT3_BNE = 3'b001,
+                BRANCH_FUNCT3_BLT = 3'b100,
+                BRANCH_FUNCT3_BGE = 3'b101,
+                BRANCH_FUNCT3_BLTU= 3'b110,
+                BRANCH_FUNCT3_BGEU= 3'b111;
+//OP_LOAD:
+    localparam  LOAD_FUNCT3_LB  = 3'b000,
+                LOAD_FUNCT3_LH  = 3'b001,
+                LOAD_FUNCT3_LW  = 3'b010,   
+                LOAD_FUNCT3_LBU = 3'b100,
+                LOAD_FUNCT3_LHU = 3'b101;
+//OP_STORE:
+    localparam  STORE_FUNCT3_SB = 3'b000,
+                STORE_FUNCT3_SH = 3'b001,
+                STORE_FUNCT3_SW = 3'b010;
+
     always@(*)begin
-        casez({funct7,funct3,opcode})
-        //jalr
-            `JALR:
-                begin jmp_op = 4'd2;exu_op=6'd0;  end //jalr
-        //op=0 add
-            `ADD: 
-                begin jmp_op = 4'd0; exu_op =   6'd0;   end //out = src1 + src2
-            `ADDI,`LW,`SW,`LBU,`SB: 
-                begin jmp_op = 4'd0; exu_op = 6'b100000;   end //out = src1 + imm
-        //op=1 sub
-            17'b0000000_000_0000100: 
-                begin jmp_op = 4'd0; exu_op =   6'd1;  ; end //out = src1 - src2
-            17'b0000000_000_0000101: 
-                begin jmp_op = 4'd0; exu_op = 6'b100001;   end //out = src1 - imm
-        //op=2 <
-            17'b0000000_000_0000000: 
-                begin jmp_op = 4'd0; exu_op =   6'd2;   end //out = src1 < src2
-            17'b0000000_000_0000001: 
-                begin jmp_op = 4'd0; exu_op = 6'b100010;   end //out = src1 < imm
-        //op=3 >
-            17'b0000000_000_0000100: 
-                begin jmp_op = 4'd0; exu_op =   6'd3;   end //out = src1 > src2
-            17'b0000000_000_0000101: 
-                begin jmp_op = 4'd0; exu_op = 6'b100011;   end //out = src1 > imm
+        case(opcode)
+            OP_LUI  : alu_op = ALU_OUTPUT_B0;
+            OP_AUIPC: alu_op = ALU_ADD;
 
-        //op=5 <u
-            17'b0000000_000_0000110: 
-                begin jmp_op = 4'd0; exu_op =   6'd5;   end //out = src1 <u src2
-            17'b0000000_000_0000111: 
-                begin jmp_op = 4'd0; exu_op = 6'b100101;   end //out = src1 <u imm
-        //op=6 >u
-            17'b0000000_000_0000000: 
-                begin jmp_op = 4'd0; exu_op =   6'd6;   end //out = src1 >u src2
-            17'b0000000_000_0000001: 
-                begin jmp_op = 4'd0; exu_op = 6'b100110;   end //out = src1 >u imm
-        //op=7 ^
-            17'b0000000_000_0000100: 
-                begin jmp_op = 4'd0; exu_op =   6'd7;   end //out = src1 ^ src2
-            17'b0000000_000_0000101: 
-                begin jmp_op = 4'd0; exu_op = 6'b100111;   end //out = src1 ^ imm
-        //op=8 |
-            17'b0000000_000_0000000: 
-                begin jmp_op = 4'd0; exu_op =   6'd8;   end //out = src1 | src2
-            17'b0000000_000_0000001: 
-                begin jmp_op = 4'd0; exu_op = 6'b101000;   end //out = src1 | imm
-        //op=9 &
-            17'b0000000_000_0000100: 
-                begin jmp_op = 4'd0; exu_op =   6'd9;   end //out = src1 & src2
-            17'b0000000_000_0000101: 
-                begin jmp_op = 4'd0; exu_op = 6'b101001;   end //out = src1 & imm
-        //op=10 <<
-            17'b0000000_000_0001000: 
-                begin jmp_op = 4'd0; exu_op =   6'd10;  end //out = src1 << src2
-            17'b0000000_000_0001001: 
-                begin jmp_op = 4'd0; exu_op = 6'b101010;   end //out = src1 << imm
-        //op=11 >>
-            17'b0000000_000_0001100:
-                begin jmp_op = 4'd0; exu_op =   6'd11;  end //out = src1 >> src2
-            17'b0000000_000_0001101: 
-                begin jmp_op = 4'd0; exu_op = 6'b101011;   end //out = src1 >> imm
-        //op=12 >>>
-            17'b0000000_000_0001110: 
-                begin jmp_op = 4'd0; exu_op =   6'd12;  end //out = src1 >>> src2
-            17'b0000000_000_0001111: 
-                begin jmp_op = 4'd0; exu_op = 6'b101100;   end //out = src1 >>> imm
+            OP_IMM  : begin
+                case(funct3)
+                    IMM_FUNCT3_ADDI  : alu_op = ALU_ADD;
+                    IMM_FUNCT3_SLTI  : alu_op = ALU_SIGNED_LESS;
+                    IMM_FUNCT3_SLTIU : alu_op = ALU_UNSIGNED_LESS;
+                    IMM_FUNCT3_XORI  : alu_op = ALU_XOR0;
+                    IMM_FUNCT3_ORI   : alu_op = ALU_OR0;
+                    IMM_FUNCT3_ANDI  : alu_op = ALU_AND0;
+                    IMM_FUNCT3_SLLI  :  begin
+                                            if(funct7 == IMM_FUNCT7_SLLI) alu_op = ALU_LEFTSHIFT0;
+                                            else alu_op = 4'b0000;
+                                        end
+                    IMM_FUNCT3_SRLI_OR_SRAI  : begin
+                                            if     (funct7 == IMM_FUNCT7_SRAI) alu_op = ALU_ARTH_RIGHTSHIFT;
+                                            else if(funct7 == IMM_FUNCT7_SRLI) alu_op = ALU_LOGIC_RIGHTSHIFT;
+                                            else alu_op = 4'b0000;
+                                        end
+                    default    : alu_op = 4'b0000; 
+                endcase
+            end
 
-        default: begin jmp_op = 4'd0; exu_op =   6'd0;   end
+            OP_NOIMM: begin
+                case(funct3)
+                    NOIMM_FUNCT3_ADD_OR_SUB : begin
+                                                if     (funct7 == IMM_FUNCT7_ADD) alu_op = ALU_ADD;
+                                                else if(funct7 == IMM_FUNCT7_SUB) alu_op = ALU_SUB;
+                                                else alu_op = 4'b0000;
+                                            end
+                    NOIMM_FUNCT3_SLL : begin
+                                        if(funct7 == IMM_FUNCT7_SLL) alu_op = ALU_LEFTSHIFT0;
+                                        else alu_op = 4'b0000;
+                                    end
+                    NOIMM_FUNCT3_SLT : begin
+                                        if(funct7 == IMM_FUNCT7_SLT) alu_op = ALU_SIGNED_LESS;
+                                        else alu_op = 4'b0000;
+                                    end
+                    NOIMM_FUNCT3_SLTU: begin
+                                        if(funct7 == IMM_FUNCT7_SLTU) alu_op = ALU_UNSIGNED_LESS;
+                                        else alu_op = 4'b0000;
+                                    end
+                    NOIMM_FUNCT3_XOR : begin 
+                                        if(funct7 == IMM_FUNCT7_XOR) alu_op = ALU_XOR0;
+                                        else alu_op = 4'b0000;
+                                    end
+                    NOIMM_FUNCT3_SRL_OR_SRA : begin
+                                        if(funct7 == IMM_FUNCT7_SRL) alu_op = ALU_LOGIC_RIGHTSHIFT;
+                                        else if(funct7 == IMM_FUNCT7_SRA) alu_op = ALU_ARTH_RIGHTSHIFT;
+                                        else alu_op = 4'b0000;
+                                    end
+                    NOIMM_FUNCT3_OR  : begin 
+                                        if(funct7 == IMM_FUNCT7_OR) alu_op = ALU_OR0;
+                                        else alu_op = 4'b0000;
+                                    end
+                    NOIMM_FUNCT3_AND : begin
+                                        if(funct7 == IMM_FUNCT7_AND) alu_op = ALU_AND0;
+                                        else alu_op = 4'b0000;
+                                    end
+                    default: alu_op = 4'b0000;
+                endcase
+            end
+
+            OP_JAL  : alu_op = ALU_ADD;
+            OP_JALR : begin 
+                        if(funct3 == IMM_FUNCT3_JALR) alu_op = ALU_ADD;
+                        else alu_op = 4'b0000;
+                    end
+
+            OP_BRANCH : begin
+                case(funct3)
+                    BRANCH_FUNCT3_BEQ : alu_op = ALU_UNSIGNED_LESS;
+                    BRANCH_FUNCT3_BNE : alu_op = ALU_UNSIGNED_LESS;
+                    BRANCH_FUNCT3_BLT : alu_op = ALU_SIGNED_LESS;
+                    BRANCH_FUNCT3_BGE : alu_op = ALU_SIGNED_LESS;
+                    BRANCH_FUNCT3_BLTU: alu_op = ALU_UNSIGNED_LESS;
+                    BRANCH_FUNCT3_BGEU: alu_op = ALU_UNSIGNED_LESS;
+                    default: alu_op = 4'b0000;
+                endcase
+            end
+
+            OP_LOAD, OP_STORE: begin
+                alu_op = ALU_ADD;
+            end
+        default: alu_op = 4'b0000;
         endcase
     end
 
-	//uncal_op
-	always@(*)begin 
-		casez({funct7,funct3,opcode})
-			`LUI: uncal_op = 4'b1;//lui rd = imm
-			default: uncal_op = 4'b0;
-		endcase
-	end
+//alu_base
+    localparam  ALU_BASE_REG_REG = 2'b00,
+                ALU_BASE_REG_IMM = 2'b01,
+                ALU_BASE_PC_4    = 2'b10;
 
-	//mem_op
-	always@(*)begin 
-		casez({funct7,funct3,opcode})
-			`LBU   : mem_op = 4'b0001;//1byte_u
-			`LB,`SB: mem_op = 4'b1001;//1byte
-			`LHU   : mem_op = 4'b0010;//2byte_u
-			`LH,`SH: mem_op = 4'b1010;//2byte
-			`LW,`SW: mem_op = 4'b0011;//4byte
-			default: mem_op = 4'd0;
-		endcase
-	end
-
-	//sys_op
-    always@(*)begin 
-        case(inst)
-            
-            `EBREAK: sys_op = 4'd2;
-
-            default: sys_op = 4'd0;
+    always@(*)begin
+        case(opcode)
+            OP_LUI,OP_AUIPC : alu_base = ALU_BASE_REG_IMM;
+            OP_IMM          : alu_base = ALU_BASE_REG_IMM;
+            OP_NOIMM        : alu_base = ALU_BASE_REG_REG;   
+            OP_JAL          : alu_base = ALU_BASE_PC_4;
+            OP_JALR         : begin 
+                                if(funct3 == IMM_FUNCT3_JALR) alu_base = ALU_BASE_PC_4;
+                                else alu_base = ALU_BASE_REG_IMM; 
+                            end
+            OP_BRANCH       : alu_base = ALU_BASE_REG_REG;
+            OP_LOAD,OP_STORE: alu_base = ALU_BASE_REG_IMM;
+            default: alu_base = 2'b00;
         endcase
     end
 
+//alu_asrc
+    assign alu_asrc = (opcode == OP_AUIPC || opcode == OP_JAL || opcode == OP_JALR) ? 1 : 0;
+
+//====================================================//
+
+// reg 写入控制
+//====================================================//
+//reg_wen
+    always@(*)begin
+        case(opcode)
+            OP_LUI   : reg_wen = 1;
+            OP_AUIPC : reg_wen = 1;
+            OP_IMM   : reg_wen = 1;
+            OP_NOIMM : reg_wen = 1;
+            OP_JAL   : reg_wen = 1;
+            OP_JALR  : begin 
+                        if(funct3 == IMM_FUNCT3_JALR) reg_wen = 1;
+                        else reg_wen = 0;
+                    end
+            OP_BRANCH: reg_wen = 0;
+            OP_LOAD  : reg_wen = 1;
+            OP_STORE : reg_wen = 0;
+            default   : reg_wen = 0;
+        endcase
+    end
+
+
+//mem
+//====================================================//
+//mem_op
+    localparam MEM_OP_SIGNED_BYTE   = 3'b000,
+               MEM_OP_SIGNED_HALF   = 3'b001,
+               MEM_OP_WORD          = 3'b010,
+               MEM_OP_UNSIGNED_BYTE = 3'b100,
+               MEM_OP_UNSIGNED_HALF = 3'b101;
+
+    always@(*)begin
+        case(opcode)
+            OP_LUI   : mem_op = 3'b000;
+            OP_AUIPC : mem_op = 3'b000;
+            OP_IMM   : mem_op = 3'b000;
+            OP_NOIMM : mem_op = 3'b000;
+            OP_JAL   : mem_op = 3'b000;
+            OP_JALR  : mem_op = 3'b000;
+            OP_BRANCH: mem_op = 3'b000;
+            OP_LOAD  : begin
+                case(funct3)
+                    LOAD_FUNCT3_LB : mem_op = MEM_OP_SIGNED_BYTE;
+                    LOAD_FUNCT3_LH : mem_op = MEM_OP_SIGNED_HALF;
+                    LOAD_FUNCT3_LW : mem_op = MEM_OP_WORD;
+                    LOAD_FUNCT3_LBU: mem_op = MEM_OP_UNSIGNED_BYTE;
+                    LOAD_FUNCT3_LHU: mem_op = MEM_OP_UNSIGNED_HALF;
+                    default: mem_op = 3'b000;
+                endcase
+            end
+            OP_STORE : begin
+                case(funct3)
+                    STORE_FUNCT3_SB : mem_op = MEM_OP_SIGNED_BYTE;
+                    STORE_FUNCT3_SH : mem_op = MEM_OP_SIGNED_HALF;
+                    STORE_FUNCT3_SW : mem_op = MEM_OP_WORD;
+                    default: mem_op = 3'b000;
+                endcase
+            end
+            default   : mem_op = 3'b000;
+        endcase
+    end
+
+// mem_wen
+    always@(*)begin
+        case(opcode)
+            OP_LUI   : mem_wen = 0;
+            OP_AUIPC : mem_wen = 0;
+            OP_IMM   : mem_wen = 0;
+            OP_NOIMM : mem_wen = 0;
+            OP_JAL   : mem_wen = 0;
+            OP_JALR  : mem_wen = 0;
+            OP_BRANCH: mem_wen = 0;
+            OP_LOAD  : mem_wen = 0;
+            OP_STORE : mem_wen = 1;
+            default  : mem_wen = 0;
+        endcase
+    end
+
+//mem_toreg
+    always@(*)begin
+        case(opcode)
+            OP_LUI   : mem_toreg = 0;
+            OP_AUIPC : mem_toreg = 0;
+            OP_IMM   : mem_toreg = 0;
+            OP_NOIMM : mem_toreg = 0;
+            OP_JAL   : mem_toreg = 0;
+            OP_JALR  : mem_toreg = 0;
+            OP_BRANCH: mem_toreg = 0;
+            OP_LOAD  : mem_toreg = 1;
+            OP_STORE : mem_toreg = 0;
+            default  : mem_toreg = 0;
+        endcase
+    end
+//====================================================//
+
+
+//branch
+//====================================================//
+//branch_op
+    localparam  BRANCH_OP_IDLE         = 3'b000,
+                BRANCH_OP_JAL          = 3'b001,
+                BRANCH_OP_JALR         = 3'b010,
+                BRANCH_OP_BEQ          = 3'b100,
+                BRANCH_OP_BNE          = 3'b101,
+                BRANCH_OP_BLT_AND_BLTU = 3'b110,
+                BRANCH_OP_BGE_AND_BGEU = 3'b111;
+
+
+
+     always@(*)begin
+        case(opcode)
+            OP_LUI   : branch_op = BRANCH_OP_IDLE;
+            OP_AUIPC : branch_op = BRANCH_OP_IDLE;
+            OP_IMM   : branch_op = BRANCH_OP_IDLE;
+            OP_NOIMM : branch_op = BRANCH_OP_IDLE;
+            OP_JAL   : branch_op = BRANCH_OP_JAL;
+            OP_JALR  : branch_op = BRANCH_OP_JALR;
+            OP_BRANCH: begin
+                case(funct3)
+                    BRANCH_FUNCT3_BEQ : branch_op = BRANCH_OP_BEQ;
+                    BRANCH_FUNCT3_BNE : branch_op = BRANCH_OP_BNE;
+                    BRANCH_FUNCT3_BLT : branch_op = BRANCH_OP_BLT_AND_BLTU;
+                    BRANCH_FUNCT3_BGE : branch_op = BRANCH_OP_BGE_AND_BGEU;
+                    BRANCH_FUNCT3_BLTU: branch_op = BRANCH_OP_BLT_AND_BLTU;
+                    BRANCH_FUNCT3_BGEU: branch_op = BRANCH_OP_BGE_AND_BGEU;
+                    default: branch_op = BRANCH_OP_IDLE;
+                endcase
+            end
+            OP_LOAD   : branch_op = BRANCH_OP_IDLE;
+            OP_STORE  : branch_op = BRANCH_OP_IDLE;
+            default   : branch_op = BRANCH_OP_IDLE;
+        endcase
+    end
+
+
+
+//====================================================//
+//ebreak 的特别判断
+    localparam INST_EBREAK = 32'h00100073;
+
+    always@(*)begin
+        if(inst == INST_EBREAK) begin
+            ebreak();
+        end
+    end
+
+
+//====================================================//
 endmodule
+
+

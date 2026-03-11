@@ -1,5 +1,4 @@
 //npc/vsrc/ysyx_26020055_WBU.v
-import "DPI-C" function void dnpc_get_HDL(int val) ;
 module ysyx_26020055_WBU (
     input clk,
     input rst,
@@ -18,22 +17,7 @@ module ysyx_26020055_WBU (
     output reg [31:0] pc
 );
 
-//更新pc
-//如果跳转的话，更新pc为pc_jmp_target
-    wire [31:0] next_pc = jmp_taken ? pc_jmp_target : pc + 4; 
-    
-    // pc_reg（在时钟上升沿更新）
-    always @(posedge clk) begin
-        if(rst)
-            pc <= 32'h8000_0000;
-        else
-            pc <= next_pc;
-    end
 
-    // 将 next_pc 同步到 C 中
-    always@(posedge clk) begin
-        dnpc_get_HDL(next_pc);
-    end
 //寄存器堆
 ysyx_26020055_RegisterFile u_RegisterFile (
     .clk(clk),
