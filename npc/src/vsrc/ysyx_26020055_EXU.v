@@ -29,7 +29,8 @@ module ysyx_26020055_EXU (
 //alu_base
     localparam  ALU_BASE_REG_REG = 2'b00,
                 ALU_BASE_REG_IMM = 2'b01,
-                ALU_BASE_PC_4    = 2'b10;
+                ALU_BASE_PC_4    = 2'b10,
+                ALU_BASE_REG_RS2 = 2'b11;
     always@(*)begin
         case(alu_base)
             ALU_BASE_REG_REG:begin
@@ -43,6 +44,10 @@ module ysyx_26020055_EXU (
             ALU_BASE_PC_4:begin
                 a = a_reg;
                 b = 32'd4;
+            end
+            ALU_BASE_REG_RS2:begin
+                a = a_reg;
+                b = imm;
             end
             default:begin
                 a = 32'd0;
@@ -89,8 +94,11 @@ ysyx_26020055_ALU u_ysyx_26020055_ALU (
 //branch_target
     always@(*)begin
         case(branch_op)
-            BRANCH_OP_JAL,BRANCH_OP_JALR: begin
-                branch_target = alu_out;
+            BRANCH_OP_JAL: begin
+                branch_target = pc + imm;
+            end
+            BRANCH_OP_JALR: begin
+                branch_target = ( src1 + imm ) & 32'hFFFF_FFFE;
             end
             BRANCH_OP_BEQ,BRANCH_OP_BNE,BRANCH_OP_BLT_AND_BLTU,BRANCH_OP_BGE_AND_BGEU: begin
                 branch_target = pc + imm;
@@ -100,5 +108,7 @@ ysyx_26020055_ALU u_ysyx_26020055_ALU (
     end
         
 //======================================================//
+
+
 
 endmodule

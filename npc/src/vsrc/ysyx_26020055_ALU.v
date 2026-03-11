@@ -109,20 +109,20 @@ module ysyx_26020055_ALU #(parameter ALU_MAX_BIT = 32)(
     assign sign_a = a[ALU_MAX_BIT-1];
     assign sign_b = b[ALU_MAX_BIT-1];
     assign sign_out = alu_out[ALU_MAX_BIT-1];
-    assign overflow = (sign_a == sign_b) && (sign_out == ~sign_a);//符号位不同且结果符号位与输入a符号位不同时为溢出
+    assign overflow = (sign_a == ~sign_b) && (sign_out == ~sign_a);//符号位不同且结果符号位与输入a符号位不同时为溢出
 
     reg [ALU_MAX_BIT-1:0] y;
     always@(*)begin
         case(alu_op)
             ALU_ADD:                           y = a + b;                                      
             ALU_SUB:                           y = a - b;                        
-            ALU_LEFTSHIFT0,    ALU_LEFTSHIFT1: y = a << b;                       
-            ALU_SIGNED_LESS:                   y = ($signed(a) - $signed(b));  
-            ALU_UNSIGNED_LESS:                 y = (a - b);                         //默认无符号
+            ALU_LEFTSHIFT0,    ALU_LEFTSHIFT1: y = a << b[4:0];                       
+            ALU_SIGNED_LESS:                   y = ($signed(a) < $signed(b))?1:0;  
+            ALU_UNSIGNED_LESS:                 y = (a < b)?1:0;                         //默认无符号
             ALU_OUTPUT_B0,     ALU_OUTPUT_B1:  y = b;                                             
             ALU_XOR0,          ALU_XOR1:       y = a ^ b;                       
-            ALU_LOGIC_RIGHTSHIFT:              y = a >> b;                     
-            ALU_ARTH_RIGHTSHIFT:               y = $signed(a) >>> b;           
+            ALU_LOGIC_RIGHTSHIFT:              y = a >> b[4:0];                     
+            ALU_ARTH_RIGHTSHIFT:               y = $signed(a) >>> b[4:0];           
             ALU_OR0,     ALU_OR1:              y = a | b;                                            
             ALU_AND0,    ALU_AND1:             y = a & b;                     
             default: y = 0;
@@ -131,9 +131,7 @@ module ysyx_26020055_ALU #(parameter ALU_MAX_BIT = 32)(
     end
 
     assign zero = (alu_out == 0);
-    assign less = sign_out ^ overflow;
+    assign less = alu_out[0];
     // 因为比大小要输出较小的值，并且需要减法计算结果，所以单独做了判断
-    assign alu_out = (alu_op == ALU_SIGNED_LESS || alu_op == ALU_UNSIGNED_LESS) ?
-                        ((less==1'b1)? 
-                            a : b) : y;
+    assign alu_out = y;
 endmodule

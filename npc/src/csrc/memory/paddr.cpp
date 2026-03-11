@@ -18,6 +18,7 @@ paddr_t host_to_guest(uint8_t *haddr) { return haddr - pRAM + CONFIG_MBASE; }
 static word_t pc_pmem_read(paddr_t addr) {
     // pc 读指令每次必定 4 byte（32bit）
     word_t ret = host_read(pROM_guest_to_host(addr), 4);
+    //printf("addr:%x inst:%x\n",addr,ret);
     return ret;
 }
 //===================================================//
@@ -28,7 +29,6 @@ static word_t pc_pmem_read(paddr_t addr) {
 //===================================================//
 static word_t pmem_read(paddr_t addr, int len) {
 	word_t ret = host_read(guest_to_host(addr), len);
-
 	IFDEF(CONFIG_MTRACE,mtrace_read(addr, len, ret);)
 
 	return ret;

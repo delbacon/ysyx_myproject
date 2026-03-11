@@ -167,6 +167,7 @@ static int decode_exec(Decode *s) {
 //作用是从内存中取出一条指令，并且让snpc指向下一条指令的位置
 int isa_exec_once(Decode *s) {
   s->isa.inst = inst_fetch(&s->snpc, 4);
+
   //进入译码
   return decode_exec(s);
 }

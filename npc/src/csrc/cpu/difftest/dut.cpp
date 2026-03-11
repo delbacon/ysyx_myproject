@@ -90,7 +90,7 @@ void (*ref_difftest_init)(int) = (void (*)(int))dlsym(handle, "difftest_init");
 
 
 static bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-//printf("pc:%x ref_pc:%x\n",cpu.dnpc,ref_r->pc);
+printf("dnpc:%x ref_pc:%x\n",cpu.dnpc,ref_r->pc);
   if(cpu.dnpc == ref_r->pc){
     for(int i = 0; i < RISCV_GPR_NUM; i++){
       if(cpu.gpr[i] != ref_r->gpr[i]){
@@ -133,8 +133,9 @@ void difftest_step(vaddr_t pc, vaddr_t npc) {
     is_skip_ref = false;
     return;
   }
-
+  
   ref_difftest_exec(1);
+  
   ref_difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
 
   checkregs(&ref_r, pc);

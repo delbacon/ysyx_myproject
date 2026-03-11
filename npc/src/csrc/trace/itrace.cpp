@@ -87,9 +87,10 @@ void itrace_list_write(Decode *s){
   p += space_len;
 
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-  disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
-      MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst, ilen);
-
+  if(s->isa.inst != 0)
+    disassemble(p, s->logbuf + sizeof(s->logbuf) - p, s->pc, (uint8_t *)&s->isa.inst, ilen);
+  else 
+    Assert(0, "Error: pc:%x instruction is %x",s->pc,s->isa.inst);
 }
 
 int itrace_list_put(char *c){

@@ -237,8 +237,8 @@ module ysyx_26020055_IDU (
 
             OP_BRANCH : begin
                 case(funct3)
-                    BRANCH_FUNCT3_BEQ : alu_op = ALU_UNSIGNED_LESS;
-                    BRANCH_FUNCT3_BNE : alu_op = ALU_UNSIGNED_LESS;
+                    BRANCH_FUNCT3_BEQ : alu_op = ALU_SUB;
+                    BRANCH_FUNCT3_BNE : alu_op = ALU_SUB;
                     BRANCH_FUNCT3_BLT : alu_op = ALU_SIGNED_LESS;
                     BRANCH_FUNCT3_BGE : alu_op = ALU_SIGNED_LESS;
                     BRANCH_FUNCT3_BLTU: alu_op = ALU_UNSIGNED_LESS;
@@ -258,6 +258,7 @@ module ysyx_26020055_IDU (
     localparam  ALU_BASE_REG_REG = 2'b00,
                 ALU_BASE_REG_IMM = 2'b01,
                 ALU_BASE_PC_4    = 2'b10;
+                //ALU_BASE_REG_RS2 = 2'b11
 
     always@(*)begin
         case(opcode)

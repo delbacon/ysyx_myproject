@@ -17,6 +17,9 @@ MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = the_insert-arg_rule_in_Makefile_will_insert_mainargs_here
 CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER=$(MAINARGS_PLACEHOLDER)
 
+
+# NPCFLAGS += -b 
+
 insert-arg: image
 	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
 
@@ -29,11 +32,11 @@ image: image-dep
 run: insert-arg
 	@echo "Running NPC simulation..."
 	@echo "IMAGE variable contains: $(IMAGE)"
-	$(MAKE) -C $(NPC_HOME) run IMG=$(IMAGE).bin IMG_NOBIN=$(IMAGE)
+	$(MAKE) -C $(NPC_HOME) run ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin  IMG_NOBIN=$(IMAGE)
 
 sim: insert-arg
 	@echo "Simming NPC simulation..."
 	@echo "IMAGE variable contains: $(IMAGE)"
-	$(MAKE) -C $(NPC_HOME) sim IMG=$(IMAGE).bin IMG_NOBIN=$(IMAGE)
+	$(MAKE) -C $(NPC_HOME) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin  IMG_NOBIN=$(IMAGE)
 
 .PHONY: insert-arg

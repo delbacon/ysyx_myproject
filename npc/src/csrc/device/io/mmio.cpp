@@ -16,7 +16,6 @@
 #include <device/map.h>
 #include <memory/paddr.h>
 
-
 #define NR_MAP 16
 
 static IOMap maps[NR_MAP] = {};

@@ -76,7 +76,7 @@ $(BINARY_WITH_TRACE): $(VSRCS) $(CSRCS) $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	verilator $(VERILATOR_COMMON_FLAGS) --trace-fst \
 		$(CSRCS) $(VSRCS) \
-		$(addprefix -CFLAGS , $(CXXFLAGS_WITH_TRACE)) \
+		$(addprefix -CFLAGS ,  $(CFLAGS) $(CXXFLAGS_WITH_TRACE)) \
 		$(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(dir $@) \
 		-o $(notdir $@)

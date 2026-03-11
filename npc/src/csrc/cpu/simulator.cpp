@@ -22,7 +22,10 @@ static void sim_once(){
     while(n){
         while (sim_time < 10) {
             dut->clk = !dut->clk;
-            dut->eval();    
+            dut->eval();
+            
+            IFDEF(WAVE_TRACE, tfp->dump(sim_time));
+            
             sim_time++;
         }
         
@@ -35,10 +38,7 @@ static void sim_once(){
 	    //更新
         dut->eval();
 
-#ifdef WAVE_TRACE
-        // 記錄波形
-        tfp->dump(cpu.sim_time);
-#endif
+        IFDEF(WAVE_TRACE, tfp->dump(sim_time));
 
 	    sim_time++;
         n--;

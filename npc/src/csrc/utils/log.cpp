@@ -7,7 +7,7 @@ FILE *log_fp = NULL;
 void init_log(const char *log_file) {
   log_fp = stdout;
   if (log_file != NULL) {
-    printf("Log is written to %s\n", log_file);
+    Log("Log is written to %s\n", log_file);
     FILE *fp = fopen(log_file, "w");
     Assert(fp, "Can not open '%s'", log_file);
     log_fp = fp;

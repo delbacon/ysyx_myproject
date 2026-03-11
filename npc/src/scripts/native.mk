@@ -36,10 +36,10 @@ LOG_FILE = $(IMG_NOBIN)-log.txt
 ELF_FILE = $(IMG_NOBIN).elf
 DIFF_FILE = $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 # Run args
-override RUNARGS ?=  --log $(LOG_FILE)
-override RUNARGS += --diff $(DIFF_FILE)
-override RUNARGS += --elf-input $(ELF_FILE)
-override RUNARGS += $(BIN) # RUN
+override ARGS +=  --log $(LOG_FILE)
+override ARGS += --diff $(DIFF_FILE)
+override ARGS += --elf-input $(ELF_FILE)
+override ARGS += $(BIN) # RUN
 
 # run 使用无 trace 版本
 run: $(BINARY_NO_TRACE)
@@ -47,7 +47,7 @@ run: $(BINARY_NO_TRACE)
 		echo "Error: Image file not found: $(BIN)"; \
 		exit 1; \
 	fi
-	$(BINARY_NO_TRACE) $(RUNARGS)
+	$(BINARY_NO_TRACE) $(ARGS)
 
 # sim 使用带 trace 版本，并打开波形
 sim: $(BINARY_WITH_TRACE)
@@ -56,7 +56,7 @@ sim: $(BINARY_WITH_TRACE)
 		echo "Error: Image file not found: $(BIN)"; \
 		exit 1; \
 	fi
-	$(BINARY_WITH_TRACE) $(RUNARGS)
+	$(BINARY_WITH_TRACE) $(ARGS)
 
 	$(GTKWAVE) waveform.* 2>/dev/null || echo "gtkwave not found or no waveform"
 

@@ -52,11 +52,7 @@ ysyx_26020055_IDU u_ysyx_26020055_IDU (
 );
 
 wire [31:0] src1,src2;
-wire [31:0] reg_wdata;
-wire [31:0] mem_addr;
 wire [31:0] alu_out;
-assign reg_wdata = alu_out;
-assign mem_addr = alu_out;
 ysyx_26020055_EXU u_ysyx_26020055_EXU(
     .pc           (pc           ),
 
@@ -76,6 +72,31 @@ ysyx_26020055_EXU u_ysyx_26020055_EXU(
     .alu_out      (alu_out      ) 
 );
 
+wire [31:0] mem_rdata;
+ysyx_26020055_LSU u_ysyx_26020055_LSU(
+    .alu_out      (alu_out      ),//addr 来源
+    .src2         (src2         ),//wdata 来源
+    .mem_op       (mem_op       ),
+    .mem_wen      (mem_wen      ),
+    .mem_toreg    (mem_toreg    ),
+    .mem_rdata    (mem_rdata    ) 
+);
 
+
+ysyx_26020055_WBU u_ysyx_26020055_WBU (
+    .clk          (clk          ),
+    .rs1          (rs1          ),
+    .rs2          (rs2          ),
+    .rd           (rd           ),
+     
+    .alu_out      (alu_out      ),
+    .mem_rdata    (mem_rdata    ),
+    .reg_wen      (reg_wen      ),
+    .mem_toreg    (mem_toreg    ),
+ 
+    .src1         (src1         ),
+    .src2         (src2         )        
+);
 
 endmodule
+

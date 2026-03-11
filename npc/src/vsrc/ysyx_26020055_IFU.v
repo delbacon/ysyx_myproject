@@ -17,12 +17,14 @@ module ysyx_26020055_IFU (
         if(rst)
             inst <= pROM_read_HDL(PC_INIT);
         else
-            inst <= pROM_read_HDL(next_pc);//确保与 pc 同步
+            inst <= pROM_read_HDL(next_pc);//确保与 pc 同步,如果写pc,会超前读1个指令
+            inst_get_HDL(inst);
     end
 
 //更新pc
 //如果跳转的话，更新pc为branch_target
-    wire [31:0] next_pc = branch_flag ? branch_target : pc + 4; 
+    wire [31:0] next_pc ;
+    assign next_pc = branch_flag ? branch_target : pc + 4; 
     
     // pc_reg（在时钟上升沿更新）
     always @(posedge clk) begin
@@ -32,12 +34,14 @@ module ysyx_26020055_IFU (
             pc <= next_pc;
     end
 
-
-
 // DPI-C 向仿真环境传输数据
-    always@(*)begin
-        dnpc_get_HDL(next_pc);
-        inst_get_HDL(inst);
-        pc_get_HDL(pc);
+    always@(posedge clk)begin
+        if(rst)begin
+            pc_get_HDL(PC_INIT);
+            dnpc_get_HDL(PC_INIT + 4);
+        end else begin
+            dnpc_get_HDL(next_pc);
+            pc_get_HDL(pc);
+        end
     end
 endmodule

@@ -3,43 +3,70 @@ import "DPI-C" function void pRAM_write_HDL(int addr, int len, int data) ;
 
 
 module ysyx_26020055_LSU(
-    input [31:0] raddr,
-    input [31:0] waddr,
-    input [31:0] wdata,
-    input [3:0] wnum, //写入的字节个数 1 2 4
-    input valid,
-    input wen,
-    output reg [31:0] rdata
+    input       [31:0] alu_out  ,//addr 来源
+    input       [31:0] src2     ,//wdata 来源
+    input       [ 2:0] mem_op   ,
+    input              mem_wen  ,
+    input              mem_toreg,
+
+    output reg [31:0] mem_rdata 
 );
-    reg [7:0] wmask;
+//mem_op
+    localparam MEM_OP_SIGNED_BYTE   = 3'b000,
+               MEM_OP_SIGNED_HALF   = 3'b001,
+               MEM_OP_WORD          = 3'b010,
+               MEM_OP_UNSIGNED_BYTE = 3'b100,
+               MEM_OP_UNSIGNED_HALF = 3'b101;
+
+//mem_rdata
+    reg [31:0] mem_rdata_raw;
+    always@(*)begin
+        case(mem_op)
+            MEM_OP_SIGNED_BYTE:
+                mem_rdata = {{24{mem_rdata_raw[7]}}, mem_rdata_raw[7:0]};
+            MEM_OP_SIGNED_HALF:
+                mem_rdata = {{16{mem_rdata_raw[15]}}, mem_rdata_raw[15:0]};
+            MEM_OP_WORD:
+                mem_rdata = mem_rdata_raw;
+            MEM_OP_UNSIGNED_BYTE:
+                mem_rdata = {{24{1'b0}}, mem_rdata_raw[7:0]};
+            MEM_OP_UNSIGNED_HALF:
+                mem_rdata = {{16{1'b0}}, mem_rdata_raw[15:0]};
+            default:
+                mem_rdata = mem_rdata_raw;
+        endcase   
+    end
+//mem_len
+    reg [31:0] mem_len;
+    always@(*)begin
+        case(mem_op)
+            MEM_OP_SIGNED_BYTE,MEM_OP_UNSIGNED_BYTE:
+                mem_len = 32'd1;
+            MEM_OP_SIGNED_HALF,MEM_OP_UNSIGNED_HALF:
+                mem_len = 32'd2;
+            MEM_OP_WORD:
+                mem_len = 32'd4;
+            default:
+                mem_len = 32'd0;
+        endcase   
+    end
 
 
-    reg [31:0] pmem_rdata;
-    always @(*) begin
-        if (valid) begin // 有读写请求时
-            pmem_rdata = pRAM_read_HDL(raddr ,4);
-            if (wen) begin // 有写请求时
-                pRAM_write_HDL(waddr, {24'd0,wmask}, wdata);
+    wire [31:0] mem_wdata;
+    assign mem_wdata = src2;
+
+    wire [31:0] mem_addr;
+    assign mem_addr = (mem_wen || mem_toreg) ? alu_out : 32'h8000_0000; 
+
+    always@(*)begin
+        begin 
+            if(mem_wen)begin
+                mem_rdata_raw = 32'h0;
+                pRAM_write_HDL(mem_addr, mem_len, mem_wdata);
+            end else begin
+                mem_rdata_raw = pRAM_read_HDL(mem_addr, mem_len);
             end
-        end else begin
-            pmem_rdata = 0;
         end
     end
 
-    always@(*)begin
-        case(wnum)//wnum[3] = 0 unsigned
-            4'b0001 :
-                begin   wmask = 8'd1;    rdata = {{24{1'b0}},pmem_rdata[7:0]};    end
-            4'b1001 :
-                begin   wmask = 8'd1;    rdata = {{24{pmem_rdata[7]}},pmem_rdata[7:0]};    end
-            4'b0010 :
-                begin   wmask = 8'd2;    rdata = {{16{1'b0}},pmem_rdata[15:0]};    end
-            4'b1010 :
-                begin   wmask = 8'd2;    rdata = {{16{pmem_rdata[15]}},pmem_rdata[15:0]};    end
-            4'b0011 ://4byte
-                begin   wmask = 8'd4;    rdata = pmem_rdata;    end
-            default :
-                begin   wmask = 8'b0;    rdata = 0;    end
-        endcase
-    end
 endmodule

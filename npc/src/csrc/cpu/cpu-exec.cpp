@@ -33,7 +33,6 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 uint64_t get_time_us();
-void device_update();
 
 
 
@@ -66,18 +65,34 @@ static void execute(uint64_t n) {
   Decode s;
 
   IFDEF(CONFIG_ITRACE_LASTEST, itrace_list_init());
+  //如果是-1的话，等于无限执行
+  if(n == -1){
+    while(1){
+      exec_once(&s, cpu.pc);
+      g_nr_guest_inst ++;
 
-  for (;n > 0; n --) {
-    exec_once(&s, cpu.pc);
-    g_nr_guest_inst ++;
-    
-    trace_and_difftest(&s, cpu.pc);
-    
-    //如果nemu的状态为NPC_RUNNING，则继续执行，否则跳出循环
-    if(npc_state.state != NPC_RUNNING) {
-      IFDEF(CONFIG_ITRACE_LASTEST, itrace_log_write());
+      trace_and_difftest(&s, cpu.pc);
+      
+      //如果nemu的状态为NPC_RUNNING，则继续执行，否则跳出循环
+      if(npc_state.state != NPC_RUNNING) {
+        IFDEF(CONFIG_ITRACE_LASTEST, itrace_log_write());
+      
+        break;
+      }
+    }
+  }else{
+    for (;n > 0; n --) {
+      exec_once(&s, cpu.pc);
+      g_nr_guest_inst ++;
 
-      break;
+      trace_and_difftest(&s, cpu.pc);
+
+      //如果nemu的状态为NPC_RUNNING，则继续执行，否则跳出循环
+      if(npc_state.state != NPC_RUNNING) {
+        IFDEF(CONFIG_ITRACE_LASTEST, itrace_log_write());
+
+        break;
+      }
     }
   }
 }
@@ -121,7 +136,7 @@ int cpu_exec(uint64_t n) {
     case NPC_RUNNING: npc_state.state = NPC_STOP; break;
 
     case NPC_END: case NPC_ABORT:
-      simulator_end();
+      
       Log("nemu: %s at pc = " FMT_WORD,
           (npc_state.state == NPC_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) :
            (npc_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
