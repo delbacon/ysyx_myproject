@@ -128,6 +128,22 @@ endmenu
 menu "Testing and Debugging"
 
 
+config DIFFTEST
+  depends on TARGET_NATIVE_ELF
+  bool "Enable differential testing"
+  default n
+  help
+    Enable differential testing with a reference design.
+    Note that this will significantly reduce the performance of NEMU.
+
+config WATCHPOINT
+  depends on TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable watchpoint"
+  default n
+  help
+    Enable watchpoint with a reference design.
+    Note that this will significantly reduce the performance of NEMU.
+
 config TRACE
   bool "Enable tracer"
   default y
@@ -215,21 +231,11 @@ config DTRACE_END
   endmenu
 endif
 
-config DIFFTEST
-  depends on TARGET_NATIVE_ELF
-  bool "Enable differential testing"
-  default n
-  help
-    Enable differential testing with a reference design.
-    Note that this will significantly reduce the performance of NEMU.
+config ETRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable ecall tracer"
+  default y
 
-config WATCHPOINT
-  depends on TARGET_NATIVE_ELF && ENGINE_INTERPRETER
-  bool "Enable watchpoint"
-  default n
-  help
-    Enable watchpoint with a reference design.
-    Note that this will significantly reduce the performance of NEMU.
 choice
   prompt "Reference design"
   default DIFFTEST_REF_SPIKE if ISA_riscv

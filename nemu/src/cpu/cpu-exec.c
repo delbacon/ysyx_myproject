@@ -38,8 +38,9 @@ void device_update();
 
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc){
-  MUXDEF(CONFIG_ITRACE_LASTEST,itrace_list_put(_this->logbuf);
-                              ,log_write("%s\n", _this->logbuf);)
+
+  MUXDEF(CONFIG_ITRACE_LASTEST,itrace_list_put(_this->logbuf),
+                                IFDEF(CONFIG_ITRACE,log_write("%s\n", _this->logbuf)));
   
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   

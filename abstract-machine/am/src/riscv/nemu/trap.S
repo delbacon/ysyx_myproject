@@ -57,8 +57,10 @@ __am_asm_trap:
   or t1, t1, a0
   csrw mstatus, t1
 
-  mv a0, sp
+  mv a0, sp # 将当前进程的 sp 存到 a0
   call __am_irq_handle
+
+  mv sp, a0 # 读取之前运行的进程的 sp
 
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)

@@ -18,6 +18,20 @@ static inline bool in_pmem(paddr_t addr) {
 }
 
 
+#define CONFIG_DIFF_DEVICE_SIZE 0x1000
+#define CONFIG_DIFF_DEVICE_BASE 0x10000000
+static inline bool in_diff_device(paddr_t addr) {
+  return addr - CONFIG_DIFF_DEVICE_BASE < CONFIG_DIFF_DEVICE_SIZE;
+}
+
+
+#define CONFIG_CSR_SIZE 0x1000
+#define CONFIG_CSR_BASE 0x0
+static inline bool in_csr(paddr_t addr) {
+  return addr - CONFIG_CSR_BASE < CONFIG_CSR_SIZE;
+}
+
+
 word_t pROM_read(paddr_t addr);
 extern "C" int pROM_read_HDL(int addr);
 

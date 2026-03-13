@@ -19,6 +19,8 @@
 #include <isa.h>
 #include <trace/mtrace.h>
 
+
+
 #if   defined(CONFIG_PMEM_MALLOC)
 static uint8_t *pmem = NULL;
 #else // CONFIG_PMEM_GARRAY
@@ -61,23 +63,28 @@ void init_mem() {
 
 word_t paddr_read(paddr_t addr, int len) {
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
-  IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
 
-  if(addr >= 0x10000000 && addr < 0x10010000){
-    printf("read from device\n");
-    return 0;
-  }
+  //IO 映射
+  IFDEF(CONFIG_DEVICE, if(in_device(addr)) return mmio_read(addr, len));
+
+  IFDEF(CONFIG_TARGET_SHARE, if(in_diff_device(addr)) return 0);
+
+  //CSR 映射
+  //if(in_csr(addr)) return csr_read(addr);
   out_of_bound(addr);
   return 0;
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
-  IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
+  IFDEF(CONFIG_DEVICE, if(in_device(addr)){mmio_write(addr, len, data); return; })
 
-  if(addr >= 0x10000000 && addr < 0x10010000){
-    printf("write to device: %c\n", data);
-    return ;
+  IFDEF(CONFIG_TARGET_SHARE, if(in_diff_device(addr)) return );
+/*
+  if(in_csr(addr)) {
+    csr_write(addr, data);
+    return;
   }
+*/
   out_of_bound(addr);
 }

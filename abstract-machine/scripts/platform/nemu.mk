@@ -14,7 +14,7 @@ LDFLAGS   += --defsym=_pmem_start=0x80000000 --defsym=_entry_offset=0x0
 LDFLAGS   += --gc-sections -e _start
 NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
 # 实现pa2批处理模式，在am中运行nemu时传参-b
-NEMUFLAGS += -b 
+# NEMUFLAGS += -b 
 NEMUFLAGS += --elf-input=$(IMAGE).elf
 
 

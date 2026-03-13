@@ -31,6 +31,24 @@ static inline bool in_pmem(paddr_t addr) {
   return addr - CONFIG_MBASE < CONFIG_MSIZE;
 }
 
+#define CONFIG_DIFF_DEVICE_SIZE 0x1000
+#define CONFIG_DIFF_DEVICE_BASE 0x10000000
+static inline bool in_diff_device(paddr_t addr) {
+  return addr - CONFIG_DIFF_DEVICE_BASE < CONFIG_DIFF_DEVICE_SIZE;
+}
+
+#define CONFIG_DEVICE_SIZE 0xa2000000
+#define CONFIG_DEVICE_BASE 0xa0000000
+static inline bool in_device(paddr_t addr) {
+  return addr - CONFIG_DEVICE_BASE < CONFIG_DEVICE_SIZE;
+}
+
+#define CONFIG_CSR_SIZE 0x1000
+#define CONFIG_CSR_BASE 0x0
+static inline bool in_csr(paddr_t addr) {
+  return addr - CONFIG_CSR_BASE < CONFIG_CSR_SIZE;
+}
+
 word_t paddr_read(paddr_t addr, int len);
 void paddr_write(paddr_t addr, int len, word_t data);
 

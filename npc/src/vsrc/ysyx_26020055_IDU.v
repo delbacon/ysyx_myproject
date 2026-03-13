@@ -418,12 +418,14 @@ module ysyx_26020055_IDU (
 
 
 //====================================================//
-//ebreak 的特别判断
-    localparam INST_EBREAK = 32'h00100073;
-
+//系统指令的特别判断
+    localparam INST_EBREAK = 32'b000000000001_00000_000_00000_1110011;
+    localparam INST_ECALL  = 32'b000000000000_00000_000_00000_1110011;
     always@(*)begin
         if(inst == INST_EBREAK) begin
             ebreak();
+        end else if(inst == INST_ECALL) begin
+            ecall();
         end
     end
 

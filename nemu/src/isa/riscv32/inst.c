@@ -18,6 +18,7 @@
 #include <cpu/ifetch.h>
 #include <cpu/decode.h>
 #include <trace/ftrace.h>
+#include <isa.h>
 
 #define R(i) gpr(i)
 #define Mr vaddr_read
@@ -138,7 +139,14 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 111 ????? 01100 11", and    , R, R(rd) = src1 & src2);
 
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, s->dnpc = isa_raise_intr(11, s->pc);); // 11:ecall from M-mode
 
+
+  //Zicsr standard extension
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, {R(rd) = csr_read(imm), csr_write(imm, src1);} );
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = csr_read(imm); );
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , N, s->dnpc = csr_read(0x341) + 4; );//MEPC = 0x341 //存储的是进入异常的地址，要+4才能到下一条
+  
   //M extension
   //attention!!! 类型没有用宏定义实现，更换环境的话可能要手动改
   //(uint64_t)(int32_t)无符号32位不能直接扩展为64位，要先扩展位有符号32位,再扩展为无符号64位
