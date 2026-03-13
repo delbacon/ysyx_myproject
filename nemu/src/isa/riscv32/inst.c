@@ -139,13 +139,13 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 111 ????? 01100 11", and    , R, R(rd) = src1 & src2);
 
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
-  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, s->dnpc = isa_raise_intr(11, s->pc);); // 11:ecall from M-mode
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, s->dnpc = isa_raise_intr(11, s->pc+4);); // 11:ecall from M-mode/存储的是进入异常的地址，要+4才能到下一条
 
 
   //Zicsr standard extension
   INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, {R(rd) = csr_read(imm), csr_write(imm, src1);} );
   INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = csr_read(imm); );
-  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , N, s->dnpc = csr_read(0x341) + 4; );//MEPC = 0x341 //存储的是进入异常的地址，要+4才能到下一条
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , N, s->dnpc = csr_read(0x341); );//MEPC = 0x341 /
   
   //M extension
   //attention!!! 类型没有用宏定义实现，更换环境的话可能要手动改
