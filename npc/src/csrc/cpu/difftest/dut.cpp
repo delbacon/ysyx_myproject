@@ -90,8 +90,7 @@ void (*ref_difftest_init)(int) = (void (*)(int))dlsym(handle, "difftest_init");
 
 
 static bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-printf("dnpc:%x ref_pc:%x\n",cpu.dnpc,ref_r->pc);
-  if(cpu.dnpc == ref_r->pc){
+  if(cpu.pc == ref_r->pc){
     for(int i = 0; i < RISCV_GPR_NUM; i++){
       if(cpu.gpr[i] != ref_r->gpr[i]){
         printf("reg[%s] = 0x%x, ref_reg[%s] = 0x%x\n", reg_name(i), cpu.gpr[i], reg_name(i), ref_r->gpr[i]);
@@ -111,6 +110,7 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
   }
 }
 
+static int cnt = 0;
 void difftest_step(vaddr_t pc, vaddr_t npc) {
   CPU_state ref_r;
 
@@ -129,15 +129,20 @@ void difftest_step(vaddr_t pc, vaddr_t npc) {
 
   if (is_skip_ref) {
     // to skip the checking of an instruction, just copy the reg state to reference design
+    printf("skip this instruction\n");
     ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
-    is_skip_ref = false;
+    cnt++;
+    if(cnt==2) {
+      is_skip_ref = false;
+      cnt = 0;
+    }
     return;
   }
   
   ref_difftest_exec(1);
   
   ref_difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
-
+  printf("pc:%x ref_pc:%x\n",cpu.pc,ref_r.pc);
   checkregs(&ref_r, pc);
 }
 #else

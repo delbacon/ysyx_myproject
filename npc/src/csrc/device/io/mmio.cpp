@@ -15,6 +15,7 @@
 
 #include <device/map.h>
 #include <memory/paddr.h>
+#include <utils.h>
 
 #define NR_MAP 16
 
@@ -54,10 +55,13 @@ void add_mmio_map(const char *name, paddr_t addr, void *space, uint32_t len, io_
 }
 
 /* bus interface */
+IFDEF(CONFIG_DIFFTEST, void difftest_skip_ref());
 word_t mmio_read(paddr_t addr, int len) {
+IFDEF(CONFIG_DIFFTEST, difftest_skip_ref());
   return map_read(addr, len, fetch_mmio_map(addr));
 }
 
 void mmio_write(paddr_t addr, int len, word_t data) {
+IFDEF(CONFIG_DIFFTEST, difftest_skip_ref());
   map_write(addr, len, data, fetch_mmio_map(addr));
 }

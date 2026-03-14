@@ -99,7 +99,6 @@ void init_monitor(int argc,char **argv) {
   IFDEF(CONFIG_FTRACE,init_ftrace(elf_file));
 
   long img_size = load_img();
-  printf("Image:%ld\n",img_size);
 
   IFDEF(CONFIG_DIFFTEST, init_difftest(diff_so_file, img_size, difftest_port));
 

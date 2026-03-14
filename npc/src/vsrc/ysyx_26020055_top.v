@@ -32,6 +32,8 @@ ysyx_26020055_IFU u_ysyx_26020055_IFU (
 	wire       mem_toreg;
 
 	wire [2:0] branch_op;
+
+    wire [2:0] csr_op;
 ysyx_26020055_IDU u_ysyx_26020055_IDU (
     .inst     	(inst     ), 
     .rs1        (rs1      ),
@@ -48,12 +50,20 @@ ysyx_26020055_IDU u_ysyx_26020055_IDU (
     .mem_wen  	(mem_wen  ),//mem写使能
     .mem_toreg	(mem_toreg),//mem读结果写入到reg
 
+    .csr_wen     (csr_wen ),
+    .csr_op      (csr_op  ),
+
     .branch_op	(branch_op)
 );
 
+
+
 wire [31:0] src1,src2;
-wire [31:0] alu_out;
+wire [31:0] exu_out;
+wire csr_wen ;
 ysyx_26020055_EXU u_ysyx_26020055_EXU(
+    .clk          (clk          ),
+    .rst          (rst          ),
     .pc           (pc           ),
 
     .imm          (imm          ),
@@ -69,12 +79,16 @@ ysyx_26020055_EXU u_ysyx_26020055_EXU(
     .branch_flag  (branch_flag  ),
     .branch_target(branch_target),
 
-    .alu_out      (alu_out      ) 
+    .csr_wen      (csr_wen      ),
+    .csr_op       (csr_op       ),
+
+    .exu_out      (exu_out      ) 
 );
 
 wire [31:0] mem_rdata;
 ysyx_26020055_LSU u_ysyx_26020055_LSU(
-    .alu_out      (alu_out      ),//addr 来源
+    .clk          (clk          ),
+    .exu_out      (exu_out      ),//addr 来源
     .src2         (src2         ),//wdata 来源
     .mem_op       (mem_op       ),
     .mem_wen      (mem_wen      ),
@@ -89,7 +103,7 @@ ysyx_26020055_WBU u_ysyx_26020055_WBU (
     .rs2          (rs2          ),
     .rd           (rd           ),
      
-    .alu_out      (alu_out      ),
+    .exu_out      (exu_out      ),
     .mem_rdata    (mem_rdata    ),
     .reg_wen      (reg_wen      ),
     .mem_toreg    (mem_toreg    ),

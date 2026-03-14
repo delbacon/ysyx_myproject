@@ -5,7 +5,7 @@ module ysyx_26020055_WBU (
     input  [4:0]  rs2          ,
     input  [4:0]  rd           ,
     //alu & mem                     
-    input  [31:0] alu_out      ,
+    input  [31:0] exu_out      ,
     input  [31:0] mem_rdata    ,
     input         reg_wen      ,
     input         mem_toreg    ,
@@ -22,7 +22,7 @@ module ysyx_26020055_WBU (
             if(mem_toreg)begin
                 reg_wdata = mem_rdata;
             end else begin
-                reg_wdata = alu_out;
+                reg_wdata = exu_out;
             end
         end else begin
             reg_wdata = 32'b0;

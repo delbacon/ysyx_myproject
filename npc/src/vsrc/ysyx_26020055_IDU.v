@@ -18,80 +18,15 @@ module ysyx_26020055_IDU (
     output reg       reg_wen  ,//reg写使能
     //mem
     output reg [2:0] mem_op   ,//mem工作模式(byte/half/word)
-    output reg       mem_wen  ,//mem写使能
-    output reg       mem_toreg,//mem读结果写入到reg
+    output           mem_wen  ,//mem写使能
+    output           mem_toreg,//mem读结果写入到reg
+    //csr
+    output           csr_wen  ,
+    output reg [2:0] csr_op   ,
     //branch
     output reg [2:0] branch_op
 );
 
-    localparam  OP_LOAD   = 7'b0000011, 
-                OP_STORE  = 7'b0100011, 
-                OP_BRANCH = 7'b1100011,
-                OP_IMM    = 7'b0010011,
-                OP_NOIMM  = 7'b0110011,
-                OP_JAL    = 7'b1101111,
-                OP_JALR   = 7'b1100111,
-                OP_LUI    = 7'b0110111,
-                OP_AUIPC  = 7'b0010111;
-
-// 操作数和寄存器地址获取
-    wire [6:0] opcode;
-    wire [2:0] funct3;
-    wire [6:0] funct7;
-
-    assign  opcode = inst[6:0];
-    assign  rs1    = inst[19:15];
-    assign  rs2    = inst[24:20];
-    assign  rd     = inst[11:7];
-    assign  funct3 = inst[14:12];
-    assign  funct7 = inst[31:25];
-
-
-// 解析指令
-//==================================================================================================//
-// 立即数获取
-//====================================================//
-    reg [2:0] imm_op;
-    localparam  IMM_OP_IMM_AND_JALR_AND_LOAD = 3'b000,
-                IMM_OP_LUI_AND_AUIPC = 3'b001,
-                IMM_OP_STORE = 3'b010,
-                IMM_OP_BRANCH = 3'b011,
-                IMM_OP_JAL = 3'b100;
-    
-    // 根据 opcode 选择对应类型的立即数输出
-    always @(*) begin
-        case (opcode)
-            OP_LOAD  : imm_op = IMM_OP_IMM_AND_JALR_AND_LOAD;   // LOAD
-            OP_STORE : imm_op = IMM_OP_STORE;                   // STORE
-            OP_BRANCH: imm_op = IMM_OP_BRANCH;                  // BRANCH
-            OP_IMM   : imm_op = IMM_OP_IMM_AND_JALR_AND_LOAD;   // OP-IMM
-            OP_NOIMM : imm_op = 3'b000;                         // OP (no imm)
-            OP_JAL   : imm_op = IMM_OP_JAL;                     // JAL
-            OP_JALR  : imm_op = IMM_OP_IMM_AND_JALR_AND_LOAD;   // JALR
-            OP_LUI   : imm_op = IMM_OP_LUI_AND_AUIPC;           // LUI
-            OP_AUIPC : imm_op = IMM_OP_LUI_AND_AUIPC;           // AUIPC
-            default:   imm_op = 3'b000;
-        endcase
-    end
-
-    wire [31:0] immI, immU, immS, immB, immJ;
-    assign immI = {{20{inst[31]}}, inst[31:20]};
-    assign immU = {inst[31:12], 12'b0};
-    assign immS = {{20{inst[31]}}, inst[31:25], inst[11:7]};
-    assign immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
-    assign immJ = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
-
-    always @(*) begin
-        case (imm_op)
-            IMM_OP_IMM_AND_JALR_AND_LOAD  : imm = immI;   
-            IMM_OP_STORE                  : imm = immS;   
-            IMM_OP_BRANCH                 : imm = immB;   
-            //op-noimm
-            IMM_OP_JAL                    : imm = immJ;   
-            IMM_OP_LUI_AND_AUIPC          : imm = immU;   
-            default:   imm = 32'h0;
-        endcase
-    end
 
 // ALU 状态获取
 //====================================================//
@@ -106,6 +41,18 @@ module ysyx_26020055_IDU (
                 ALU_ARTH_RIGHTSHIFT=4'b1101,
                 ALU_OR0=4'b0110,
                 ALU_AND0=4'b0111;
+
+//==================== baisc inst I ==============================//
+
+    localparam  OP_LOAD   = 7'b0000011, 
+                OP_STORE  = 7'b0100011, 
+                OP_BRANCH = 7'b1100011,
+                OP_IMM    = 7'b0010011,
+                OP_NOIMM  = 7'b0110011,
+                OP_JAL    = 7'b1101111,
+                OP_JALR   = 7'b1100111,
+                OP_LUI    = 7'b0110111,
+                OP_AUIPC  = 7'b0010111;
 
 
 // OP_JALR:
@@ -162,6 +109,56 @@ module ysyx_26020055_IDU (
     localparam  STORE_FUNCT3_SB = 3'b000,
                 STORE_FUNCT3_SH = 3'b001,
                 STORE_FUNCT3_SW = 3'b010;
+//==================== inst for Zicsr ==============================//
+    localparam  OP_CSR = 7'b1110011;
+    localparam  CSR_FUNCT3_CSRRW = 3'b001;
+    localparam  CSR_FUNCT3_CSRRS = 3'b010;
+
+
+
+
+// 操作数和寄存器地址获取
+    wire [6:0] opcode;
+    wire [2:0] funct3;
+    wire [6:0] funct7;
+
+    assign  opcode = inst[6:0];
+    assign  rs1    = inst[19:15];
+    assign  rs2    = inst[24:20];
+    assign  rd     = inst[11:7];
+    assign  funct3 = inst[14:12];
+    assign  funct7 = inst[31:25];
+
+
+// 解析指令
+//==================================================================================================//
+// 立即数获取
+//====================================================//
+    wire [31:0] immI, immU, immS, immB, immJ;
+    assign immI = {{20{inst[31]}}, inst[31:20]};
+    assign immU = {inst[31:12], 12'b0};
+    assign immS = {{20{inst[31]}}, inst[31:25], inst[11:7]};
+    assign immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
+    assign immJ = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
+
+    always @(*) begin
+        case (opcode)
+            OP_LOAD  : imm = immI;   // LOAD
+            OP_STORE : imm = immS;   // STORE
+            OP_BRANCH: imm = immB;   // BRANCH
+            OP_IMM   : imm = immI;   // OP-IMM
+            OP_NOIMM : imm = 32'b0; // OP (no imm)
+            OP_JAL   : imm = immJ;   // JAL
+            OP_JALR  : imm = immI;   // JALR
+            OP_LUI   : imm = immU;   // LUI
+            OP_AUIPC : imm = immU;   // AUIPC
+            OP_CSR   : imm = immI;
+            default:   imm = 32'b0;
+        endcase
+    end
+
+
+
 
     always@(*)begin
         case(opcode)
@@ -247,9 +244,9 @@ module ysyx_26020055_IDU (
                 endcase
             end
 
-            OP_LOAD, OP_STORE: begin
-                alu_op = ALU_ADD;
-            end
+            OP_LOAD, OP_STORE: alu_op = ALU_ADD;
+            OP_CSR:            alu_op = ALU_OUTPUT_B0;
+            
         default: alu_op = 4'b0000;
         endcase
     end
@@ -258,7 +255,7 @@ module ysyx_26020055_IDU (
     localparam  ALU_BASE_REG_REG = 2'b00,
                 ALU_BASE_REG_IMM = 2'b01,
                 ALU_BASE_PC_4    = 2'b10;
-                //ALU_BASE_REG_RS2 = 2'b11
+                //ALU_BASE_REG_MEM = 2'b11;
 
     always@(*)begin
         case(opcode)
@@ -272,6 +269,7 @@ module ysyx_26020055_IDU (
                             end
             OP_BRANCH       : alu_base = ALU_BASE_REG_REG;
             OP_LOAD,OP_STORE: alu_base = ALU_BASE_REG_IMM;
+            OP_CSR          : alu_base = ALU_BASE_REG_IMM;
             default: alu_base = 2'b00;
         endcase
     end
@@ -298,6 +296,7 @@ module ysyx_26020055_IDU (
             OP_BRANCH: reg_wen = 0;
             OP_LOAD  : reg_wen = 1;
             OP_STORE : reg_wen = 0;
+            OP_CSR   : reg_wen = 1;
             default   : reg_wen = 0;
         endcase
     end
@@ -339,41 +338,16 @@ module ysyx_26020055_IDU (
                     default: mem_op = 3'b000;
                 endcase
             end
+            OP_CSR   : mem_op = 3'b000;
             default   : mem_op = 3'b000;
         endcase
     end
 
 // mem_wen
-    always@(*)begin
-        case(opcode)
-            OP_LUI   : mem_wen = 0;
-            OP_AUIPC : mem_wen = 0;
-            OP_IMM   : mem_wen = 0;
-            OP_NOIMM : mem_wen = 0;
-            OP_JAL   : mem_wen = 0;
-            OP_JALR  : mem_wen = 0;
-            OP_BRANCH: mem_wen = 0;
-            OP_LOAD  : mem_wen = 0;
-            OP_STORE : mem_wen = 1;
-            default  : mem_wen = 0;
-        endcase
-    end
+    assign mem_wen = (opcode == OP_STORE)?1 : 0;
 
 //mem_toreg
-    always@(*)begin
-        case(opcode)
-            OP_LUI   : mem_toreg = 0;
-            OP_AUIPC : mem_toreg = 0;
-            OP_IMM   : mem_toreg = 0;
-            OP_NOIMM : mem_toreg = 0;
-            OP_JAL   : mem_toreg = 0;
-            OP_JALR  : mem_toreg = 0;
-            OP_BRANCH: mem_toreg = 0;
-            OP_LOAD  : mem_toreg = 1;
-            OP_STORE : mem_toreg = 0;
-            default  : mem_toreg = 0;
-        endcase
-    end
+    assign mem_toreg = (opcode == OP_LOAD)?1 : 0;
 //====================================================//
 
 
@@ -411,9 +385,21 @@ module ysyx_26020055_IDU (
             end
             OP_LOAD   : branch_op = BRANCH_OP_IDLE;
             OP_STORE  : branch_op = BRANCH_OP_IDLE;
+            OP_CSR    : begin
+                if(inst == INST_MRET || inst == INST_ECALL)
+                    branch_op = BRANCH_OP_JAL;
+                else
+                    branch_op = BRANCH_OP_IDLE;
+            end
             default   : branch_op = BRANCH_OP_IDLE;
         endcase
     end
+
+
+
+
+//====================================================//
+
 
 
 
@@ -421,15 +407,41 @@ module ysyx_26020055_IDU (
 //系统指令的特别判断
     localparam INST_EBREAK = 32'b000000000001_00000_000_00000_1110011;
     localparam INST_ECALL  = 32'b000000000000_00000_000_00000_1110011;
+    localparam INST_MRET   = 32'b001100000010_00000_000_00000_1110011;
+
+//ebreak
     always@(*)begin
         if(inst == INST_EBREAK) begin
             ebreak();
-        end else if(inst == INST_ECALL) begin
-            ecall();
-        end
+        end 
     end
 
+//csr_wen
+    assign csr_wen = ((opcode == OP_CSR && (funct3 == CSR_FUNCT3_CSRRW)) || inst == INST_ECALL)?1 : 0;
+//csr_op
+    localparam  CSR_OP_CSRRW = 3'b000,
+                CSR_OP_CSRRS = 3'b001,
+                CSR_OP_ECALL = 3'b110,
+                CSR_OP_MRET  = 3'b111;
 
+
+    always@(*)begin
+        if(opcode == OP_CSR)begin
+            if(inst == INST_ECALL) begin
+                csr_op = CSR_OP_ECALL;
+            end else if(inst == INST_MRET) begin
+                csr_op = CSR_OP_MRET;
+            end else begin
+                case(funct3)
+                    CSR_FUNCT3_CSRRW : csr_op = CSR_OP_CSRRW;
+                    CSR_FUNCT3_CSRRS : csr_op = CSR_OP_CSRRS;
+                    default: csr_op = 3'b000;
+                endcase
+            end
+        end else begin
+            csr_op = 3'b000;
+        end
+    end
 //====================================================//
 endmodule
 

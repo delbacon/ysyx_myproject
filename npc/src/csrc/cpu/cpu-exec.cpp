@@ -28,7 +28,7 @@
  */
 #define MAX_INST_TO_PRINT 100
 
-CPU_state cpu = {};
+CPU_state cpu = {.pc=0x80000000 };
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
@@ -136,10 +136,10 @@ int cpu_exec(uint64_t n) {
     case NPC_RUNNING: npc_state.state = NPC_STOP; break;
 
     case NPC_END: case NPC_ABORT:
-      
+      extern bool ebreak_flag;
       Log("nemu: %s at pc = " FMT_WORD,
           (npc_state.state == NPC_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) :
-           (npc_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
+           ((ebreak_flag == 1 && cpu.gpr[10] == 0) ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
             ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED))),
           cpu.pc);
       // fall through

@@ -78,25 +78,6 @@ include $(NPC_HOME)/src/scripts/config.mk
 #-------------------------
 # Yosys Synthesis & STA
 #-------------------------
-PROJ_PATH = $(shell pwd)
-YOSYS_STA_HOME ?= $(HOME)/software/yosys-sta
-YOSYS_STA_SCRIPTS ?= $(YOSYS_STA_HOME)/scripts
-IEDA ?= $(YOSYS_STA_HOME)/bin/iEDA
-
-SDC_FILE ?= $(YOSYS_STA_SCRIPTS)/default.sdc
-RTL_FILES ?= $(shell find $(PROJ_PATH)/src/vsrc -name "*.v")
-CLK_FREQ_MHZ ?= 500
-export CLK_FREQ_MHZ
-CLK_PORT_NAME ?= clk
-export CLK_PORT_NAME
-PDK := icsprout55
-
-O ?= $(PROJ_PATH)/result
-DESIGN ?= $(TOP_MODULE)
-RESULT_DIR = $(O)/$(DESIGN)-$(CLK_FREQ_MHZ)MHz
-NETLIST_SYN_V   = $(RESULT_DIR)/$(DESIGN).netlist.v
-TIMING_RPT = $(RESULT_DIR)/$(DESIGN).rpt
-
 # yosys
 
 # Example:
@@ -106,33 +87,34 @@ TIMING_RPT = $(RESULT_DIR)/$(DESIGN).rpt
 #     CLK_FREQ_MHZ=100 CLK_PORT_NAME=clk O=/path/to/pwd \
 #     RTL_FILES="/path/to/mydesign.v /path/to/xxx.v ..."
 
-check-yosys-sta:
-	@test -f "$(YOSYS_STA_SCRIPTS)/yosys.tcl" || \
-		(echo "Error: missing $(YOSYS_STA_SCRIPTS)/yosys.tcl. Set YOSYS_STA_HOME=..."; exit 1)
-	@test -f "$(YOSYS_STA_SCRIPTS)/sta.tcl" || \
-		(echo "Error: missing $(YOSYS_STA_SCRIPTS)/sta.tcl. Set YOSYS_STA_HOME=..."; exit 1)
-	@test -x "$(IEDA)" || \
-		(echo "Error: missing or non-executable $(IEDA). Set YOSYS_STA_HOME=..."; exit 1)
+#***************************************************************************************
+# Yosys Synthesis Makefile for NPC Project
+#***************************************************************************************/
 
-check-sdc:
-	@test -f "$(SDC_FILE)" || \
-		(echo "Error: SDC_FILE not found: $(SDC_FILE)"; exit 1)
+PROJ_PATH = $(shell pwd)
+SHELL := /bin/bash
+
+O ?= $(PROJ_PATH)/result
+DESIGN ?= TOP_MODULE
+SDC_FILE ?= $(PROJ_PATH)/scripts/default.sdc
+RTL_FILES ?= $(shell find $(PROJ_PATH)/example -name "*.v")
+export CLK_FREQ_MHZ ?= 500
+export CLK_PORT_NAME ?= clk
+PDK = icsprout55
+
+RESULT_DIR = $(O)/$(DESIGN)-$(CLK_FREQ_MHZ)MHz
+SCRIPT_DIR = $(PROJ_PATH)/scripts
+NETLIST_SYN_V   = $(RESULT_DIR)/$(DESIGN).netlist.v
+TIMING_RPT = $(RESULT_DIR)/$(DESIGN).rpt
 
 syn: $(NETLIST_SYN_V)
-$(NETLIST_SYN_V): $(RTL_FILES) | check-yosys-sta $(RESULT_DIR)
-	@echo "Running Yosys synthesis..."
-	echo tcl $(YOSYS_STA_SCRIPTS)/yosys.tcl $(DESIGN) $(PDK) \"$(RTL_FILES)\" $@ | \
-		$(YOSYS) -g -l $(@D)/yosys.log -s -
-	@echo "✓ Synthesis complete: $@"
+$(NETLIST_SYN_V): $(RTL_FILES) $(SCRIPT_DIR)/yosys.tcl
+	mkdir -p $(@D)
+	echo tcl $(SCRIPT_DIR)/yosys.tcl $(DESIGN) $(PDK) \"$(RTL_FILES)\" $@ | yosys -g -l $(@D)/yosys.log -s -
 
 sta: $(TIMING_RPT)
-$(TIMING_RPT): $(NETLIST_SYN_V) | check-yosys-sta check-sdc
-	@echo "Running static timing analysis..."
-	set -o pipefail && \
-	$(IEDA) -script $(YOSYS_STA_SCRIPTS)/sta.tcl $(SDC_FILE) $(NETLIST_SYN_V) $(DESIGN) $(PDK) 2>&1 | \
-		tee $(RESULT_DIR)/sta.log
-	@echo "✓ STA complete: $(TIMING_RPT)"
-
+$(TIMING_RPT): $(SCRIPT_DIR)/sta.tcl $(SDC_FILE) $(NETLIST_SYN_V)
+	set -o pipefail && ./bin/iEDA -script $^ $(DESIGN) $(PDK) 2>&1 | tee $(RESULT_DIR)/sta.log
 
 # 为了能跑 git_commit ,也不要删掉这个！！
 include ../Makefile
