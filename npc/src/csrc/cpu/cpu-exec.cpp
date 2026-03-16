@@ -34,18 +34,16 @@ static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 uint64_t get_time_us();
 
-
-
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc){
-  MUXDEF(CONFIG_ITRACE_LASTEST,itrace_list_put(_this->logbuf);
-                              ,log_write("%s\n", _this->logbuf);)
-  
-  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
-  
-  IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
+    MUXDEF(CONFIG_ITRACE_LASTEST,itrace_list_put(_this->logbuf);
+                                ,log_write("%s\n", _this->logbuf);)
+    
+    if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+    
+    IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
-  //打开wp_difftest
-  IFDEF(CONFIG_WATCHPOINT, wp_difftest());
+    //打开wp_difftest
+    IFDEF(CONFIG_WATCHPOINT, wp_difftest());
 
 }
 

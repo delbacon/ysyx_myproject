@@ -18,12 +18,13 @@ module ysyx_26020055_WBU (
 );
     wire wbu_wen;
     assign wbu_wen = exu_valid && reg_wen;
-    assign wbu_ready = exu_valid;
-/*
+
+
+
     always@(posedge clk)begin
         wbu_ready <= exu_valid;
     end
-*/
+
 
     reg [31:0]reg_wdata;
     //wen & mux2to1

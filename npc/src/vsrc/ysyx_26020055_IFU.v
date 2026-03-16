@@ -27,32 +27,40 @@ end
 always@(*)begin
     case(st)
         IDLE:begin n_st = WAIT; end
-        WAIT:begin n_st = IDLE; end
+        WAIT:begin n_st = (ifu_respValid)?IDLE:WAIT; end
         default:begin n_st = IDLE; end
     endcase
 end
 
 reg [31:0] ifu_data,ifu_addr;
 
-always@(posedge clk)begin
-    if(st == WAIT)
-        inst <= ifu_data;
-end
-always@(posedge clk)begin
-    if(st == IDLE)
-        ifu_addr <= pc;
-end
+assign inst = (st == WAIT && ifu_respValid)?ifu_data:32'b0;
+
+assign ifu_addr = pc;
+
+assign ifu_reqValid = (st == IDLE && wbu_ready);
+
+assign ifu_valid = (rst)?1:(st == WAIT && ifu_respValid);
+/*
+output        lsu_reqValid,
+output [31:0] lsu_addr,
+output        lsu_wen,
+output [31:0] lsu_wdata,
+output [ 3:0] lsu_wmask,
+input         lsu_respValid,
+input  [31:0] lsu_rdata,
+*/
 
 
+
+reg ifu_respValid,ifu_reqValid;
 always @(posedge clk) begin
     if (rst) begin
-        inst <= pROM_read_HDL(PC_INIT);
-        ifu_valid <= 1'b0;
-    end else if(st == WAIT)begin
+        ifu_data <= pROM_read_HDL(PC_INIT);
+    end else if(st == IDLE && ifu_reqValid)begin
         ifu_data <= pROM_read_HDL(ifu_addr);
-        ifu_valid <= 1'b1;
-    end else
-        ifu_valid <= 1'b0;
+    end
+    ifu_respValid <= ifu_reqValid;
     inst_get_HDL(inst);
 end
 /*
@@ -79,7 +87,7 @@ ysyx_26020055_pROM u_ysyx_26020055_pROM(
 always @(posedge clk) begin
     if (rst) begin
         pc <= PC_INIT;
-    end else if(wbu_ready && st == IDLE)begin
+    end else if(st == WAIT && ifu_respValid)begin
         pc <= next_pc; // 正常更新
     end
 end
@@ -91,7 +99,7 @@ end
             dnpc_get_HDL(PC_INIT + 4);
         end else begin
             dnpc_get_HDL(next_pc);
-            pc_get_HDL(pc);
+            pc_get_HDL(next_pc);
         end
     end
 endmodule

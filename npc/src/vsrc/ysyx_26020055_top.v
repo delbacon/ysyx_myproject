@@ -1,7 +1,8 @@
 
 module ysyx_26020055_top (
     input         clk,
-    input         rst
+    input         rst,
+    output        ifu_valid
 );
 	wire [31:0] pc;
 	wire [31:0] inst;
@@ -9,7 +10,6 @@ module ysyx_26020055_top (
 //branch
 	wire branch_flag;
 	wire [31:0] branch_target;
-    wire ifu_valid;
 ysyx_26020055_IFU u_ysyx_26020055_IFU (
     .clk            (clk          ),
     .rst            (rst          ),

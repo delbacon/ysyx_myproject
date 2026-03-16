@@ -17,33 +17,36 @@ static uint64_t sim_time = 0;
 
 // 初始化仿真信号
 //============== SIM ===================//
+int ifu_valid=0;
 static void sim_once(){
-    int n = 2;//推进一个时钟周期
-    while(n){
-        while (sim_time <= 10) {
+    do{
+        int n = 2;//推进一个时钟周期
+        while(n){
+            ifu_valid = dut->ifu_valid;
+            while (sim_time <= 10) {
+                dut->clk = !dut->clk;
+                dut->eval();
+                IFDEF(WAVE_TRACE, tfp->dump(sim_time));
+
+                sim_time++;
+            }
+
+            if(sim_time == 11){
+                dut->rst = 0;
+            }
+	        // 時鐘切換
             dut->clk = !dut->clk;
+
+	        //更新
             dut->eval();
-            
+
             IFDEF(WAVE_TRACE, tfp->dump(sim_time));
-            
-            sim_time++;
+
+	        sim_time++;
+            n--;
+            //ebreak
         }
-        
-        if(sim_time == 11){
-            dut->rst = 0;
-        }
-	    // 時鐘切換
-        dut->clk = !dut->clk;
-
-	    //更新
-        dut->eval();
-
-        IFDEF(WAVE_TRACE, tfp->dump(sim_time));
-
-	    sim_time++;
-        n--;
-        //ebreak
-    }
+    }while(!ifu_valid);
 }
 
 static void simulate_signal_init(){
