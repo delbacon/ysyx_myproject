@@ -3,7 +3,7 @@ import "DPI-C" function void pRAM_write_HDL(int addr, int len, int data) ;
 
 
 module ysyx_26020055_LSU(
-    input clk,
+//    input clk,
     input       [31:0] exu_out  ,//addr 来源
     input       [31:0] src2     ,//wdata 来源
     input       [ 2:0] mem_op   ,
@@ -61,7 +61,7 @@ module ysyx_26020055_LSU(
 
 
 
-/*
+
     always@(*)begin
         begin 
             if(mem_wen)begin
@@ -72,8 +72,8 @@ module ysyx_26020055_LSU(
             end
         end
     end
-*/
 
+/*
 reg [31:0] wdata;
 always@(*)begin
     case(mem_len)
@@ -91,8 +91,8 @@ always@(*)begin
         end
     endcase
 end
-
-
+*/
+/*
 ysyx_26020055_pRAM u_ysyx_26020055_pRAM(
     .clk    (clk     ),
     .wdata  (wdata   ),
@@ -100,7 +100,7 @@ ysyx_26020055_pRAM u_ysyx_26020055_pRAM(
     .wen    (mem_wen     ),  
     .rdata  (mem_rdata_raw)
 );
-
+*/
 
 
 endmodule

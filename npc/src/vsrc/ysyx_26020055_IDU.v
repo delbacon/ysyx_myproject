@@ -3,7 +3,12 @@
 import "DPI-C" function void ebreak ();
 
 module ysyx_26020055_IDU (
+    input clk,
+    /* verilator lint_off UNUSEDSIGNAL */
+    input rst,
     input [31:0] inst,
+    input [31:0] pc,
+    
     //addr
     output reg [4:0] rs1      ,
     output reg [4:0] rs2      ,
@@ -24,8 +29,32 @@ module ysyx_26020055_IDU (
     output           csr_wen  ,
     output reg [2:0] csr_op   ,
     //branch
-    output reg [2:0] branch_op
+    output reg [2:0] branch_op,
+    
+    output reg [31:0]pc_in    ,
+    input            ifu_valid,
+    output           idu_valid,
+    input            exu_ready 
 );
+wire idu_fire;
+assign idu_fire = ifu_valid && exu_ready;
+
+reg [31:0] inst_reg;
+wire [31:0] inst_in;
+always@(posedge clk)begin
+    if(idu_fire)
+        inst_reg <= inst;
+end
+reg [31:0] pc_reg;
+always@(posedge clk)begin
+    if(idu_fire)
+        pc_reg <= pc;
+end
+assign pc_in = idu_fire?pc:pc_reg;
+
+
+assign inst_in = idu_fire?inst:inst_reg ;
+assign idu_valid = idu_fire;
 
 
 // ALU 状态获取
@@ -42,7 +71,7 @@ module ysyx_26020055_IDU (
                 ALU_OR0=4'b0110,
                 ALU_AND0=4'b0111;
 
-//==================== baisc inst I ==============================//
+//==================== baisc inst_in I ==============================//
 
     localparam  OP_LOAD   = 7'b0000011, 
                 OP_STORE  = 7'b0100011, 
@@ -109,7 +138,7 @@ module ysyx_26020055_IDU (
     localparam  STORE_FUNCT3_SB = 3'b000,
                 STORE_FUNCT3_SH = 3'b001,
                 STORE_FUNCT3_SW = 3'b010;
-//==================== inst for Zicsr ==============================//
+//==================== inst_in for Zicsr ==============================//
     localparam  OP_CSR = 7'b1110011;
     localparam  CSR_FUNCT3_CSRRW = 3'b001;
     localparam  CSR_FUNCT3_CSRRS = 3'b010;
@@ -122,12 +151,12 @@ module ysyx_26020055_IDU (
     wire [2:0] funct3;
     wire [6:0] funct7;
 
-    assign  opcode = inst[6:0];
-    assign  rs1    = inst[19:15];
-    assign  rs2    = inst[24:20];
-    assign  rd     = inst[11:7];
-    assign  funct3 = inst[14:12];
-    assign  funct7 = inst[31:25];
+    assign  opcode = inst_in[6:0];
+    assign  rs1    = inst_in[19:15];
+    assign  rs2    = inst_in[24:20];
+    assign  rd     = inst_in[11:7];
+    assign  funct3 = inst_in[14:12];
+    assign  funct7 = inst_in[31:25];
 
 
 // 解析指令
@@ -135,11 +164,11 @@ module ysyx_26020055_IDU (
 // 立即数获取
 //====================================================//
     wire [31:0] immI, immU, immS, immB, immJ;
-    assign immI = {{20{inst[31]}}, inst[31:20]};
-    assign immU = {inst[31:12], 12'b0};
-    assign immS = {{20{inst[31]}}, inst[31:25], inst[11:7]};
-    assign immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
-    assign immJ = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
+    assign immI = {{20{inst_in[31]}}, inst_in[31:20]};
+    assign immU = {inst_in[31:12], 12'b0};
+    assign immS = {{20{inst_in[31]}}, inst_in[31:25], inst_in[11:7]};
+    assign immB = {{20{inst_in[31]}}, inst_in[7], inst_in[30:25], inst_in[11:8], 1'b0};
+    assign immJ = {{12{inst_in[31]}}, inst_in[19:12], inst_in[20], inst_in[30:21], 1'b0};
 
     always @(*) begin
         case (opcode)
@@ -386,7 +415,7 @@ module ysyx_26020055_IDU (
             OP_LOAD   : branch_op = BRANCH_OP_IDLE;
             OP_STORE  : branch_op = BRANCH_OP_IDLE;
             OP_CSR    : begin
-                if(inst == INST_MRET || inst == INST_ECALL)
+                if(inst_in == INST_MRET || inst_in == INST_ECALL)
                     branch_op = BRANCH_OP_JAL;
                 else
                     branch_op = BRANCH_OP_IDLE;
@@ -411,13 +440,13 @@ module ysyx_26020055_IDU (
 
 //ebreak
     always@(*)begin
-        if(inst == INST_EBREAK) begin
+        if(inst_in == INST_EBREAK) begin
             ebreak();
         end 
     end
 
 //csr_wen
-    assign csr_wen = ((opcode == OP_CSR && (funct3 == CSR_FUNCT3_CSRRW)) || inst == INST_ECALL)?1 : 0;
+    assign csr_wen = ((opcode == OP_CSR && (funct3 == CSR_FUNCT3_CSRRW)) || inst_in == INST_ECALL)?1 : 0;
 //csr_op
     localparam  CSR_OP_CSRRW = 3'b000,
                 CSR_OP_CSRRS = 3'b001,
@@ -427,9 +456,9 @@ module ysyx_26020055_IDU (
 
     always@(*)begin
         if(opcode == OP_CSR)begin
-            if(inst == INST_ECALL) begin
+            if(inst_in == INST_ECALL) begin
                 csr_op = CSR_OP_ECALL;
-            end else if(inst == INST_MRET) begin
+            end else if(inst_in == INST_MRET) begin
                 csr_op = CSR_OP_MRET;
             end else begin
                 case(funct3)

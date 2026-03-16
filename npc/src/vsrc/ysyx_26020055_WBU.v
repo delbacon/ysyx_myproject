@@ -11,14 +11,24 @@ module ysyx_26020055_WBU (
     input         mem_toreg    ,
     //output                      
     output [31:0] src1         ,
-    output [31:0] src2                 
+    output [31:0] src2         ,
+    /* verilator lint_off UNUSEDSIGNAL */
+    input         exu_valid    ,
+    output reg    wbu_ready     
 );
-
+    wire wbu_wen;
+    assign wbu_wen = exu_valid && reg_wen;
+    assign wbu_ready = exu_valid;
+/*
+    always@(posedge clk)begin
+        wbu_ready <= exu_valid;
+    end
+*/
 
     reg [31:0]reg_wdata;
     //wen & mux2to1
     always@(*)begin
-        if(reg_wen)begin
+        if(wbu_wen)begin
             if(mem_toreg)begin
                 reg_wdata = mem_rdata;
             end else begin
@@ -37,7 +47,7 @@ ysyx_26020055_RegisterFile u_RegisterFile (
     .raddr2(rs2      ),
     .rdata1(src1     ),
     .rdata2(src2     ),
-    .wen   (reg_wen  ) 
+    .wen   (wbu_wen  ) 
 );
 
     

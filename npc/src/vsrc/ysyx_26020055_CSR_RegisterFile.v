@@ -4,7 +4,7 @@ module ysyx_26020055_CSR_RegisterFile #(ADDR_WIDTH = 12, DATA_WIDTH = 32) (
     input [DATA_WIDTH-1:0] wdata,
     input [ADDR_WIDTH-1:0] waddr,
     input [ADDR_WIDTH-1:0] raddr,
-    input wen,  
+    input wen,
 
     output reg [DATA_WIDTH-1:0] rdata
 );
@@ -18,6 +18,7 @@ module ysyx_26020055_CSR_RegisterFile #(ADDR_WIDTH = 12, DATA_WIDTH = 32) (
                 CSR_MVENDORID = 12'hF11,
                 CSR_MARCHID = 12'hF12,
                 CSR_IDLE = 12'h000;
+
 //写
     always @(posedge clk) begin
         if (wen) begin

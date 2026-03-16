@@ -3,7 +3,7 @@
 module ysyx_26020055_EXU (
     input           clk           ,
     input           rst           ,
-    input      [31:0]pc           ,
+    input      [31:0]pc_in           ,
     //imm_data    
     input      [31:0]imm          ,
     //reg_data    
@@ -21,8 +21,33 @@ module ysyx_26020055_EXU (
     input            csr_wen      ,
     input      [ 2:0]csr_op       ,
     //out
-    output     [31:0]exu_out        
+    output     [31:0]exu_out      ,
+
+    input            idu_valid    ,
+    output reg       exu_valid    ,
+    output reg       exu_ready     
 );
+
+// 指令是否被当前周期接受？
+wire inst_accepted = idu_valid && exu_ready;
+
+// exu_valid: 上一拍是否接受了指令？
+assign exu_valid = inst_accepted;
+
+// exu_ready: 是否准备好接收新指令？
+// 目前只有 CSR 写需要 1 周期，且不能被打断
+reg exu_busy;
+always @(posedge clk) begin
+    if (rst)
+        exu_busy <= 1'b0;
+    else if (inst_accepted && csr_wen)
+        exu_busy <= 1'b1;           // 接收了一条 CSR 写指令 → 忙
+    else
+        exu_busy <= 1'b0;           // 其他情况（包括 ALU/branch）都 1 周期完成
+end
+
+assign exu_ready = 1;
+
 
 // csr 特殊处理
 //======================================================//
@@ -43,7 +68,7 @@ module ysyx_26020055_EXU (
 ysyx_26020055_ExceptionCtrl u_ysyx_26020055_ExceptionCtrl(
     .clk         (clk    ),
     .rst         (rst    ),
-    .pc          ( pc    ),
+    .pc          ( pc_in    ),
     .imm         (imm[11:0]),
     .csr_wen     (csr_wen),
     .csr_op      (csr_op ),
@@ -87,7 +112,7 @@ localparam      CSR_MSTATUS = 12'h300,
     reg [31:0] a,b;
 //alu_asrc
     wire [31:0] a_reg;
-    assign a_reg = alu_asrc ? pc : src1;
+    assign a_reg = alu_asrc ? pc_in : src1;
 
 //alu_base
     localparam  ALU_BASE_REG_REG = 2'b00,
@@ -161,13 +186,13 @@ ysyx_26020055_ALU u_ysyx_26020055_ALU (
         end else begin
             case(branch_op)
                 BRANCH_OP_JAL: begin
-                    branch_target = pc + imm;
+                    branch_target = pc_in + imm;
                 end
                 BRANCH_OP_JALR: begin
                     branch_target = ( src1 + imm ) & 32'hFFFF_FFFE;
                 end
                 BRANCH_OP_BEQ,BRANCH_OP_BNE,BRANCH_OP_BLT_AND_BLTU,BRANCH_OP_BGE_AND_BGEU: begin
-                    branch_target = pc + imm;
+                    branch_target = pc_in + imm;
                 end
                 default: begin
                     branch_target = 32'd0;

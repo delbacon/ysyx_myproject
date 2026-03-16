@@ -20,7 +20,7 @@ static uint64_t sim_time = 0;
 static void sim_once(){
     int n = 2;//推进一个时钟周期
     while(n){
-        while (sim_time < 10) {
+        while (sim_time <= 10) {
             dut->clk = !dut->clk;
             dut->eval();
             
@@ -29,7 +29,7 @@ static void sim_once(){
             sim_time++;
         }
         
-        if(sim_time == 10){
+        if(sim_time == 11){
             dut->rst = 0;
         }
 	    // 時鐘切換

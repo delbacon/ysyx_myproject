@@ -29,9 +29,6 @@ reg [31:0] mtvec;
 reg [31:0] mepc;
 reg [31:0] mcause; 
 
-
-
-
 //write
 always@(posedge clk)begin
     if(rst)begin
