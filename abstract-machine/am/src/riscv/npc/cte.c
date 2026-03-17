@@ -8,6 +8,7 @@ Context* __am_irq_handle(Context *c) {
   if (user_handler) {
     Event ev = {0};
     switch (c->mcause) {
+      case 11: ev.event = EVENT_YIELD; break;
       default: ev.event = EVENT_ERROR; break;
     }
 
@@ -31,7 +32,16 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
 }
 
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
-  return NULL;
+  //uint8_t *stack_start = kstack.start;
+  uint8_t *stack_end = kstack.end;
+  //在栈底分配一块内存给上下文
+  Context *c = (Context *)(stack_end - sizeof(Context));
+  //存入口地址到 mepc
+  c->mepc = (uintptr_t)entry;
+  c->mstatus = 0x1800;
+  //ABI 规定，整数参数通过reg a0 - a8 传递（2.1)
+  c->gpr[10] = (uintptr_t)arg;
+  return c;
 }
 
 void yield() {
