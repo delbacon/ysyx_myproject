@@ -49,6 +49,10 @@ word_t csr_read(paddr_t addr){
       return csr(INDEX_MEPC);
     case ADDR_MCAUSE:
       return csr(INDEX_MCAUSE);
+    case ADDR_MVENDORID:
+      return 0x79737978; //read_only
+    case ADDR_MARCHID:
+      return 26020055;  //read_only
     default:
       printf("csr_read: unknown csr addr %x\n",addr);
   }

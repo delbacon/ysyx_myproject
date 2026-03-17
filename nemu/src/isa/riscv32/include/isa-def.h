@@ -18,7 +18,7 @@
 
 #include <common.h>
 
-#define MAX_CSR_IDX 4
+#define MAX_CSR_IDX 6
 
 enum { 
   //存放状态
@@ -29,6 +29,10 @@ enum {
   ADDR_MEPC = 0x341 ,//gpr数量+pc寄存器 //0x341
   //存放异常信息
   ADDR_MCAUSE = 0x342,//0x342
+  //
+  ADDR_MVENDORID = 0xf11,
+  //
+  ADDR_MARCHID = 0xf12
  };
 
 enum { 
@@ -39,7 +43,9 @@ enum {
   //存放触发异常的pc
   INDEX_MEPC,
   //存放异常信息
-  INDEX_MCAUSE
+  INDEX_MCAUSE,
+  INDEX_MVENDORID,
+  INDEX_MARCHID
  };
 
 
