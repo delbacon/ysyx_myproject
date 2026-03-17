@@ -1,6 +1,7 @@
 //npc/vsrc/ysyx_26020055_WBU.v
 module ysyx_26020055_WBU (
     input         clk          ,
+    input         rst          ,
     input  [4:0]  rs1          ,
     input  [4:0]  rs2          ,
     input  [4:0]  rd           ,
@@ -14,23 +15,42 @@ module ysyx_26020055_WBU (
     output [31:0] src2         ,
     /* verilator lint_off UNUSEDSIGNAL */
     input         exu_valid    ,
-    output reg    wbu_ready     
+    output reg    wbu_ready    ,
+    input         lsu_valid    
 );
-    wire wbu_wen;
-    assign wbu_wen = exu_valid && reg_wen;
-
-
-
+    localparam IDLE=2'b00,WAITREG=2'b10;
+    reg [1:0] st,n_st;
     always@(posedge clk)begin
-        wbu_ready <= exu_valid;
+        if(rst)begin
+            st <= IDLE;
+        end
+        else begin
+            st <= n_st;
+        end
     end
+
+    always@(*)begin
+        case(st)
+            IDLE :begin n_st = (lsu_valid) ? WAITREG : IDLE; end
+            WAITREG :begin n_st = IDLE; end
+            default: begin n_st = IDLE; end
+        endcase
+    end
+
+    wire wbu_wen;
+    assign wbu_wen = (st == WAITREG) && reg_wen;
+
+    wire wbu_toreg;
+    assign wbu_toreg =  (st == WAITREG) && mem_toreg;
+
+    assign wbu_ready = (rst) ? 1 : (st==WAITREG);
 
 
     reg [31:0]reg_wdata;
     //wen & mux2to1
     always@(*)begin
         if(wbu_wen)begin
-            if(mem_toreg)begin
+            if(wbu_toreg)begin
                 reg_wdata = mem_rdata;
             end else begin
                 reg_wdata = exu_out;

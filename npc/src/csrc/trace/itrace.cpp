@@ -1,6 +1,7 @@
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <trace/itrace.h>
+#include <memory/paddr.h>
 #ifdef CONFIG_ITRACE
 //itrace 相关函数:
 //============================================================================//
@@ -69,7 +70,9 @@ void itrace_list_write(Decode *s){
   int i;
   //先取地址再取内容，这样取到的是第一个字节的数据，并且可以通过指针访问后续字节
   //如果直接强制类型转换为uint8_t,会丢失第一个字节后的内容
-  uint8_t *inst = (uint8_t *)&s->isa.inst;
+  char *str = (char *)malloc(ilen);
+  sprintf(str, "%d", pROM_read(s->pc));
+  uint8_t *inst = ( uint8_t *)str;
   //这里特殊处理x86是因为指令顺序不同
 #ifdef CONFIG_ISA_x86
   for (i = 0; i < ilen; i ++) 
@@ -87,10 +90,10 @@ void itrace_list_write(Decode *s){
   p += space_len;
 
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-  if(s->isa.inst != 0)
-    disassemble(p, s->logbuf + sizeof(s->logbuf) - p, s->pc, (uint8_t *)&s->isa.inst, ilen);
+  if(inst != 0)
+    disassemble(p, s->logbuf + sizeof(s->logbuf) - p, s->pc, inst, ilen);
   else 
-    Assert(0, "Error: pc:%x instruction is %x",s->pc,s->isa.inst);
+    Assert(0, "Error: pc:%x instruction is %x",s->pc,pROM_read(s->pc));
 }
 
 int itrace_list_put(char *c){

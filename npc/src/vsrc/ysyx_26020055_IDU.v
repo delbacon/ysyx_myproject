@@ -36,25 +36,49 @@ module ysyx_26020055_IDU (
     output           idu_valid,
     input            exu_ready 
 );
+
+    localparam IDLE=2'b00,WAIT=2'b01;
+    reg [1:0] st,n_st;
+    always@(posedge clk)begin
+        if(rst)
+            st <= IDLE;
+        else
+            st <= n_st;
+    end
+    always@(*)begin
+        case(st)
+            IDLE:begin n_st = (ifu_valid)?WAIT:IDLE; end
+            WAIT:begin n_st = (exu_ready)?IDLE:WAIT; end
+            default:begin n_st = IDLE; end
+        endcase
+    end
+
 wire idu_fire;
-assign idu_fire = ifu_valid && exu_ready;
+assign idu_fire = (st == IDLE && ifu_valid);
+
+//虽然IDU都是组合逻辑，但还是人为打一拍
+always@(posedge clk)begin
+    if(idu_fire)begin
+        idu_valid <= 1;
+    end else begin
+        idu_valid <= 0;
+    end
+end
 
 reg [31:0] inst_reg;
 wire [31:0] inst_in;
 always@(posedge clk)begin
     if(idu_fire)
         inst_reg <= inst;
+        inst_get_HDL(inst);
 end
 reg [31:0] pc_reg;
 always@(posedge clk)begin
     if(idu_fire)
         pc_reg <= pc;
 end
-assign pc_in = idu_fire?pc:pc_reg;
-
-
-assign inst_in = idu_fire?inst:inst_reg ;
-assign idu_valid = idu_fire;
+assign pc_in   = (idu_fire)?pc:pc_reg;
+assign inst_in = (idu_fire)?inst:inst_reg ;
 
 
 // ALU 状态获取

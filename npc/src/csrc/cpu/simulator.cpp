@@ -22,7 +22,7 @@ static void sim_once(){
     do{
         int n = 2;//推进一个时钟周期
         while(n){
-            ifu_valid = dut->ifu_valid;
+            ifu_valid = dut->wbu_ready;
             while (sim_time <= 10) {
                 dut->clk = !dut->clk;
                 dut->eval();
@@ -46,7 +46,7 @@ static void sim_once(){
             n--;
             //ebreak
         }
-    }while(!ifu_valid);
+    }while(0);
 }
 
 static void simulate_signal_init(){

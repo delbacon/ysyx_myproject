@@ -2,7 +2,8 @@
 module ysyx_26020055_top (
     input         clk,
     input         rst,
-    output        ifu_valid
+    output        ifu_valid,
+    output        wbu_ready
 );
 	wire [31:0] pc;
 	wire [31:0] inst;
@@ -104,19 +105,24 @@ ysyx_26020055_EXU u_ysyx_26020055_EXU(
 );
 
 wire [31:0] mem_rdata;
+wire lsu_valid;
 ysyx_26020055_LSU u_ysyx_26020055_LSU(
- //   .clk          (clk          ),
+    .clk          (clk          ),
+    .rst          (rst          ),
     .exu_out      (exu_out      ),//addr 来源
     .src2         (src2         ),//wdata 来源
     .mem_op       (mem_op       ),
     .mem_wen      (mem_wen      ),
     .mem_toreg    (mem_toreg    ),
-    .mem_rdata    (mem_rdata    ) 
+    .mem_rdata    (mem_rdata    ),
+    .exu_valid    (exu_valid    ),
+    .wbu_ready    (wbu_ready    ),
+    .lsu_valid    (lsu_valid    )
 );
 
-wire wbu_ready;
 ysyx_26020055_WBU u_ysyx_26020055_WBU (
     .clk          (clk          ),
+    .rst          (rst          ),
     .rs1          (rs1          ),
     .rs2          (rs2          ),
     .rd           (rd           ),
@@ -129,7 +135,8 @@ ysyx_26020055_WBU u_ysyx_26020055_WBU (
     .src1         (src1         ),
     .src2         (src2         ),
     .exu_valid    (exu_valid    ),
-    .wbu_ready    (wbu_ready   )
+    .wbu_ready    (wbu_ready    ),
+    .lsu_valid    (lsu_valid    )
 );
 
 endmodule
