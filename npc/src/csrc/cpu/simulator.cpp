@@ -46,7 +46,7 @@ static void sim_once(){
             n--;
             //ebreak
         }
-    }while(0);
+    }while(!ifu_valid);
 }
 
 static void simulate_signal_init(){

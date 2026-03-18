@@ -1,7 +1,7 @@
 // npc/vsrc/ysyx_26020055_IDU.v
 // IDU 负责译码
 import "DPI-C" function void ebreak ();
-
+import "DPI-C" function void inst_get_HDL(int vraddr) ;
 module ysyx_26020055_IDU (
     input clk,
     /* verilator lint_off UNUSEDSIGNAL */
@@ -76,6 +76,7 @@ reg [31:0] pc_reg;
 always@(posedge clk)begin
     if(idu_fire)
         pc_reg <= pc;
+        //pc_get_HDL(pc);
 end
 assign pc_in   = (idu_fire)?pc:pc_reg;
 assign inst_in = (idu_fire)?inst:inst_reg ;

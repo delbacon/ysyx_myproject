@@ -1,6 +1,5 @@
-
-import "DPI-C" function void inst_get_HDL(int vraddr) ;
 import "DPI-C" function void pc_get_HDL(int val) ;
+
 import "DPI-C" function void dnpc_get_HDL(int val) ;
 module ysyx_26020055_IFU (
     input            clk          ,
@@ -14,18 +13,17 @@ module ysyx_26020055_IFU (
 );
 // ========================== 主 状态机 ============================//
 // 用于控制 IFU 状态，分为等待 MEM 完成和等待 WBU 完成(即最近发送的指令被执行完)
-    localparam IDLE = 2'b00, WAITMEM = 2'b01,BUSY = 2'b10;
+    localparam WAITMEM = 2'b01,BUSY = 2'b10;
     reg [1:0]st,n_st;
     always@(posedge clk)begin
         if(rst)
-            st <= IDLE;
+            st <= WAITMEM;
         else
             st <= n_st;
     end
     //wait 等待 wbu 完成
     always@(*)begin
         case(st)
-            IDLE:     begin n_st = WAITMEM; end
             // 向 ROM 发出请求，并等待 ROM 取指完成(进入 MEM_IDLE 状态)
             WAITMEM:  begin n_st = (mem_ready)?BUSY:WAITMEM; end
             // 等待当前 inst 执行完成
@@ -36,32 +34,37 @@ module ysyx_26020055_IFU (
 
 // 从仿真环境中读取 ROM ，获得执行的指令
 localparam PC_INIT = 32'h8000_0000;
-reg [31:0] ifu_data,ifu_addr;
-// 判断从mem取指是否完成
+// 判断从mem取指是否完
+/*
+reg rom_done;
+always@(posedge clk)begin
+    if(rst)
+        rom_done <= 1'b0;
+    else 
+        rom_done <= (rom_st == MEM_WAITDATA && ifu_rValid);
+end
+*/
 wire mem_ready;
-assign mem_ready = (rom_st == MEM_BUSY && ifu_respValid);
+//assign mem_ready = rom_done;
+assign mem_ready = (rom_st == MEM_WAITDATA && ifu_rValid);
 // 如果取指完成，取出的指令
 assign inst = mem_ready?ifu_rData:32'b0;
 // 此时 ifu 工作完成，inst和pc有效
-assign ifu_valid = mem_ready;
-assign ifu_addr = pc;
-
-// 收到 wbu_ready 代表指令执行完成
-assign ifu_respReady = (st==BUSY) && wbu_ready;
+assign ifu_valid = mem_ready && (st == WAITMEM);
+assign ifu_arAddr = pc;
 // =============================================================//
-
+/*
 reg rst_ready;
 always@(posedge clk)begin
     rst_ready <= rst;
 end
-
+*/
 
 // ============== ROM 状态机 ====================//
 // 用于和 ROM 交互
-// addr 状态机
-localparam  MEM_IDLE = 'd0,
-            MEM_WAIT = 'd1,
-            MEM_BUSY = 'd2;
+localparam  MEM_IDLE = 'd1,
+            MEM_WAITADDR = 'd2,
+            MEM_WAITDATA = 'd3;
 reg [1:0]rom_st,rom_n_st;
 always@(posedge clk)begin
     if(rst)
@@ -72,39 +75,26 @@ end
 always@(*)begin
     case(rom_st)
         // 如果主状态机开始等待 mem 执行
-        MEM_IDLE: begin rom_n_st = (st == WAITMEM)?MEM_WAIT:MEM_IDLE; end
-        // 等待 ROM 取完毕
-        MEM_BUSY:begin rom_n_st = (ifu_respValid)?MEM_IDLE:MEM_BUSY;end
+        MEM_IDLE: begin rom_n_st = (st == WAITMEM)?MEM_WAITADDR:MEM_IDLE; end
+        // 等待 ROM 识别地址,此时地址有效
+        MEM_WAITADDR:begin rom_n_st = (ifu_arReady)?MEM_WAITDATA:MEM_WAITADDR;end
+        // 等待 ROM 读取数据。此时数据有效
+        MEM_WAITDATA:begin rom_n_st = (ifu_rValid)?MEM_IDLE:MEM_WAITDATA; end
+        default: begin rom_n_st = MEM_IDLE; end
     endcase
 end
 
-// data 状态机
-localparam  MEM_IDLEDATA = 'd0,
-            MEM_WAITDATA = 'd1;
-reg [1:0]data_st,data_n_st;
-always@(posedge clk)begin
-    if(rst)
-        data_st <= MEM_IDLEDATA;
-    else
-        data_st <= data_n_st;
-end
-always@(*)begin
-    case(data_st)
-        // 如果主状态机开始等待 mem 执行
-        MEM_IDLEDATA: begin rom_n_st = (st == WAITMEM)?MEM_WAITDATA:MEM_IDLEDATA; end
-        // 等待 ROM 不忙，可以响应 IFU 的请求（reqReady），期间一直向 mem 发出读请求(ifu_reqValid)
-        MEM_WAITDATA: begin rom_n_st = (ifu_rValid)?MEM_IDLEDATA:MEM_WAITDATA; end
-    endcase
-end
+assign ifu_arValid = (rom_st == MEM_WAITADDR);
+
 // wait data 时一直置 1 ，表示准备好接收数据
-assign ifu_rReady = (st==MEM_WAITDATA);
-assign ifu_reqValid = (rst_ready)?1:(rom_st == MEM_WAIT);
+assign ifu_rReady = (rom_st == MEM_WAITDATA);
 
 reg [31:0] ifu_arAddr  ;
 wire ifu_arValid       ;
 wire ifu_arReady       ;
 reg [31:0] ifu_rData   ;
-wire ifu_rResp         ;
+/* verilator lint_off UNUSEDSIGNAL */
+wire [1:0]ifu_rResp    ;
 wire ifu_rValid        ;
 wire ifu_rReady        ;
 
@@ -122,13 +112,16 @@ ysyx_26020055_pROM u_ysyx_26020055_pROM (
 
     .awAddr     (32'd0         ),
     .awValid    (1'd0          ),
+/* verilator lint_off PINCONNECTEMPTY */
     .awReady    (              ),
        
     .wData      (32'd0         ),
     .wValid     (1'd0          ),
+/* verilator lint_off PINCONNECTEMPTY */
     .wReady     (              ),
-       
+/* verilator lint_off PINCONNECTEMPTY */
     .bResp      (              ),
+/* verilator lint_off PINCONNECTEMPTY */
     .bValid     (              ),
     .bReady     (1'd0          )
 );
@@ -175,9 +168,10 @@ end
 
 // DPI-C 向仿真环境传输数据
     always@(posedge clk)begin
-        dnpc_get_HDL(next_pc);
-        pc_get_HDL(pc);
-        inst_get_HDL(inst);
+        if(ifu_valid)begin
+            dnpc_get_HDL(next_pc);
+            pc_get_HDL(next_pc);
+        end
     end
 
 endmodule
