@@ -143,6 +143,45 @@ assign lsu_reqValid = mem_req || (rom_st == MEM_WAIT);
     assign mem_addr = exu_out;
 
 
+    wire lsu_arAddr ;
+    wire lsu_arValid;
+    wire lsu_arReady;
+    wire lsu_rData  ;
+    wire lsu_rResp  ;
+    wire lsu_rValid ;
+    wire lsu_rReady ;
+    wire lsu_awAddr ;
+    wire lsu_awValid;
+    wire lsu_awReady;
+    wire lsu_wData  ;
+    wire lsu_wValid ;
+    wire lsu_wReady ;
+    wire lsu_bResp  ;
+    wire lsu_bValid ;
+    wire lsu_bReady ;
+lsu_
+ysyx_26020055_pRAM u_ysyx_26020055_pRAM (
+    .clk        (clk           ),
+    .rst        (rst           ),
+    .wmask      (mem_len       ),  
+    .arAddr     (lsu_arAddr    ),
+    .arValid    (lsu_arValid   ),
+    .arReady    (lsu_arReady   ),
+    .rData      (lsu_rData     ),
+    .rResp      (lsu_rResp     ),
+    .rValid     (lsu_rValid    ),
+    .rReady     (lsu_rReady    ),
+    .awAddr     (lsu_awAddr    ),
+    .awValid    (lsu_awValid   ),
+    .awReady    (lsu_awReady   ),
+    .wData      (lsu_wData     ),
+    .wValid     (lsu_wValid    ),
+    .wReady     (lsu_wReady    ),
+    .bResp      (lsu_bResp     ),
+    .bValid     (lsu_bValid    ),
+    .bReady     (lsu_bReady    )
+);
+/*
 ysyx_26020055_pRAM u_ysyx_26020055_pRAM  (
     .clk                 (clk               ),
     .rst                 (rst               ),
@@ -157,5 +196,5 @@ ysyx_26020055_pRAM u_ysyx_26020055_pRAM  (
     .rden                (lsu_rden          ),
     .wmask               (mem_len           )                    
 );
-
+*/
 endmodule

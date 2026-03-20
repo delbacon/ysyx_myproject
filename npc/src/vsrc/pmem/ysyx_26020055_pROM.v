@@ -98,7 +98,7 @@ always @(posedge clk) begin
             rData <= pROM_read_HDL(arAddr_reg);
             rResp <= 2'b00;
         // mem
-        end else if(arAddr_reg <= 2**ADDR_WIDTH-4 + VADDR_INIT)begin 
+        end else if(arAddr_reg >= VADDR_INIT && arAddr_reg <= 2**ADDR_WIDTH-4 + VADDR_INIT)begin 
             rData <= {rf[arPaddr+3],rf[arPaddr+2],rf[arPaddr+1],rf[arPaddr]};
             rResp <= 2'b00;//有效地址
         end else begin
