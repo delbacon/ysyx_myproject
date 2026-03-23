@@ -14,12 +14,9 @@ module ysyx_26020055_LSU(
     output            lsu_valid ,
     input             wbu_ready
 );
-    
-    wire lsu_respValid,lsu_reqValid;
-    wire lsu_respReady,lsu_reqReady;
 
 // ============================ 主状态机 ===============================//
-    localparam IDLE = 2'b00, WAITMEM = 2'b01,BUSY = 2'b10;
+    localparam IDLE = 2'b00, WAIT_WRITE = 2'b01,WAIT_READ = 2'b10, BUSY = 2'b11;
     reg [1:0]st,n_st;
     always@(posedge clk)begin
         if(rst)
@@ -30,9 +27,18 @@ module ysyx_26020055_LSU(
     //wait 等待 wbu 完成
     always@(*)begin
         case(st)
-            IDLE:     begin n_st = (exu_valid &&(mem_wen || mem_toreg))?WAITMEM:IDLE; end
-            // 向 ROM 发出请求，并等待 ROM 取指完成(进入 MEM_IDLE 状态)
-            WAITMEM:  begin n_st = (mem_ready)?BUSY:WAITMEM; end
+            // 如果有请求与 mem 交互的信号，就等待 mem 执行完毕
+            IDLE:begin 
+                if(exu_valid)begin
+                    if(mem_wen) n_st = WAIT_WRITE;
+                    else if(mem_read) n_st = WAIT_READ;
+                    else n_st = IDLE;
+                end
+            end
+            // 向 ROM 发出请求，并等待 RAM 执行完成(进入 MEM_IDLE 状态)
+            WAIT_WRITE:  begin n_st = (mem_ready)?BUSY:WAIT_WRITE; end
+            // 读取数据
+            WAIT_READ:  begin n_st = (mem_ready)?BUSY:WAIT_READ; end
             // 等待下一个模块执行完成
             BUSY:     begin n_st = (wbu_ready)?IDLE:BUSY;   end
             default : n_st = IDLE;
@@ -64,26 +70,27 @@ end
 assign lsu_valid = ( mem_ready ) || ((st == IDLE) && exu_valid && ~(mem_wen || mem_toreg));
 // =================================================================//
 
-// ============== ROM 状态机 ====================//
-// 用于和 ROM 交互
-localparam  MEM_IDLE = 'd0,
-            MEM_WAIT = 'd1,
-            MEM_BUSY = 'd2;
+// ============== RAM 状态机 ====================//
+// 用于和 RAM 交互
+// read
+localparam  READ_IDLE = 'd0,
+            READ_WAIT = 'd1,
+            READ_BUSY = 'd2;
 reg [1:0]rom_st,rom_n_st;
 always@(posedge clk)begin
     if(rst)
-        rom_st <= MEM_IDLE;
+        rom_st <= READ_IDLE;
     else
         rom_st <= rom_n_st;
 end
 always@(*)begin
     case(rom_st)
         // 如果主状态机开始等待 mem 执行
-        MEM_IDLE: begin rom_n_st = (st == WAITMEM)?MEM_WAIT:MEM_IDLE; end
+        READ_IDLE: begin rom_n_st = (st == WAITMEM)?MEM_WAIT:READ_IDLE; end
         // 等待 ROM 不忙，可以响应 IFU 的请求（reqReady），期间一直向 mem 发出读请求(ifu_reqValid)
-        MEM_WAIT: begin rom_n_st = (lsu_reqReady)?MEM_BUSY:MEM_WAIT; end
+        READ_WAIT: begin rom_n_st = (lsu_reqReady)?READ_BUSY:READ_WAIT; end
         // 等待 ROM 取完毕
-        MEM_BUSY:begin rom_n_st = (lsu_respValid)?MEM_IDLE:MEM_BUSY;end
+        READ_BUSY:begin rom_n_st = (lsu_respValid)?READ_IDLE:READ_BUSY;end
     endcase
 end
 
@@ -159,7 +166,7 @@ assign lsu_reqValid = mem_req || (rom_st == MEM_WAIT);
     wire lsu_bResp  ;
     wire lsu_bValid ;
     wire lsu_bReady ;
-lsu_
+
 ysyx_26020055_pRAM u_ysyx_26020055_pRAM (
     .clk        (clk           ),
     .rst        (rst           ),
