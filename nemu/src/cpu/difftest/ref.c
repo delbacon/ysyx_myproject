@@ -46,13 +46,15 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
     for(i = 0; i < RISCV_GPR_NUM; i++){
       ((uint32_t *)dut)[i] = cpu.gpr[i];
     }
+    ((uint32_t *)dut)[32] = cpu.pc;
 
   }else if(direction == DIFFTEST_TO_REF){
     for(i = 0; i < RISCV_GPR_NUM; i++){
       cpu.gpr[i] = ((uint32_t *)dut)[i];
     }
+    cpu.pc = ((uint32_t *)dut)[32];
   }
-  ((uint32_t *)dut)[32] = cpu.pc;
+
 }
 
 __EXPORT void difftest_exec(uint64_t n) {

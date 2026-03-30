@@ -29,7 +29,7 @@ void halt(int code) {
   while (1);
 }
 
-/*
+
 static char *print_u32_as_bytes(uint32_t value) {
     // 使用静态缓冲区以避免返回局部变量地址
     static char buffer[4];
@@ -38,14 +38,15 @@ static char *print_u32_as_bytes(uint32_t value) {
     buffer[2] = (char)((value >> 8)  & 0xFF);
     buffer[3] = (char)( value        & 0xFF); // LSB
     return buffer;
-}*/
+}
 void _trm_init() {
-/*
+
   uint32_t ysyx,my_id;
   asm volatile("csrr %0, mvendorid": "=r"(ysyx));
   asm volatile("csrr %0, marchid": "=r"(my_id));
   printf("ysyx_id: %s_%d\n",print_u32_as_bytes(ysyx),my_id);
-*/
+  //printf("ysyx_id:\n");
+
   /*
   int i = 0;
   for(i=0;i<4;i++){
