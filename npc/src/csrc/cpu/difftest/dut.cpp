@@ -91,9 +91,10 @@ void (*ref_difftest_init)(int) = (void (*)(int))dlsym(handle, "difftest_init");
 
 static bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
   if(cpu.pc == ref_r->pc){
+    /*
     for(int i = 0; i < RISCV_GPR_NUM; i++){
         printf("reg[%s] = 0x%x, ref_reg[%s] = 0x%x\n", reg_name(i), cpu.gpr[i], reg_name(i), ref_r->gpr[i]);
-    }
+    }*/
     for(int i = 0; i < RISCV_GPR_NUM; i++){
       if(cpu.gpr[i] != ref_r->gpr[i]){
         printf("-->reg[%s] = 0x%x, ref_reg[%s] = 0x%x\n", reg_name(i), cpu.gpr[i], reg_name(i), ref_r->gpr[i]);

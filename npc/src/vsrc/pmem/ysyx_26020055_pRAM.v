@@ -1,25 +1,10 @@
 import "DPI-C" function int pRAM_read_HDL(int addr, int len);
 import "DPI-C" function void pRAM_write_HDL(int addr, int len, int data) ;
-/*
-module ysyx_26020055_pRAM #(ADDR_WIDTH = 28, DATA_WIDTH = 8) (
-    input                      clk                ,
-    input                      rst                ,
-    input [31:0]               vaddr              ,
-    input                      reqValid           ,
-    output reg                 respValid          ,
-    input                      respReady          ,
-    output                     reqReady           ,
-    output reg[31:0]           rdata              ,
-    input     [31:0]           wdata              ,
-    input                      wen                ,
-    input                      rden               ,
-    input      [31:0]          wmask                                  
-);
-*/
+
+
 module ysyx_26020055_pRAM (
     input               clk         ,
     input               rst         ,
-    input        [31:0] wmask       ,  
             /* AXI4-lite */
     /* 读地址操作 */
     input        [31:0] arAddr      ,
@@ -35,11 +20,12 @@ module ysyx_26020055_pRAM (
     input               awValid     ,
     output              awReady     ,
     /* 写数据操作 */
+    input        [31:0] wStrb       ,
     input        [31:0] wData       ,
     input               wValid      ,
     output              wReady      ,
     /* 写回操作 */
-    output              bResp       ,
+    output       [1:0]  bResp       ,
     output              bValid      ,
     input               bReady  
 );
@@ -47,7 +33,7 @@ module ysyx_26020055_pRAM (
 // ==================== 寄存器组 =========================== //
 // 32bit 地址， 8bit 单元
     //localparam ADDR_WIDTH = 27;//27: 0x800_0000 大小(128MB)
-    localparam ADDR_WIDTH = 20;//27: 0x000_1000 大小(1KB)
+    localparam ADDR_WIDTH = 27;//27: 0x000_1000 大小(1KB)
     localparam DATA_WIDTH = 8;
 
     localparam VADDR_INIT = 32'h8000_0000;
@@ -55,7 +41,7 @@ module ysyx_26020055_pRAM (
 // 初始化
     initial begin
         for(int i=0;i<2**ADDR_WIDTH-1;i=i+4)begin
-            {rf[i+3],rf[i+2],rf[i+1],rf[i]} = pROM_read_HDL(i + VADDR_INIT);
+            {rf[i+3],rf[i+2],rf[i+1],rf[i]} = pRAM_read_HDL(i + VADDR_INIT,4);
         end
     end
 // ========================== 操作mem ============================== //
@@ -80,7 +66,7 @@ always @(posedge clk) begin
     if(rdata_success)begin
         // device
         if(arAddr_reg >= DEVICE_ADDR && arAddr_reg < DEVICE_ADDR+DEVICE_SIZE)begin
-            rData <= pROM_read_HDL(arAddr_reg);
+            rData <= pRAM_read_HDL(arAddr_reg,32'd4);
             rResp <= 2'b00;
         // mem
         end else if(arAddr_reg >= VADDR_INIT && arAddr_reg <= 2**ADDR_WIDTH-4 + VADDR_INIT)begin 
@@ -128,24 +114,21 @@ end
     wire [ADDR_WIDTH-1:0] awPaddr;
     assign awPaddr = awAddr_reg[ADDR_WIDTH-1:0];
 
-    reg [31:0] wmask_full;
+    reg [31:0] wmask;
     always@(*)begin
-        case(wmask)
-            32'd1: begin
-                wmask_full = 32'h0000_00FF;
-            end
-            32'd2:begin 
-                wmask_full = 32'h0000_FFFF;
-            end
-            32'd4: wmask_full = 32'hFFFF_FFFF;
-            default: wmask_full = 32'hFFFF_FFFF;
+        case(wStrb)
+            32'h0000_00FF: wmask = 32'd1;
+            32'h0000_FFFF: wmask = 32'd2;
+            32'hFFFF_FFFF: wmask = 32'd4;
+            default:       wmask = 32'd4;
         endcase
     end
 
+
     wire [31:0]wdata_all,rdata_all;
     // 获得不会被写入覆盖的内容
-    assign rdata_all = {rf[awPaddr+3],rf[awPaddr+2],rf[awPaddr+1],rf[awPaddr]} & (~(wmask_full));
-    assign wdata_all = wData_reg & (wmask_full);
+    assign rdata_all = {rf[awPaddr+3],rf[awPaddr+2],rf[awPaddr+1],rf[awPaddr]} & (~(wStrb));
+    assign wdata_all = wData_reg & (wStrb);
     //读
     always @(posedge clk) begin
         if(wdata_success)begin
@@ -228,6 +211,7 @@ end
     assign wReady  = (awst == AWIDLE);
     assign bValid  = (awst == AWVALID);
 
-
+//暂时没有实现相关接受功能，所以默认为00
+assign bResp = 2'b00;
 endmodule
 

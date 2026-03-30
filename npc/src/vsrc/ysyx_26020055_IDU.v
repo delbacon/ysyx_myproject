@@ -471,7 +471,7 @@ assign inst_in = (idu_fire)?inst:inst_reg ;
     end
 
 //csr_wen
-    assign csr_wen = ((opcode == OP_CSR && (funct3 == CSR_FUNCT3_CSRRW)) || inst_in == INST_ECALL)?1 : 0;
+    assign csr_wen = ((opcode == OP_CSR && (funct3 == CSR_FUNCT3_CSRRW || funct3 == CSR_FUNCT3_CSRRS)) || inst_in == INST_ECALL)?1 : 0;
 //csr_op
     localparam  CSR_OP_CSRRW = 3'b000,
                 CSR_OP_CSRRS = 3'b001,
